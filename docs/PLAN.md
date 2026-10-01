@@ -183,9 +183,88 @@ space, and the clipboard is unchanged afterwards.
 - Optional **Also save to folder** (user-picked). When on, the file path is
   added to the output text.
 
-### F11. Tray, onboarding, branding
-- **Tray** additions: *New capture* (with its hotkey), a *Macros* submenu, and
-  *Copy last capture text*.
+### F11. Board: build a prompt from many images
+A window for putting a prompt together before sending it: screenshots, any other
+images (for example five alternatives ChatGPT generated, saved to a folder), and
+text, laid out next to each other. Quick Send (F6) stays the same. The Board is
+for when one capture isn't enough.
+
+**Layout: structured, not freeform.** A board is a vertical list of
+**sections**. Each section has an optional title, a row or grid of images, a
+note under each image, and a text box. A **Prompt** box at the top holds the
+overall request. Everything snaps into place, so images always line up with
+their text, and the order on screen is the order the AI reads. A freeform
+canvas (tldraw/Excalidraw style) was considered and rejected: it adds about
+1 MB+ of JS, and freeform positions don't turn into an ordered prompt.
+
+**Labels.** Every image gets a label the text can refer to. By default images
+are numbered across the board (Image 1, 2, 3…). A section can switch to
+**Options** labels (A, B, C…), which suits a set of alternatives.
+
+**Adding images:**
+- From a capture: **`Alt+Enter`** in the capture editor sends it to the board
+  instead of the chat, keeping the annotations, caption and notes.
+- **Drag and drop** files or a folder from Explorer, or drop them onto a section.
+- **`Ctrl+V`** a copied image or copied files.
+- **Add files…** / **Add from folder…** (with a thumbnail picker).
+- From History → Captures: **Add to board**.
+- **Inbox folder** (optional, e.g. Downloads): new images in that folder show up
+  in a strip at the bottom of the board, ready to add with one click. The
+  folder is checked every 2 s, and only while the board is open, so no file
+  watcher runs in the background.
+- Supported formats: PNG, JPG, WebP, GIF (first frame) and BMP. Imported files
+  are copied into the board, so moving or deleting the originals later doesn't
+  break it.
+
+**Editing:** drag to reorder images and sections, or move an image to another
+section. Double-click an image to open it in the capture editor and add pins,
+boxes or arrows. Delete removes an item, with undo. Every text field takes
+dictation (`Ctrl+Space`), and `Ctrl+K` runs AI cleanup on the whole board. The
+board saves automatically.
+
+**Output:**
+| Action | Key | What happens |
+|---|---|---|
+| **Send** | `Ctrl+Enter` | Paste every image in order, then the compiled text, into the target window (see below). Paste profiles apply, so terminals get file paths. |
+| **Copy as one image** | `Ctrl+Shift+C` | Render the board as one labelled sheet image (what you see is what you get) and put it on the clipboard. For apps that allow one image, or for sharing. |
+| **Copy text** | `Ctrl+Alt+C` | Compiled text only. |
+
+The target window is the one that was active before the board opened. Clicking
+**Send to ▾** picks a different one (click any window) or a recent target.
+Before pasting, images are resized so the longest edge is at most 2048 px
+(configurable), so uploads are quick. Boards with more images than the paste
+limit (default 10, configurable) trigger a warning that offers "Copy as one
+image" instead, because chat apps cap attachments per message.
+
+**Compiled text:** image labels match the paste order.
+```
+Redesign the landing hero. Use the current page for structure and pick the best
+direction from the options. Implement it with our Next.js + Tailwind setup.
+
+## Current (Image 1)
+1. Headline is too big on mobile.
+2. Input and button heights don't match.
+
+## Options (Images 2–6)
+Image 2 (Option A): centered, keeps the current layout.
+Image 3 (Option B): split layout, product shot on the right. ← preferred
+Image 4 (Option C): dark theme.
+Image 5 (Option D): full-width image on top.
+Image 6 (Option E): minimal, no illustration.
+Prefer B, with the colors from C.
+```
+
+**Boards are kept:** several boards with names, plus *New*, *Duplicate* and
+*Delete*, and a **Boards** tab in History. Open the board with
+**`Alt+Shift+B`**, from the tray, or with the board button in the capture editor.
+
+**Done when:** five images dropped from a folder plus one capture (Alt+Enter),
+with notes, send into Claude web as 6 images and text whose labels match. The
+same board copies as one sheet image that pastes into ChatGPT.
+
+### F12. Tray, onboarding, branding
+- **Tray** additions: *New capture* (with its hotkey), *Open board*, a *Macros*
+  submenu, and *Copy last capture text*.
 - **Onboarding:** Handy's steps (microphone permission, model download), with
   **Canary 180M Flash** (139 MB) pre-selected, then one new step: a hotkey card
   and a "Try it: capture this window" practice capture.
@@ -202,6 +281,7 @@ space, and the clipboard is unchanged afterwards.
 | `Ctrl+Space` | Dictate (hold) |
 | `Ctrl+Shift+Space` | Dictate + AI cleanup |
 | `Alt+Shift+S` | Capture |
+| `Alt+Shift+B` | Open the board |
 | `Alt+1`…`Alt+4` | Starter macros (user can add more) |
 | `Esc` | Cancel recording (Handy) |
 
@@ -213,6 +293,14 @@ space, and the clipboard is unchanged afterwards.
 | `Tab` / `Shift+Tab` | Next / previous field |
 | `Ctrl+K` | AI clean up |
 | `Enter` / `Ctrl+Enter` / `Shift+Enter` / `Esc` | Send / Send and submit / Copy only / Cancel |
+| `Alt+Enter` | Add to board instead of sending |
+
+| On the board | Action |
+|---|---|
+| `Ctrl+V`, drag and drop | Add images |
+| `Ctrl+K` | AI cleanup of the whole board |
+| `Ctrl+Enter` / `Ctrl+Shift+C` / `Ctrl+Alt+C` | Send / Copy as one image / Copy text |
+| Double-click an image | Annotate in the capture editor |
 
 All global hotkeys can be changed in Settings → Shortcuts.
 
@@ -226,6 +314,7 @@ All global hotkeys can be changed in Settings → Shortcuts.
 │     "transcribe", "transcribe_with_post_process", "cancel"   (Handy)                 │
 │     "capture"        ─▶ vibe::capture::CaptureAction                       NEW       │
 │     "macro:<id>"     ─▶ vibe::macros::MacroAction  (prefix dispatch)       NEW       │
+│     "board"          ─▶ vibe::board::OpenBoardAction                       NEW       │
 │                                                                                      │
 │ vibe/                                                                      NEW       │
 │   mod.rs        init, state registration, commands                                   │
@@ -238,12 +327,13 @@ All global hotkeys can be changed in Settings → Shortcuts.
 │   macros.rs     Macro CRUD, binding registration, variable expansion                 │
 │   vocab.rs      starter list, project import scan                                    │
 │   captures_db.rs  captures table + queries (shares Handy's history DB)               │
+│   board.rs      board CRUD, file/clipboard import, thumbnails, inbox poll, send      │
 │                                                                                      │
 │ Touched Handy files (kept small):                                                    │
 │   actions.rs       route final transcript → editor when capture window is open       │
 │   settings.rs      new fields with #[serde(default)]; new built-in prompt            │
 │   shortcut/handler.rs  "macro:" prefix lookup                                        │
-│   managers/history.rs  one migration: captures table                                 │
+│   managers/history.rs  migrations: captures, boards, board_images tables             │
 │   tray.rs          menu items     lib.rs   vibe::init()     tauri.conf.json  brand   │
 └──────────────────────────────────────────────────────────────────────────────────────┘
 ┌──────────────────────────────── Frontend: src ──────────────────────────────────────┐
@@ -254,9 +344,15 @@ All global hotkeys can be changed in Settings → Shortcuts.
 │   Annotations.tsx           SVG shapes + hit testing          shapes.ts (model, undo)│
 │   exportPng.ts              composite to canvas at physical px → PNG bytes           │
 │   useDictation.ts           listens to vibe://dictation + stream events              │
+│ board/                                                                    NEW        │
+│   index.html, main.tsx      third Vite entry                                         │
+│   Board.tsx                 prompt box, sections, toolbar, send bar, board picker    │
+│   Section.tsx  ImageCard.tsx  Inbox.tsx   drag/drop (native HTML5), labels, notes    │
+│   compile.ts                ordered images + compiled text (shared with output.rs)   │
+│   exportSheet.ts            render the board to one PNG sheet                        │
 │ components/settings/capture/   Capture page (send, profiles, folder, band, AI)  NEW  │
 │ components/settings/macros/    list + editor                                    NEW  │
-│ components/settings/history/   + Captures tab                              touched  │
+│ components/settings/history/   + Captures and Boards tabs                  touched  │
 │ components/settings/CustomWords.tsx  + dev vocabulary / import buttons      touched  │
 │ components/onboarding/         + hotkeys + practice step                    touched  │
 │ Sidebar.tsx                    + Capture, Macros                            touched  │
@@ -280,10 +376,16 @@ clipboard plugin are already used directly.
 | `macro_list/create/update/delete()` | macros (also re-register hotkeys) |
 | `captures_list/get/delete/star/resend/copy()` | capture history |
 | `vocab_add_starter()`, `vocab_scan_project(path)` | vocabulary |
+| `board_list/get/create/update/duplicate/delete()` | boards |
+| `board_add_files(boardId, sectionId, paths)`, `board_add_clipboard(...)`, `board_add_capture(...)` | import images (copied in, thumbnails made) |
+| `board_inbox(folder)` | new images in the inbox folder since the board opened |
+| `board_send({boardId, target})` | paste images in order, then the compiled text |
+| `board_pick_target()` | click-to-pick a target window |
 
 ### Events (Rust → frontend)
 `vibe://frame-ready`, `vibe://dictation {text, final}`, `vibe://recording {active}`,
-`vibe://sent {captureId}`, plus Handy's existing stream events for live text.
+`vibe://sent {captureId}`, `board://inbox {files}`, `board://sent {boardId}`, plus
+Handy's existing stream events for live text.
 
 ---
 
@@ -333,7 +435,40 @@ CREATE TABLE captures (
   target_process TEXT,
   saved BOOLEAN NOT NULL DEFAULT 0
 );
+
+CREATE TABLE boards (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  updated_at INTEGER NOT NULL,
+  doc_json TEXT NOT NULL,           -- prompt, sections[], image order, notes, labels
+  saved BOOLEAN NOT NULL DEFAULT 0
+);
+CREATE TABLE board_images (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  board_id INTEGER NOT NULL REFERENCES boards(id) ON DELETE CASCADE,
+  file_name TEXT NOT NULL,          -- <app data>/boards/<board_id>/<file>
+  thumb_name TEXT NOT NULL,         -- 400 px thumbnail for the board view
+  width INTEGER NOT NULL, height INTEGER NOT NULL,
+  source TEXT NOT NULL,             -- capture | file | clipboard | inbox
+  annotations_json TEXT             -- pins/boxes added in the editor
+);
 ```
+
+```ts
+// boards.doc_json
+type BoardDoc = {
+  prompt: string;
+  sections: {
+    id: string; title?: string; labels: "numbers" | "options";
+    layout: "row" | "grid";
+    items: { imageId: number; note: string }[];
+    text: string;
+  }[];
+};
+```
+
+Board settings (added to `CaptureSettings`): `board_inbox_folder: Option<PathBuf>`,
+`board_max_edge_px: u32` (2048), `board_paste_limit: u32` (10).
 
 ---
 
@@ -380,6 +515,20 @@ the editor gets the same cleaned text a normal paste would.
 9. Restore the clipboard after `paste_delay_after_ms`.
 10. Emit `vibe://sent` and show a toast ("Pasted image + 4 notes").
 
+### Board send
+1. `compile.ts` walks the sections in order and assigns labels (Image 1…N,
+   Option A…), producing `[{imageId, label}]` and the compiled text.
+2. `board_send`: resize each image to `board_max_edge_px` if needed (the
+   annotations are burned in), snapshot the clipboard, and restore focus to the
+   target window (same as Send).
+3. For each image: write it to the clipboard → `Ctrl+V` → wait `paste_gap_ms`.
+   Then write the text → `Ctrl+V`. A *File path + text* profile instead pastes
+   one block that lists every file path, then the text.
+4. Restore the clipboard and show a toast ("Pasted 6 images + text").
+5. **Copy as one image:** `exportSheet.ts` draws the board on a canvas (prompt,
+   section titles, images with label badges, notes) at 2× scale, encodes it as
+   PNG, and writes it to the clipboard. No send step.
+
 ### Macro
 `MacroAction::start` → expand variables (read `{clipboard}` before anything
 changes it) → add the insert-before prefix → Handy's `clipboard::paste` path
@@ -388,6 +537,9 @@ changes it) → add the insert-before prefix → Handy's `clipboard::paste` path
 ---
 
 ## 6. Settings and UI
+
+The **Board** is its own window (`Alt+Shift+B`, tray, or the capture editor),
+not a settings page. History gets a **Boards** tab listing saved boards.
 
 Sidebar: **General · Capture *(new)* · Macros *(new)* · History · Models ·
 Post-processing · Advanced · About** (Debug stays hidden behind `Ctrl+Shift+D`).
@@ -415,6 +567,7 @@ Measured against stock Handy on the same machine (recorded during the toolchain 
 | Installer size | Handy + ≤ 3 MB |
 | Idle RAM (no capture window, model unloaded) | Handy + ≤ 5 MB |
 | Capture window JS bundle | ≤ 150 KB gzipped |
+| Board window JS bundle | ≤ 120 KB gzipped (no drag-and-drop or canvas library) |
 | Hotkey → frozen frame visible | ≤ 150 ms (cold), ≤ 60 ms (warm) |
 | Enter → image pasted | ≤ 300 ms (excluding the paste gap) |
 | Capture window after close | destroyed after 60 s (configurable) |
@@ -453,8 +606,10 @@ Before each commit: `bun run lint`, `bun run format:check`, `cargo clippy`,
 - cleanup response validation (wrong note count → per-field fallback)
 - `captures` migration on a copy of an existing Handy database
 - dictation routing: capture window open → event; closed → paste
+- board import: format detection, thumbnail size, copy-in, cascade delete
+- board send order and the file-path profile block
 
-**Frontend:** unit tests for `shapes.ts` (undo/redo, pin renumbering) with Bun's
+**Frontend:** unit tests for `shapes.ts` (undo/redo, pin renumbering) and `compile.ts` (labels, numbering across sections, Options letters) with Bun's
 test runner, like Handy's existing `keyboard.test.ts`. Extend Handy's
 Playwright `app.spec.ts` for the Capture and Macros settings pages.
 
@@ -511,6 +666,8 @@ theme, and an existing Handy install side by side.
 | Hotkey conflicts (`Alt+Shift+S`, `Alt+1…4`) with the user's apps | Handy's recorder flags conflicts. Every hotkey can be changed. |
 | Handy's keyboard hook and the capture window both reacting to `Esc` | Turn off Handy's cancel binding while the capture window is open. |
 | Upstream merges conflict | Small changes to Handy's files (§11). Regular merges. |
+| Pasting many images in a row is slow, or some get dropped while uploading | Images are resized before pasting, the paste gap applies per image, and a warning above the paste limit offers "Copy as one image". |
+| Big boards slow down the board window | Thumbnails (400 px) in the view, originals only at send time. Images load lazily. |
 
 ---
 
@@ -552,17 +709,24 @@ can be built in parallel.
 **Vocabulary** (needs Foundation only)
 - [ ] `vocab.rs`: starter list, first-run seeding, project scan. Custom Words buttons. *(F9 check)*
 
+**Board** (needs Output, and the editor for annotating)
+- [ ] `boards` / `board_images` migrations, `board.rs` CRUD, imports (files, folder, clipboard, capture), thumbnails.
+- [ ] `Board.tsx` + `Section.tsx` + `ImageCard.tsx`: sections, labels, notes, drag and drop, reorder, autosave, dictation routing.
+- [ ] Editor static mode: open any board image in the capture editor and save the annotations back.
+- [ ] `compile.ts` + `board_send` + target picker. `exportSheet.ts` for Copy as one image. *(F11 check)*
+- [ ] Inbox folder strip. `Alt+Enter` add-to-board from the editor. Boards tab in History.
+
 **History and shell** (needs Output)
 - [ ] Captures tab: grid, send again, copy, open in editor, star, delete, retention. *(F10)*
 - [ ] Capture settings page with the paste profiles table.
-- [ ] Tray items, onboarding step, sidebar. *(F11)*
+- [ ] Tray items, onboarding step, sidebar. *(F12)*
 
 **Release** (needs everything above)
 - [ ] All Rust/Bun/Playwright tests pass. The manual matrix (§9) is fully checked.
 - [ ] Budgets (§7) are met, or the gaps are written down.
 - [ ] Windows CI build, own updater key, first tagged release `v0.1.0`.
 
-**Estimate:** about 12–16 working days for one developer, end to end.
+**Estimate:** about 15–20 working days for one developer, end to end (the Board adds 3–4).
 
 ---
 
@@ -572,4 +736,8 @@ can be built in parallel.
 - Selections that span monitors. Scrolling or long-page capture. Video or GIF capture.
 - Macro steps beyond text (key sequences, delays, "start capture").
 - A macro search palette for people with more than ~10 macros.
+- A freeform board (shapes and arrows between images, free positioning). The
+  structured board covers the prompt-building job and stays light.
+- Generating images from inside the app. Generate them in ChatGPT or similar,
+  and they come in through the inbox folder or drag and drop.
 - macOS and Linux packaging. The code is written for them, but they aren't tested or shipped.

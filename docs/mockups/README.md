@@ -13,6 +13,10 @@ The build plan is in [`../PLAN.md`](../PLAN.md).
 ## Output: what lands in the chat
 ![Pasted output](screens/04-pasted-output.png)
 
+## Flow D: Board (build a prompt from many images)
+![Board](screens/10-board.png)
+![Board output](screens/11-board-output.png)
+
 ## Flow C: prompt macros
 ![Macros settings](screens/05-macros-settings.png)
 ![Macro in use](screens/06-macro-in-use.png)

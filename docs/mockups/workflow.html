@@ -118,6 +118,23 @@
     box-shadow: 0 12px 30px #000a; font-size: 12.5px; width: 180px; }
   .menu div { padding: 6px 10px; border-radius: 6px; }
   .menu .cur { background: var(--accent); color: #fff; }
+
+  .btn { display: inline-flex; gap: 6px; align-items: center; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 8px; padding: 6px 10px; font-size: 12.5px; color: var(--text); white-space: nowrap; }
+  .btn small { color: var(--muted); font-size: 10.5px; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .btn.primary small { color: #ede9fe; }
+  .sect { position: absolute; left: 20px; right: 20px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+  .sect-h { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12.5px; }
+  .sect-h b { font-size: 13px; }
+  .sect-h .grip { color: var(--muted); letter-spacing: -2px; }
+  .lbl { display: inline-block; background: #111827; color: #fff; font: 700 11px/1 "Segoe UI"; padding: 4px 7px; border-radius: 6px; }
+  .tile { position: relative; width: 165px; height: 104px; border-radius: 8px; overflow: hidden; background: #fff; border: 1px solid #ffffff22; }
+  .tile i { position: absolute; display: block; border-radius: 3px; }
+  .ocard { width: 165px; }
+  .ocard .tile .lbl { position: absolute; left: 6px; top: 6px; }
+  .ocard p { margin: 6px 2px 0; font-size: 11.5px; color: var(--muted); line-height: 1.35; }
+  .ocard.pref .tile { outline: 2px solid var(--accent); outline-offset: 2px; }
   .note { display: flex; gap: 10px; align-items: flex-start; padding: 6px 12px; font-size: 13px; }
   .note.active { background: #ff3b7f14; }
   .pin { position: absolute; width: 24px; height: 24px; border-radius: 50%; background: var(--mark); color: #fff;
@@ -209,6 +226,7 @@
     <div><kbd>Alt</kbd> <kbd>Shift</kbd> <kbd>S</kbd> capture</div>
     <div><kbd>Alt</kbd> <kbd>1</kbd>…<kbd>9</kbd> prompt macros</div>
     <div><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Space</kbd> dictate + AI cleanup</div>
+    <div><kbd>Alt</kbd> <kbd>Shift</kbd> <kbd>B</kbd> board · <kbd>Alt</kbd><kbd>Enter</kbd> in editor = add to board</div>
     <div>In editor: <kbd>B</kbd> box · <kbd>A</kbd> arrow · <kbd>P</kbd> pin · <kbd>Ctrl</kbd><kbd>K</kbd> ✨ clean up · <kbd>Enter</kbd> send · <kbd>Ctrl</kbd><kbd>Enter</kbd> send + submit · <kbd>Esc</kbd> cancel</div>
   </div>
 </header>
@@ -311,6 +329,87 @@ Make the hero section mobile friendly and match our design system.
         </div>
       </div>
       <div class="toast"><span class="ok">✓</span> Pasted image + 5 lines · clipboard restored</div>
+    </div>
+  </section>
+
+
+  <!-- BOARD -->
+  <section>
+    <div class="flow">Flow D · Board</div>
+    <h2>Build a bigger prompt on a board: screenshots, generated images and text, side by side</h2>
+    <p class="step">Open it with <kbd>Alt</kbd> <kbd>Shift</kbd> <kbd>B</kbd>. In the capture editor, <kbd>Alt</kbd><kbd>Enter</kbd> sends a capture here. Drag in files (like five options ChatGPT made you), or <kbd>Ctrl</kbd><kbd>V</kbd> an image. Each section lines its images up with their notes, and every text box takes dictation.</p>
+    <div class="screen" style="height:740px">
+      <div class="win">
+        <div class="win-title"><b>MaximusVibius</b> — Board <span style="margin-left:auto" class="select">Onboarding hero redesign ▾</span></div>
+        <div style="position:absolute;left:20px;right:20px;top:48px;display:flex;gap:8px">
+          <span class="btn">＋ Capture <small>Alt+Shift+S</small></span><span class="btn">＋ Add files</span><span class="btn">⎘ Paste image <small>Ctrl+V</small></span><span class="btn">▦ New section</span>
+          <span class="btn" style="margin-left:auto">✨ Clean up <small>Ctrl+K</small></span>
+        </div>
+        <div class="sect" style="top:92px;height:66px">
+          <div class="cap-row"><div class="mic">🎙</div><div class="cap-text"><span style="color:var(--muted);font-size:11px;display:block">PROMPT</span>Redesign the landing hero. Use the current page for structure and pick the best direction from the options. Implement it with our Next.js + Tailwind setup.</div></div>
+        </div>
+        <div class="sect" style="top:170px;height:176px">
+          <div class="sect-h"><span class="grip">⋮⋮</span><b>Current</b><span class="lbl">Image 1</span><span style="margin-left:auto;color:var(--muted)">from capture · 2 pins</span></div>
+          <div style="position:absolute;left:12px;top:44px;width:300px;height:120px;border-radius:8px;overflow:hidden" id="bcur"></div>
+          <div style="position:absolute;left:330px;right:12px;top:44px">
+            <div class="note" style="padding:5px 0"><span class="pin">1</span>Headline is too big on mobile.</div>
+            <div class="note" style="padding:5px 0"><span class="pin">2</span>Input and button heights don't match.</div>
+            <div class="inp" style="margin-top:8px;color:var(--muted);font-size:12.5px">Section text… <kbd>Ctrl</kbd><kbd>Space</kbd> to dictate</div>
+          </div>
+        </div>
+        <div class="sect" style="top:358px;height:250px">
+          <div class="sect-h"><span class="grip">⋮⋮</span><b>Options</b><span class="lbl">Images 2–6</span><span class="select" style="padding:3px 8px;font-size:12px">Labels: A, B, C… ▾</span>
+            <span style="margin-left:auto;color:var(--muted)">Drop images here or <kbd>Ctrl</kbd><kbd>V</kbd></span></div>
+          <div style="position:absolute;left:12px;right:12px;top:46px;display:flex;gap:12px" id="bopts"></div>
+          <div class="inp" style="position:absolute;left:12px;right:12px;bottom:12px;font-size:12.5px">Prefer B, with the colors from C.<span class="caret"></span></div>
+        </div>
+        <div class="sect" style="top:620px;height:56px;border-style:dashed;background:transparent">
+          <div style="display:flex;align-items:center;gap:12px;padding:8px 12px">
+            <span style="font-size:12.5px"><b>Inbox</b> <span style="color:var(--muted)">· Downloads · 2 new</span></span>
+            <div class="tile" style="width:58px;height:38px" id="inb1"></div><div class="tile" style="width:58px;height:38px" id="inb2"></div>
+            <span class="btn" style="padding:4px 9px">＋ Add all</span>
+            <span style="margin-left:auto;color:var(--muted);font-size:11.5px">Watching only while the board is open</span>
+          </div>
+        </div>
+        <div style="position:absolute;left:20px;right:20px;top:690px;display:flex;gap:8px;align-items:center">
+          <span style="color:var(--muted);font-size:12px">6 images · autosaved</span>
+          <span class="btn" style="margin-left:auto">Copy text <small>Ctrl+Alt+C</small></span>
+          <span class="btn">Copy as one image <small>Ctrl+Shift+C</small></span>
+          <span class="btn primary">Send to Claude ▾ <small>Ctrl+Enter</small></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BOARD OUT -->
+  <section>
+    <div class="flow">Flow D · output</div>
+    <h2>Send pastes every image in order, then one prompt whose labels match</h2>
+    <p class="step">Like quick Send, it pastes into the chat you came from (or a window you pick) and doesn't press Enter unless you ask. For apps that take only one image, <b>Copy as one image</b> gives a single labelled sheet.</p>
+    <div class="screen" style="height:560px">
+      <div class="chat">
+        <div class="chat-side"><div class="cur">Hero redesign</div><div>Acme landing page fixes</div></div>
+        <div class="chat-main">
+          <div class="composer" style="top:30px;bottom:auto">
+            <div style="display:flex;gap:8px;margin-bottom:10px" id="bthumbs"></div>
+            <div class="txt" style="font-size:13px">Redesign the landing hero. Use the current page for structure and pick the best direction from the options. Implement it with our Next.js + Tailwind setup.
+
+## Current (Image 1)
+1. Headline is too big on mobile.
+2. Input and button heights don't match.
+
+## Options (Images 2–6)
+Image 2 (Option A): centered, keeps the current layout.
+Image 3 (Option B): split layout, product shot on the right.
+Image 4 (Option C): dark theme.
+Image 5 (Option D): full-width image on top.
+Image 6 (Option E): minimal, no illustration.
+Prefer B, with the colors from C.</div>
+            <div class="row"><span>＋ Attach · Model: Claude</span><span class="go">↑</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="toast" style="top:auto;bottom:22px"><span class="ok">✓</span> Pasted 6 images + text · clipboard restored</div>
     </div>
   </section>
 
@@ -545,6 +644,36 @@ Make the hero section mobile friendly and match our design system.
   document.getElementById("hgrid").innerHTML = items.map(([x, y, w, h, cap, meta, star], i) => `
     <div class="cardc${i === 1 ? " cur" : ""}"><div style="height:96px;overflow:hidden;background:#fff;display:flex;align-items:center">${shot(x, y, w, h, 222)}</div>
       <div class="meta"><div style="display:flex;justify-content:space-between"><b style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${cap}</b><span style="color:#facc15">${star}</span></div><p>${meta}</p></div></div>`).join("");
+
+  // Board: generated alternative hero designs (A–E).
+  const variant = (k) => ({
+    A: `<i style="left:30%;top:22%;width:40%;height:9%;background:#111827"></i><i style="left:36%;top:38%;width:28%;height:5%;background:#cbd5e1"></i>
+        <i style="left:34%;top:56%;width:14%;height:12%;background:#2563eb"></i><i style="left:51%;top:56%;width:14%;height:12%;border:1px solid #cbd5e1"></i>`,
+    B: `<i style="left:8%;top:24%;width:38%;height:9%;background:#111827"></i><i style="left:8%;top:40%;width:32%;height:5%;background:#cbd5e1"></i>
+        <i style="left:8%;top:58%;width:18%;height:12%;background:#2563eb"></i><i style="left:54%;top:14%;width:38%;height:72%;background:linear-gradient(135deg,#bfdbfe,#c4b5fd)"></i>`,
+    C: `<i style="left:0;top:0;width:100%;height:100%;background:#0f172a;border-radius:0"></i><i style="left:10%;top:26%;width:46%;height:9%;background:#e2e8f0"></i>
+        <i style="left:10%;top:42%;width:36%;height:5%;background:#475569"></i><i style="left:10%;top:60%;width:18%;height:12%;background:#a78bfa"></i>
+        <i style="left:62%;top:20%;width:28%;height:60%;background:#1e293b;border:1px solid #334155"></i>`,
+    D: `<i style="left:0;top:0;width:100%;height:46%;background:linear-gradient(135deg,#fde68a,#fca5a5);border-radius:0"></i>
+        <i style="left:10%;top:56%;width:52%;height:9%;background:#111827"></i><i style="left:10%;top:72%;width:40%;height:5%;background:#cbd5e1"></i><i style="left:70%;top:58%;width:20%;height:13%;background:#2563eb"></i>`,
+    E: `<i style="left:10%;top:30%;width:62%;height:12%;background:#111827"></i><i style="left:10%;top:50%;width:30%;height:4%;background:#e5e7eb"></i>
+        <i style="left:10%;top:64%;width:12%;height:9%;background:#111827"></i>`,
+  })[k];
+  const opts = [["A", "Centered, keeps the current layout."], ["B", "Split layout, product shot on the right."], ["C", "Dark theme."],
+    ["D", "Full-width image on top."], ["E", "Minimal, no illustration."]];
+  document.getElementById("bopts").innerHTML = opts.map(([k, note], i) => `
+    <div class="ocard${k === "B" ? " pref" : ""}"><div class="tile">${variant(k)}<span class="lbl">${i + 2} · ${k}</span></div><p>${note}</p></div>`).join("");
+  document.getElementById("inb1").innerHTML = variant("B");
+  document.getElementById("inb2").innerHTML = variant("C");
+  // Current screenshot on the board, with pins.
+  { const c = { x: 56, y: 96, w: 864, h: 300 }, k = 300 / c.w;
+    document.getElementById("bcur").innerHTML = `<div style="width:${c.w}px;height:${c.h}px;transform:scale(${k});transform-origin:0 0;position:relative">
+      <div class="crop" style="width:${c.w}px;height:${c.h}px"><div style="position:absolute;left:${-c.x}px;top:${-c.y}px;width:960px;height:600px">${site()}</div></div>
+      <div class="pin" style="left:40px;top:40px;transform:scale(2.4)">1</div><div class="pin" style="left:478px;top:180px;transform:scale(2.4)">2</div></div>`; }
+  // Thumbnails attached in the chat.
+  document.getElementById("bthumbs").innerHTML =
+    `<div class="tile" style="width:96px;height:60px">${document.getElementById("bcur").innerHTML.replace("scale(" + (300 / 864) + ")", "scale(" + (96 / 864) + ")")}</div>` +
+    ["A", "B", "C", "D", "E"].map(k => `<div class="tile" style="width:96px;height:60px">${variant(k)}</div>`).join("");
 </script>
 </body>
 </html>
