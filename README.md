@@ -1,3 +1,15 @@
+# MaximusVibius
+
+Voice-first capture for AI vibe coding: snap part of the screen, dictate what to change, and paste the
+image and instructions into any AI chat. Fire saved prompts with one key.
+
+- **Plan:** [docs/PLAN.md](docs/PLAN.md)
+- **Workflow mockups:** [docs/mockups/workflow.html](docs/mockups/workflow.html) (open in a browser)
+
+MaximusVibius is a fork of [Handy](https://github.com/cjpais/Handy) by CJ Pais (MIT). Handy's original README follows.
+
+---
+
 # Handy
 
 [![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?style=for-the-badge&logo=discord&logoColor=white)](https://discord.com/invite/WVBeWsNXK4)

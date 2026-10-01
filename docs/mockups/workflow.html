@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>MaximusVibius — Workflow Mockups</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --panel2: #1e222b; --line: #2a2f3a;
+    --text: #e8eaf0; --muted: #9aa1b2; --accent: #8b5cf6; --accent2: #a78bfa;
+    --mark: #ff3b7f; --ok: #22c55e;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.45 "Segoe UI", system-ui, sans-serif; }
+  header { padding: 40px 48px 8px; max-width: 1100px; margin: auto; }
+  h1 { margin: 0 0 4px; font-size: 28px; letter-spacing: -.02em; }
+  h1 span { color: var(--accent2); }
+  .lede { color: var(--muted); margin: 0 0 20px; max-width: 760px; }
+  .keys { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; }
+  .keys div { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 8px 12px; color: var(--muted); }
+  kbd { font: 600 12px/1 "Segoe UI", system-ui; color: var(--text); background: var(--panel2);
+    border: 1px solid #3a4150; border-bottom-width: 2px; border-radius: 6px; padding: 3px 6px; }
+  main { max-width: 1100px; margin: auto; padding: 0 48px 80px; }
+  section { margin-top: 44px; }
+  .flow { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--accent2); }
+  h2 { margin: 2px 0 6px; font-size: 20px; }
+  .step { color: var(--muted); margin: 0 0 14px; }
+  .screen { position: relative; width: 960px; height: 600px; overflow: hidden; border-radius: 12px;
+    border: 1px solid var(--line); background: #dfe3ea; box-shadow: 0 20px 60px #0008; }
+
+  /* ---------- fake browser + website ---------- */
+  .chrome { position: absolute; inset: 0 0 auto 0; height: 36px; background: #f3f4f6;
+    border-bottom: 1px solid #d6d9df; display: flex; align-items: center; gap: 8px; padding: 0 12px; }
+  .chrome i { width: 11px; height: 11px; border-radius: 50%; background: #d1d5db; display: block; }
+  .chrome .url { margin-left: 16px; flex: 1; max-width: 420px; height: 22px; border-radius: 11px;
+    background: #fff; border: 1px solid #e5e7eb; color: #6b7280; font-size: 12px; padding: 2px 12px; }
+  .site { position: absolute; inset: 36px 0 0 0; background: #fff; color: #111827; }
+  .site * { position: absolute; margin: 0; }
+  .s-logo { left: 40px; top: 16px; font-weight: 800; font-size: 18px; }
+  .s-logo b { color: #2563eb; }
+  .s-nav { right: 40px; top: 18px; display: flex; gap: 24px; color: #4b5563; position: absolute; }
+  .s-nav span { position: static; }
+  .s-h1 { left: 80px; top: 88px; width: 480px; font-size: 40px; line-height: 1.1; font-weight: 800;
+    letter-spacing: -.02em; }
+  .s-sub { left: 80px; top: 186px; width: 470px; color: #6b7280; font-size: 16px; }
+  .s-input { left: 80px; top: 256px; width: 300px; height: 44px; border: 1px solid #d1d5db;
+    border-radius: 8px; color: #9ca3af; padding: 11px 14px; }
+  .s-btn { left: 392px; top: 253px; width: 140px; height: 50px; border-radius: 8px; background: #374151;
+    color: #fff; font-weight: 600; text-align: center; line-height: 50px; }
+  .s-note { left: 80px; top: 314px; font-size: 12px; color: #9ca3af; }
+  .s-card { left: 600px; top: 76px; width: 300px; height: 250px; border-radius: 16px;
+    background: linear-gradient(135deg, #dbeafe, #ede9fe); }
+  .s-card .bar { left: 24px; height: 12px; border-radius: 6px; background: #c7d2fe; }
+  .s-logos { left: 80px; top: 380px; display: flex; gap: 40px; color: #cbd5e1; font-weight: 800;
+    font-size: 20px; position: absolute; }
+  .s-logos span { position: static; }
+
+  /* ---------- capture overlay ---------- */
+  .sel { position: absolute; outline: 2px solid var(--accent); box-shadow: 0 0 0 9999px #0b0d12a6;
+    border-radius: 2px; }
+  .sel.drawing { outline-style: dashed; }
+  .size { position: absolute; background: var(--accent); color: #fff; font: 600 11px/1 "Segoe UI";
+    padding: 4px 6px; border-radius: 4px; }
+  .cross { position: absolute; width: 22px; height: 22px; }
+  .cross::before, .cross::after { content: ""; position: absolute; background: #fff; }
+  .cross::before { left: 10px; top: 0; width: 2px; height: 22px; }
+  .cross::after { top: 10px; left: 0; height: 2px; width: 22px; }
+  .hint { position: absolute; left: 50%; transform: translateX(-50%); bottom: 22px; background: #111827e6;
+    color: #e5e7eb; padding: 8px 14px; border-radius: 999px; font-size: 12px; border: 1px solid #ffffff22;
+    white-space: nowrap; }
+
+  .toolbar { position: absolute; display: flex; gap: 2px; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; padding: 4px; box-shadow: 0 8px 24px #0007; }
+  .tool { width: 32px; height: 30px; border-radius: 7px; display: grid; place-items: center; color: var(--muted);
+    font-size: 15px; position: relative; }
+  .tool.on { background: var(--accent); color: #fff; }
+  .tool small { position: absolute; right: 3px; bottom: 1px; font-size: 8px; opacity: .7; }
+  .sep { width: 1px; background: var(--line); margin: 4px 3px; }
+  .dot { width: 14px; height: 14px; border-radius: 50%; margin: 8px 5px; }
+
+  .caption { position: absolute; background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    box-shadow: 0 12px 32px #0008; color: var(--text); overflow: hidden; }
+  .cap-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+  .mic { width: 30px; height: 30px; flex: none; border-radius: 50%; display: grid; place-items: center;
+    background: var(--panel2); color: var(--muted); font-size: 14px; }
+  .mic.live { background: var(--mark); color: #fff; box-shadow: 0 0 0 5px #ff3b7f33, 0 0 0 10px #ff3b7f18; }
+  .cap-text { flex: 1; font-size: 14px; }
+  .cap-text .pending { color: var(--muted); }
+  .caret { display: inline-block; width: 2px; height: 16px; background: var(--accent2); vertical-align: -3px;
+    margin-left: 1px; }
+  .wave { display: flex; gap: 2px; align-items: center; height: 20px; }
+  .wave i { width: 3px; border-radius: 2px; background: var(--mark); display: block; }
+  .cap-foot { display: flex; justify-content: space-between; gap: 12px; padding: 7px 12px; border-top: 1px solid var(--line);
+    color: var(--muted); font-size: 11.5px; background: #13161c; }
+  .cap-foot kbd { font-size: 10.5px; padding: 2px 5px; }
+  .send { background: var(--accent); color: #fff; border-radius: 8px; padding: 6px 12px; font-weight: 600; font-size: 12px; }
+  .note { display: flex; gap: 10px; align-items: flex-start; padding: 6px 12px; font-size: 13px; }
+  .note.active { background: #ff3b7f14; }
+  .pin { position: absolute; width: 24px; height: 24px; border-radius: 50%; background: var(--mark); color: #fff;
+    font: 700 12px/24px "Segoe UI"; text-align: center; box-shadow: 0 0 0 2px #fff, 0 4px 10px #0006; }
+  .note .pin { position: static; flex: none; width: 20px; height: 20px; line-height: 20px; font-size: 11px;
+    box-shadow: none; }
+  .box { position: absolute; border: 2.5px solid var(--mark); border-radius: 6px; }
+  .tag { position: absolute; font: 600 11px/1 "Segoe UI"; color: #fff; background: #111827; padding: 4px 7px;
+    border-radius: 999px; }
+
+  /* ---------- chat app ---------- */
+  .chat { position: absolute; inset: 0; background: #1b1b1f; color: #ececf1; }
+  .chat-side { position: absolute; left: 0; top: 0; bottom: 0; width: 220px; background: #141417;
+    border-right: 1px solid #2a2a30; padding: 18px 14px; color: #9b9ba5; font-size: 13px; }
+  .chat-side div { padding: 7px 10px; border-radius: 8px; }
+  .chat-side .cur { background: #26262c; color: #ececf1; }
+  .chat-main { position: absolute; left: 220px; right: 0; top: 0; bottom: 0; }
+  .bubble { position: absolute; left: 60px; right: 60px; color: #c9c9d1; font-size: 14px; }
+  .composer { position: absolute; left: 60px; right: 60px; bottom: 28px; background: #26262c; border: 1px solid #3a3a42;
+    border-radius: 18px; padding: 14px 16px 12px; }
+  .composer .txt { font-size: 14px; white-space: pre-wrap; color: #ececf1; }
+  .composer .row { display: flex; justify-content: space-between; margin-top: 10px; color: #8b8b96; font-size: 12px; }
+  .composer .go { width: 30px; height: 30px; border-radius: 50%; background: #ececf1; color: #1b1b1f;
+    display: grid; place-items: center; font-weight: 800; }
+  .thumb { position: relative; display: inline-block; border-radius: 10px; overflow: hidden; border: 1px solid #3a3a42;
+    margin-bottom: 10px; vertical-align: top; }
+  .crop { position: relative; overflow: hidden; background: #fff; }
+  .band { background: #111827; color: #f3f4f6; font-size: 12px; padding: 8px 12px; line-height: 1.5; }
+  .band b { color: #ff7aa8; }
+  .ins { background: #8b5cf633; border-radius: 4px; box-shadow: 0 0 0 2px #8b5cf633; }
+  .toast { position: absolute; right: 22px; top: 22px; background: var(--panel); border: 1px solid var(--line);
+    color: var(--text); border-radius: 10px; padding: 10px 14px; font-size: 12.5px; box-shadow: 0 10px 30px #0008;
+    display: flex; gap: 10px; align-items: center; }
+  .toast .ok { color: var(--ok); font-weight: 800; }
+  .bigkey { position: absolute; display: flex; gap: 8px; align-items: center; background: #000c; padding: 12px 16px;
+    border-radius: 14px; border: 1px solid #ffffff22; }
+  .bigkey kbd { font-size: 18px; padding: 6px 10px; }
+
+  /* ---------- settings window ---------- */
+  .win { position: absolute; inset: 0; background: var(--bg); color: var(--text); }
+  .win-title { height: 36px; background: #0b0d11; border-bottom: 1px solid var(--line); display: flex; align-items: center;
+    padding: 0 14px; color: var(--muted); font-size: 12px; gap: 8px; }
+  .win-title b { color: var(--text); }
+  .side { position: absolute; top: 36px; bottom: 0; left: 0; width: 200px; border-right: 1px solid var(--line); padding: 14px 10px; }
+  .side div { padding: 8px 12px; border-radius: 8px; color: var(--muted); display: flex; justify-content: space-between; }
+  .side .cur { background: var(--panel2); color: var(--text); }
+  .new { font-size: 10px; color: var(--accent2); border: 1px solid #8b5cf666; border-radius: 999px; padding: 0 6px; }
+  .content { position: absolute; top: 36px; left: 200px; right: 0; bottom: 0; padding: 22px 28px; }
+  .content h3 { margin: 0 0 2px; font-size: 18px; }
+  .content .sub { color: var(--muted); margin: 0 0 16px; }
+  .mlist { position: absolute; left: 28px; top: 96px; width: 300px; display: flex; flex-direction: column; gap: 8px; }
+  .mitem { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .mitem.cur { border-color: var(--accent); background: #8b5cf614; }
+  .mitem .top { display: flex; justify-content: space-between; font-weight: 600; }
+  .mitem p { margin: 4px 0 0; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .madd { border: 1px dashed var(--line); border-radius: 10px; padding: 10px; text-align: center; color: var(--muted); }
+  .medit { position: absolute; left: 350px; right: 28px; top: 96px; bottom: 22px; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 16px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+  .inp { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  .inp.area { height: 150px; line-height: 1.5; }
+  .hk { display: inline-flex; gap: 4px; align-items: center; background: var(--bg); border: 1px solid var(--accent);
+    border-radius: 8px; padding: 6px 10px; }
+  .toggle { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--line); }
+  .sw { width: 34px; height: 20px; border-radius: 10px; background: var(--accent); position: relative; }
+  .sw::after { content: ""; position: absolute; right: 3px; top: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; }
+  .sw.off { background: #3a4150; }
+  .sw.off::after { right: auto; left: 3px; }
+  .tray { position: absolute; left: 10px; bottom: 12px; width: 180px; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; padding: 6px; box-shadow: 0 12px 30px #000a; font-size: 13px; }
+  .tray div { padding: 7px 10px; border-radius: 6px; display: flex; justify-content: space-between; color: var(--text); }
+  .tray div span { color: var(--muted); font-size: 11px; }
+  .tray hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+  .tray .cur { background: var(--panel2); }
+  .callout { position: absolute; color: #fff; background: var(--accent); font-size: 12px; font-weight: 600;
+    padding: 5px 10px; border-radius: 8px; box-shadow: 0 6px 18px #0006; }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  footer { color: var(--muted); max-width: 1100px; margin: auto; padding: 0 48px 60px; font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Maximus<span>Vibius</span> — workflow mockups</h1>
+  <p class="lede">Snap part of the screen, say what's wrong with it, and paste the image and your instructions into any AI chat.
+    Fire saved prompts with one key. Built on Handy (offline voice to text, Canary/Parakeet models). Lightweight: one extra window, created only when you capture.</p>
+  <div class="keys">
+    <div><kbd>Ctrl</kbd> <kbd>Space</kbd> hold to dictate (anywhere, incl. captions)</div>
+    <div><kbd>Alt</kbd> <kbd>Shift</kbd> <kbd>S</kbd> capture</div>
+    <div><kbd>Alt</kbd> <kbd>1</kbd>…<kbd>9</kbd> prompt macros</div>
+    <div>In editor: <kbd>B</kbd> box · <kbd>A</kbd> arrow · <kbd>P</kbd> pin · <kbd>Enter</kbd> send · <kbd>Esc</kbd> cancel</div>
+  </div>
+</header>
+
+<main>
+  <!-- A1 -->
+  <section>
+    <div class="flow">Flow A · Snap one element · step 1</div>
+    <h2>Press <kbd>Alt</kbd> <kbd>Shift</kbd> <kbd>S</kbd> and drag over the element</h2>
+    <p class="step">The screen freezes as it was when you pressed the key, so open menus and hover states are kept. Everything outside the selection is dimmed.</p>
+    <div class="screen" id="a1">
+      <div class="sel drawing" style="left:68px;top:280px;width:482px;height:100px"></div>
+      <div class="size" style="left:68px;top:258px">482 × 100</div>
+      <div class="cross" style="left:539px;top:369px"></div>
+      <div class="hint">Drag to select · <b>Esc</b> to cancel · <b>Space</b> to grab the whole window</div>
+    </div>
+  </section>
+
+  <!-- A2 -->
+  <section>
+    <div class="flow">Flow A · step 2</div>
+    <h2>Hold <kbd>Ctrl</kbd> <kbd>Space</kbd> and say what you want</h2>
+    <p class="step">The editor opens in place. Your words stream into the caption bar. You can also type or fix text by hand. Press <kbd>Enter</kbd> to send.</p>
+    <div class="screen" id="a2">
+      <div class="sel" style="left:68px;top:280px;width:482px;height:100px"></div>
+      <div class="toolbar" style="left:68px;top:234px">
+        <div class="tool on">↖</div><div class="tool">▢<small>B</small></div><div class="tool">↗<small>A</small></div><div class="tool">①<small>P</small></div>
+        <div class="sep"></div><div class="tool">↶</div>
+        <div class="sep"></div><div class="dot" style="background:#ff3b7f"></div><div class="dot" style="background:#facc15"></div><div class="dot" style="background:#22c55e"></div>
+      </div>
+      <div class="caption" style="left:68px;top:392px;width:560px">
+        <div class="cap-row">
+          <div class="mic live">🎙</div>
+          <div class="cap-text">Stack the sign-up row on mobile and make the button full width
+            <span class="pending">and use the primary blue</span><span class="caret"></span></div>
+          <div class="wave" id="wave"></div>
+        </div>
+        <div class="cap-foot">
+          <span>Listening… release <kbd>Ctrl</kbd><kbd>Space</kbd> to stop</span>
+          <span><kbd>Enter</kbd> send · <kbd>Shift</kbd><kbd>Enter</kbd> copy · <kbd>Esc</kbd> cancel</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- B1 -->
+  <section>
+    <div class="flow">Flow B · Annotate many elements</div>
+    <h2>Same capture. Press <kbd>P</kbd>, click each element, and speak a note for each</h2>
+    <p class="step">Each click drops a numbered pin and focuses its note. Boxes and arrows are optional. The top caption is the overall request.</p>
+    <div class="screen" id="b1" style="height:640px">
+      <div class="sel" style="left:56px;top:96px;width:864px;height:300px"></div>
+      <div class="toolbar" style="left:56px;top:50px">
+        <div class="tool">↖</div><div class="tool">▢<small>B</small></div><div class="tool">↗<small>A</small></div><div class="tool on">①<small>P</small></div>
+        <div class="sep"></div><div class="tool">↶</div>
+        <div class="sep"></div><div class="dot" style="background:#ff3b7f"></div><div class="dot" style="background:#facc15"></div><div class="dot" style="background:#22c55e"></div>
+      </div>
+      <div class="box" style="left:72px;top:282px;width:470px;height:62px"></div>
+      <div class="pin" style="left:530px;top:276px">1</div>
+      <div class="pin" style="left:68px;top:110px">2</div>
+      <div class="pin" style="left:888px;top:100px">3</div>
+      <div class="pin" style="left:352px;top:348px">4</div>
+      <div class="caption" style="left:56px;top:408px;width:864px">
+        <div class="cap-row" style="border-bottom:1px solid var(--line)">
+          <div class="mic">🎙</div>
+          <div class="cap-text">Make the hero section mobile friendly and match our design system.</div>
+        </div>
+        <div class="note"><span class="pin">1</span>Input and button heights don't match. Both should be 44px, aligned to the top.</div>
+        <div class="note"><span class="pin">2</span>Headline is too big on small screens. Clamp it between 28 and 40px.</div>
+        <div class="note"><span class="pin">3</span>Hide this illustration below 768px.</div>
+        <div class="note active"><span class="pin">4</span><span>Make this note smaller and <span style="color:var(--muted)">left aligned with the input</span><span class="caret"></span></span>
+          <span style="margin-left:auto" class="wave" id="wave2"></span></div>
+        <div class="cap-foot"><span>4 pins · <kbd>Del</kbd> removes the selected pin · pins renumber automatically</span>
+          <span><kbd>Enter</kbd> send · <kbd>Shift</kbd><kbd>Enter</kbd> copy · <kbd>Esc</kbd> cancel</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OUT -->
+  <section>
+    <div class="flow">Output</div>
+    <h2>Press <kbd>Enter</kbd>: the image, then the text, are pasted into the chat you came from</h2>
+    <p class="step">The caption is also printed on the image, so it makes sense on its own. The text copy is what the AI reads most reliably. Your old clipboard is put back afterwards.</p>
+    <div class="screen">
+      <div class="chat">
+        <div class="chat-side"><div class="cur">Acme landing page fixes</div><div>Auth refactor</div><div>Pricing table</div></div>
+        <div class="chat-main">
+          <div class="bubble" style="top:40px">Here's the current landing page. Let me know what to change.</div>
+          <div class="composer">
+            <div id="thumbs"></div>
+            <div class="txt">[screenshot above]
+Make the hero section mobile friendly and match our design system.
+1. Input and button heights don't match. Both should be 44px, aligned to the top.
+2. Headline is too big on small screens. Clamp it between 28 and 40px.
+3. Hide this illustration below 768px.
+4. Make this note smaller and left aligned with the input.</div>
+            <div class="row"><span>＋ Attach · Model: Claude</span><span class="go">↑</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="toast"><span class="ok">✓</span> Pasted image + 5 lines · clipboard restored</div>
+    </div>
+  </section>
+
+  <!-- C1 -->
+  <section>
+    <div class="flow">Flow C · Prompt macros · setup</div>
+    <h2>Save prompts you use all the time and give each one a key</h2>
+    <p class="step">Settings → Macros. Hotkeys use Handy's existing shortcut recorder, so conflicts are caught. The tray menu has quick entry points.</p>
+    <div class="screen">
+      <div class="win">
+        <div class="win-title"><b>MaximusVibius</b> — Settings</div>
+        <div class="side">
+          <div>General</div><div>Models</div><div>Shortcuts</div>
+          <div>Capture <span class="new">new</span></div>
+          <div class="cur">Macros <span class="new">new</span></div>
+          <div>History</div><div>About</div>
+        </div>
+        <div class="content">
+          <h3>Prompt macros</h3>
+          <p class="sub">Press a key anywhere to insert the prompt at your cursor.</p>
+          <div class="mlist">
+            <div class="mitem"><div class="top">Plan first <span><kbd>Alt</kbd> <kbd>1</kbd></span></div><p>Before writing code, list the files you'll change and why…</p></div>
+            <div class="mitem cur"><div class="top">Match design system <span><kbd>Alt</kbd> <kbd>2</kbd></span></div><p>Use our existing components and Tailwind tokens…</p></div>
+            <div class="mitem"><div class="top">Don't touch tests <span><kbd>Alt</kbd> <kbd>3</kbd></span></div><p>Do not modify or delete existing tests…</p></div>
+            <div class="mitem"><div class="top">Small diff <span><kbd>Alt</kbd> <kbd>4</kbd></span></div><p>Make the smallest change that fixes it. No refactors…</p></div>
+            <div class="madd">＋ New macro</div>
+          </div>
+          <div class="medit">
+            <div class="field"><label>Name</label><div class="inp">Match design system</div></div>
+            <div class="field"><label>Hotkey</label><span class="hk"><kbd>Alt</kbd> <kbd>2</kbd></span>
+              <span style="color:var(--muted);font-size:12px;margin-left:8px">click, then press keys</span></div>
+            <div class="field"><label>Prompt (dictate with <kbd>Ctrl</kbd><kbd>Space</kbd>, or type)</label>
+              <div class="inp area">Use our existing components and Tailwind tokens. Don't add new colors, fonts or spacing values. If a component is missing, tell me first instead of creating one.</div></div>
+            <div class="toggle"><span>Add a space or new line before the prompt if needed</span><span class="sw"></span></div>
+            <div class="toggle"><span>Press Enter after inserting</span><span class="sw off"></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="tray"><div style="color:var(--muted);font-size:11px;padding:2px 10px">Tray menu</div>
+        <div class="cur">New capture <span>Alt+Shift+S</span></div>
+        <div>Macros… <span></span></div>
+        <hr />
+        <div>Settings <span></span></div>
+        <div>Quit <span></span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- C2 -->
+  <section>
+    <div class="flow">Flow C · use</div>
+    <h2>Halfway through typing, press <kbd>Alt</kbd> <kbd>2</kbd></h2>
+    <p class="step">The prompt is added at your cursor, so what you already typed stays. Works in any app: a chat, VS Code, a terminal.</p>
+    <div class="screen" style="height:360px">
+      <div class="chat">
+        <div class="chat-side"><div class="cur">Acme landing page fixes</div><div>Auth refactor</div></div>
+        <div class="chat-main">
+          <div class="composer" style="bottom:auto;top:36px">
+            <div style="color:#8b8b96;font-size:11px;margin-bottom:6px">BEFORE</div>
+            <div class="txt">Add a pricing toggle for monthly / yearly to the pricing page.<span class="caret"></span></div>
+          </div>
+          <div class="composer" style="bottom:28px">
+            <div style="color:#8b8b96;font-size:11px;margin-bottom:6px">AFTER <kbd>Alt</kbd> <kbd>2</kbd></div>
+            <div class="txt">Add a pricing toggle for monthly / yearly to the pricing page. <span class="ins">Use our existing components and Tailwind tokens. Don't add new colors, fonts or spacing values. If a component is missing, tell me first instead of creating one.</span><span class="caret"></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="bigkey" style="right:24px;top:150px"><kbd>Alt</kbd><kbd>2</kbd></div>
+    </div>
+  </section>
+</main>
+<footer>Mockup only: layout and copy are illustrative. See <code>docs/PLAN.md</code> for the build plan.</footer>
+
+<script>
+  // Shared fake website (absolute layout, so selection boxes line up).
+  const site = () => `
+    <div class="chrome"><i></i><i></i><i></i><div class="url">localhost:3000</div></div>
+    <div class="site">
+      <div class="s-logo">acme<b>.</b></div>
+      <div class="s-nav"><span>Product</span><span>Pricing</span><span>Docs</span><span>Sign in</span></div>
+      <h1 class="s-h1">Ship faster with Acme</h1>
+      <p class="s-sub">The all-in-one platform for teams who want to build, test and deploy without the busywork.</p>
+      <div class="s-input">you@company.com</div>
+      <div class="s-btn">Sign up</div>
+      <div class="s-note">No credit card required · Free for 14 days</div>
+      <div class="s-card"><div class="bar" style="top:28px;width:140px"></div><div class="bar" style="top:52px;width:220px;opacity:.6"></div>
+        <div class="bar" style="top:76px;width:180px;opacity:.6"></div>
+        <div style="left:24px;top:116px;width:252px;height:110px;border-radius:10px;background:#fff9"></div></div>
+      <div class="s-logos"><span>NORTHWIND</span><span>globex</span><span>Initech</span><span>UMBRELLA</span></div>
+    </div>`;
+  for (const id of ["a1", "a2", "b1"]) document.getElementById(id).insertAdjacentHTML("afterbegin", site());
+
+  // Waveforms.
+  for (const id of ["wave", "wave2"]) {
+    const w = document.getElementById(id);
+    [6, 12, 18, 10, 16, 8, 14, 20, 9, 13, 7, 15].forEach(h => w.insertAdjacentHTML("beforeend", `<i style="height:${h}px"></i>`));
+  }
+
+  // Composited capture as it lands in the chat: crop of the site + pins/box + caption band.
+  const crop = { x: 56, y: 96, w: 864, h: 300 }, scale = 0.42;
+  const marks = `
+    <div class="box" style="left:${72 - crop.x}px;top:${282 - crop.y}px;width:470px;height:62px"></div>
+    <div class="pin" style="left:${530 - crop.x}px;top:${276 - crop.y}px">1</div>
+    <div class="pin" style="left:${68 - crop.x}px;top:${110 - crop.y}px">2</div>
+    <div class="pin" style="left:${888 - crop.x}px;top:${100 - crop.y}px">3</div>
+    <div class="pin" style="left:${352 - crop.x}px;top:${348 - crop.y}px">4</div>`;
+  document.getElementById("thumbs").innerHTML = `
+    <div class="thumb" style="width:${crop.w * scale}px;height:${(crop.h + 130) * scale}px">
+      <div style="width:${crop.w}px;transform:scale(${scale});transform-origin:0 0">
+        <div class="crop" style="width:${crop.w}px;height:${crop.h}px">
+          <div style="position:absolute;left:${-crop.x}px;top:${-crop.y}px;width:960px;height:600px">${site()}</div>
+          ${marks}
+        </div>
+        <div class="band" style="font-size:15px;height:130px">Make the hero section mobile friendly and match our design system.<br>
+          <b>1</b> Input/button heights don't match, 44px &nbsp; <b>2</b> Clamp headline 28–40px<br>
+          <b>3</b> Hide illustration below 768px &nbsp; <b>4</b> Smaller note, left aligned</div>
+      </div>
+    </div>`;
+</script>
+</body>
+</html>
