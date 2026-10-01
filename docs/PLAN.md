@@ -1,215 +1,575 @@
-# MaximusVibius — Build Plan
+# MaximusVibius — Full Build Plan
 
-> Voice-first capture for AI vibe coding. Snap a piece of the screen, say what's
-> wrong with it, and paste image + instructions into any AI chat. Fire saved
-> prompts with one key.
+> Voice-first capture for AI vibe coding. Snap part of the screen, say what to
+> change, and paste the image and instructions into any AI chat or terminal.
+> Fire saved prompts with one key.
 
-MaximusVibius is a fork of [Handy](https://github.com/cjpais/Handy) (MIT), which
-already provides offline speech-to-text (Whisper / Parakeet / **Canary**), global
-hotkeys, a tray app, and paste-into-active-window on Windows/macOS/Linux. We add
-three features on top. **Windows first**; nothing Windows-only leaks into shared
-code without a `#[cfg]`.
+MaximusVibius is a fork of [Handy](https://github.com/cjpais/Handy) (MIT, Tauri 2:
+Rust + React/TypeScript). Handy already provides offline speech-to-text
+(Whisper, Parakeet, **Canary** and others), global hotkeys, AI post-processing,
+custom vocabulary, history, a tray app, and paste-into-the-active-app. This plan
+adds the capture editor, prompt macros, and the glue that makes them one
+workflow. **Windows first**; anything Windows-only sits behind `#[cfg(windows)]`
+so macOS/Linux stay possible.
 
-Mockups: [`docs/mockups/workflow.html`](mockups/workflow.html) (open in a browser).
+Mockups: [`docs/mockups/workflow.html`](mockups/workflow.html), open in a browser.
+
+**Contents:** 1 Features · 2 Hotkeys · 3 Architecture · 4 Data model ·
+5 Pipelines · 6 Settings & UI · 7 Lightweight budgets · 8 Build environment ·
+9 Testing · 10 Packaging & release · 11 Upstream sync · 12 Risks ·
+13 Build checklist · 14 Out of scope
 
 ---
 
 ## 1. Features
 
-| # | Feature | Trigger | Output |
-|---|---|---|---|
-| F1 | **Dictate** (Handy, unchanged) | hold `Ctrl+Space` | text typed into the focused app |
-| F2 | **Snap & caption** — one element | `Alt+Shift+S`, drag a box, speak | image with caption band + caption text |
-| F3 | **Multi-annotate** — many elements | same capture, then drop numbered pins and speak per pin | image with ①②③ badges + numbered note list |
-| F4 | **Prompt macros** | user-assigned keys, e.g. `Alt+1`…`Alt+9` | saved prompt inserted at the cursor |
+### F1. Dictation (Handy, kept as-is)
+Hold `Ctrl+Space` to dictate into any app. `Ctrl+Shift+Space` dictates with AI
+cleanup. Everything Handy already does stays available: live overlay, VAD,
+filler-word removal, translate-to-English, paste methods, history, CLI flags.
 
-F2 and F3 are **one flow**, not two tools. Every capture opens the same editor.
-If you add no pins, you get a single caption. Each pin adds a numbered note.
-That keeps one hotkey, one window and one code path.
+### F2. Capture: freeze and select
+- `Alt+Shift+S` captures **the monitor under the cursor** the instant the key is
+  pressed, so hover states, open menus and tooltips are kept.
+- A borderless, topmost, full-screen window shows that frozen frame, dimmed.
+  The cursor is a crosshair with a live size label (in physical pixels).
+- **Drag** selects a region. **Space** selects the window under the cursor.
+  **Ctrl+A** selects the whole monitor. **Esc** cancels.
+- Before the capture window takes focus, the app remembers which window had it
+  (its window handle, process name and title). Send uses this to return focus.
 
-### Workflow (F2/F3)
+**Done when:** at 100% and 150% scaling, on a second monitor, the cropped pixels
+exactly match what was selected.
 
-1. `Alt+Shift+S`. The current monitor is grabbed instantly as a still frame, so
-   hover states, open dropdowns and tooltips are kept. A full-screen window
-   shows the frame dimmed.
-2. Drag a region. The editor appears **in place**: the selection stays bright,
-   a small toolbar sits above it and a caption bar sits below it.
-3. Hold `Ctrl+Space` (the normal dictation key) and talk. The words land in the
-   caption field. Or type.
-4. Optional: press `P` (or pick the pin tool) and click elements. Each click
-   drops a numbered pin and focuses that pin's note. Hold `Ctrl+Space` again
-   to dictate the note. `B` draws a box, `A` an arrow.
-5. `Enter` sends: the capture window closes, focus returns to the app you were
-   in, and the image is pasted, then the text. `Shift+Enter` copies to the
-   clipboard only. `Esc` cancels.
+### F3. Capture editor: annotate in place
+The editor opens over the frozen frame, anchored to the selection. You can drag
+the selection's handles to adjust it.
+- **Toolbar** above the selection: Select `V`, Box `B`, Arrow `A`, Pin `P`, Undo,
+  Redo, three colors (pink, yellow, green).
+- **Pins:** each click drops a numbered pin and adds a note row. Pins renumber
+  automatically when one is deleted. `Del` removes the selected shape or pin.
+  `Tab` and `Shift+Tab` move between the caption and the notes.
+- **Caption bar** below the selection: one overall caption, plus a note row per
+  pin. It flips above the selection when there's no room below.
+- Tool keys are plain letters when no text field has focus, and need `Alt`
+  (`Alt+B`) while typing.
+- All drawing is a small custom SVG layer. No canvas library.
 
-### Output format
+**Done when:** you can place, move, delete, undo and redo boxes, arrows and 10+
+pins, and the numbering stays correct.
 
-Image: the cropped region, annotations, and a caption band at the bottom with
-the caption and numbered notes printed in it. The image makes sense on its own.
+### F4. Voice in the editor
+- While the capture window is open, **Handy's dictation goes to the editor
+  instead of being pasted.** The text is inserted at the cursor in the focused
+  field (caption or active note). This leaves the user's clipboard untouched
+  and avoids focus races.
+- With a streaming model, words appear live in grey, then become final text.
+- The mic button in the caption bar mirrors the recording state. Clicking it
+  starts or stops recording, the same as the hotkey.
+- Handy's own recording overlay is hidden while the editor is open, because the
+  editor shows its own listening state.
 
-Text (pasted after the image, because models read real text better than pixels):
+**Done when:** holding `Ctrl+Space` with the editor open fills the focused field
+and nothing reaches the clipboard or the app behind.
 
+### F5. AI cleanup for captions *(uses Handy's post-processing)*
+- **✨ Clean up** button (`Ctrl+K`) in the caption bar rewrites the caption and
+  all notes into short, specific coding instructions. The result replaces the
+  fields in place, and `Ctrl+Z` brings back the original.
+- Dictating with `Ctrl+Shift+Space` inside the editor cleans up just that
+  dictated part, matching Handy's existing behaviour for that key.
+- Optional setting **Always clean up on send** (off by default).
+- Uses whichever provider is set up in Handy's Post-processing page: Anthropic,
+  OpenAI, OpenRouter, Groq, Cerebras, or Custom (any OpenAI-compatible endpoint,
+  including a local Ollama, so it can stay fully offline).
+- Ships a new built-in prompt, **"Vibe coding instruction"**:
+  > Rewrite these spoken notes about a UI screenshot into concise, specific
+  > instructions for an AI coding assistant. Keep the same number of notes and
+  > their order. Don't add requirements that weren't said. Keep exact values
+  > (sizes, colors, names).
+- Uses structured output: the request sends `{caption, notes[]}` and must return
+  the same shape with the same number of notes. If the shape doesn't match, it
+  falls back to cleaning each field separately.
+- When no provider is set up, the button is disabled and links to the
+  Post-processing page.
+
+**Done when:** three rambling notes come back as three clean notes, in order,
+with nothing invented, and `Ctrl+Z` restores the originals.
+
+### F6. Send
+| Key | Action |
+|---|---|
+| `Enter` | **Send:** paste the image, then the text, into the window you came from |
+| `Ctrl+Enter` | **Send and submit:** Send, then press the app's submit key |
+| `Shift+Enter` | **Copy only:** put the image on the clipboard and close |
+| `Esc` | Cancel |
+
+**Output image:** the crop at full resolution, the annotations, and (setting on
+by default) a caption band underneath with the caption and numbered notes. The
+image makes sense even if the text is lost.
+
+**Output text:**
 ```
 [screenshot above]
-Make the sign-up area mobile friendly.
-1. Button should be full width below 640px, primary color.
-2. Email input is misaligned with the button — same height (44px).
-3. Remove the "No credit card" note on mobile.
+Make the hero section mobile friendly and match our design system.
+1. Input and button heights don't match. Both should be 44px, aligned to the top.
+2. Headline is too big on small screens. Clamp it between 28 and 40px.
+3. Hide this illustration below 768px.
 ```
 
-**Clipboard limitation:** most chat apps take either an image or text from one
-paste, not both. "Send" therefore does two pastes in a row: put the image on
-the clipboard, press `Ctrl+V`, put the text on the clipboard, press `Ctrl+V`,
-then restore whatever the user had before. "Copy only" puts the image on the
-clipboard (the user can press `Shift+Enter` again for the text).
+**Paste profiles** (per target app, matched on process name): what Send does
+depends on where it's going.
+| Profile | Behaviour | Default for |
+|---|---|---|
+| Image + text | paste image, pause, paste text | everything else (browsers, Claude/ChatGPT desktop, Cursor, VS Code) |
+| File path + text | save the PNG, paste `path` and the text as one block of text | `WindowsTerminal.exe`, `pwsh.exe`, `cmd.exe`, `wezterm-gui.exe`, `alacritty.exe` (for Claude Code and other terminal agents) |
+| Copy only | clipboard only, show a "Press Ctrl+V" toast | user-assigned |
 
-Optional setting, **Save captures to folder**. When on, each capture is also
-written as a PNG and the file path is added to the text. This helps terminal
-agents such as Claude Code, which accept image file paths.
+The user's clipboard is put back after sending. The pause between the two
+pastes is configurable (default 250 ms).
 
-### Workflow (F4)
+**Done when:** in Claude web, ChatGPT web, Claude desktop, Cursor chat, VS Code
+Copilot chat and Claude Code in Windows Terminal, `Enter` produces the right
+result without the user doing anything else.
 
-Settings → **Macros**. Each macro has a name, a hotkey, a prompt body, and a
-"press Enter after" toggle. Pressing the hotkey anywhere inserts the body at the
-cursor, adding it to whatever you were already typing, through Handy's existing
-paste pipeline, which also restores the clipboard. v1 is text only. Variables
-(`{clipboard}`, `{date}`) and multi-step actions come later.
+### F7. Auto-submit everywhere
+Uses Handy's existing submit-key setting (`Enter`, `Ctrl+Enter` or `Cmd+Enter`).
+- Captures: `Ctrl+Enter` for one-off submits, plus a setting **Always submit
+  after Send** (off by default).
+- Macros: a per-macro **Press submit after inserting** toggle.
+- Dictation: Handy's global auto-submit toggle, unchanged.
+
+### F8. Prompt macros
+- Settings → **Macros**. Each macro has a name, a hotkey (recorded with Handy's
+  shortcut recorder, so conflicts are caught), a body, **Insert before**
+  (nothing, space or new line), and **Press submit after inserting**.
+- Pressing the hotkey anywhere inserts the body at the cursor, adding to what's
+  already typed. Macros always paste through the clipboard, even when Handy's
+  paste method is "direct typing", so multi-line prompts don't trigger a send
+  halfway through. The clipboard is restored afterwards.
+- **Variables:** `{clipboard}`, `{date}`, `{time}`, filled in when the macro fires.
+- The body field accepts dictation (`Ctrl+Space`).
+- Ships 4 editable starter macros on `Alt+1`…`Alt+4`: *Plan first*, *Match
+  design system*, *Don't touch tests*, *Small diff*.
+- The tray menu lists macros, and clicking one inserts it. Useful for macros
+  without a hotkey.
+
+**Done when:** `Alt+2` in a half-typed Claude message adds the prompt after a
+space, and the clipboard is unchanged afterwards.
+
+### F9. Developer vocabulary *(uses Handy's custom words)*
+- On first run, a curated list of about 80 developer terms is added to Custom
+  Words, for example: React, Next.js, Tailwind, TypeScript, useEffect, useState,
+  npm, pnpm, Vite, Supabase, Prisma, shadcn, Vercel, API, JSON, CSS, flexbox,
+  padding, margin, z-index, viewport, breakpoint, hover state, dropdown, modal,
+  navbar, CTA, props, endpoint, localhost. The words are chosen to sound
+  distinct, to keep Handy's fuzzy correction from making false swaps.
+- **Import from project…** asks for a folder, reads `package.json` dependency
+  names and PascalCase component file names (`*.tsx`, `*.jsx`, `*.vue`, `*.svelte`,
+  up to 200), and shows a checklist before adding anything.
+- A **Restore developer vocabulary** button re-adds the starter list.
+
+**Done when:** "use effect", "tailwind" and "shad CN" come out as `useEffect`,
+`Tailwind` and `shadcn` with the default Canary model.
+
+### F10. Capture history
+- Every Send or Copy is saved: a PNG in the app's data folder plus a database
+  row (see §4). The History page gets **Dictations | Captures** tabs.
+- Captures tab: thumbnail grid. Each item offers **Send again** (opens a
+  window picker, then runs the normal Send), **Copy image**, **Copy text**,
+  **Open in editor** (re-annotate), **Show in folder**, star, and delete.
+- Follows Handy's existing history limit and retention settings. Starred items
+  are never pruned.
+- Optional **Also save to folder** (user-picked). When on, the file path is
+  added to the output text.
+
+### F11. Tray, onboarding, branding
+- **Tray** additions: *New capture* (with its hotkey), a *Macros* submenu, and
+  *Copy last capture text*.
+- **Onboarding:** Handy's steps (microphone permission, model download), with
+  **Canary 180M Flash** (139 MB) pre-selected, then one new step: a hotkey card
+  and a "Try it: capture this window" practice capture.
+- **Branding:** name, `com.bay714.maximusvibius` identifier (a separate data
+  folder, so it can sit beside a real Handy install), icons, tray tooltip,
+  window titles, and an About page that credits Handy.
 
 ---
 
-## 2. Lightweight by design
+## 2. Hotkeys
 
-| Decision | Why |
+| Global | Action |
 |---|---|
-| **No canvas library.** The annotation layer is a small custom SVG layer (box, arrow, pin), drawn to a `<canvas>` only on export. Excalidraw (~1 MB+ of JS) is dropped. | Only 3 shapes are needed. Target: capture window bundle < 150 KB gzipped. |
-| **One extra webview, created on demand.** Region select and editor are the same window. It is destroyed about 60 s after closing (kept warm for repeat snaps). | Zero extra memory while idle. |
-| **Frame served from memory** through a custom `capture://` URI scheme (raw BMP), not base64 over IPC and not a temp file. | A 4K RGBA frame is about 33 MB, which base64 IPC is too slow for. |
-| **Small default speech model:** Canary 180M Flash Q4 (139 MB), with Parakeet V3 offered as the accuracy upgrade. Handy's idle model unloading stays on. | Small download, low RAM, fast on CPU. |
-| **Screen capture via `xcap`** (Rust, Apache-2.0), one small crate. | No external screenshot app to install. |
-| **Macros reuse Handy's shortcut and paste code.** No espanso. | No second process, no GPL dependency. |
+| `Ctrl+Space` | Dictate (hold) |
+| `Ctrl+Shift+Space` | Dictate + AI cleanup |
+| `Alt+Shift+S` | Capture |
+| `Alt+1`…`Alt+4` | Starter macros (user can add more) |
+| `Esc` | Cancel recording (Handy) |
 
-Budgets to verify in Phase 0/5 (measure Handy's baseline first):
-installer grows by ≤ 2 MB; idle RAM unchanged vs Handy; hotkey → frozen frame
-visible in ≤ 150 ms; Enter → pasted in ≤ 300 ms.
+| In the capture editor | Action |
+|---|---|
+| Drag / `Space` / `Ctrl+A` | Select region / window under cursor / whole monitor |
+| `V` `B` `A` `P` (`Alt+` while typing) | Select / Box / Arrow / Pin |
+| `Del`, `Ctrl+Z`, `Ctrl+Y` | Delete, Undo, Redo |
+| `Tab` / `Shift+Tab` | Next / previous field |
+| `Ctrl+K` | AI clean up |
+| `Enter` / `Ctrl+Enter` / `Shift+Enter` / `Esc` | Send / Send and submit / Copy only / Cancel |
+
+All global hotkeys can be changed in Settings → Shortcuts.
 
 ---
 
 ## 3. Architecture
 
 ```
-                 ┌───────────────────────── Rust (src-tauri) ─────────────────────────┐
- global hotkey ─▶│ shortcut/handler.rs ──▶ ACTION_MAP                                 │
-                 │      "transcribe"   ─▶ TranscribeAction (Handy)                     │
-                 │      "capture"      ─▶ vibe::capture::CaptureAction   ── NEW        │
-                 │      "macro:<id>"   ─▶ vibe::macros::MacroAction       ── NEW        │
-                 │                                                                     │
-                 │ vibe/capture.rs   xcap grab → frame in memory → capture:// scheme    │
-                 │                   remembers foreground HWND to return focus later    │
-                 │ vibe/output.rs    image+text → clipboard → paste ×2 → restore        │
-                 │ vibe/macros.rs    macro → utils::paste (Handy)                       │
-                 │ actions.rs:~839   if capture window focused → emit "vibe://dictation"│
-                 │                   instead of pasting (keeps the clipboard clean)    │
-                 └────────────────────────────────────────────────────────────────────┘
-                 ┌──────────────────────── Frontend (src) ─────────────────────────────┐
-                 │ src/capture/      NEW window entry: select → annotate → export      │
-                 │   Selector.tsx  Editor.tsx  Annotations.tsx (SVG)  exportPng.ts     │
-                 │ src/components/settings/capture/  NEW: hotkey, send mode, folder    │
-                 │ src/components/settings/macros/   NEW: list + editor                │
-                 └─────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────── Rust: src-tauri/src ────────────────────────────────┐
+│ shortcut/handler.rs ─▶ ACTION_MAP                                                    │
+│     "transcribe", "transcribe_with_post_process", "cancel"   (Handy)                 │
+│     "capture"        ─▶ vibe::capture::CaptureAction                       NEW       │
+│     "macro:<id>"     ─▶ vibe::macros::MacroAction  (prefix dispatch)       NEW       │
+│                                                                                      │
+│ vibe/                                                                      NEW       │
+│   mod.rs        init, state registration, commands                                   │
+│   capture.rs    xcap grab, CaptureState {frame, monitor, target}, capture:// scheme  │
+│   window.rs     create/show/hide/destroy capture window, 60 s warm timer             │
+│   target.rs     foreground HWND + process name, restore focus (Windows)              │
+│   output.rs     compose text, save PNG, paste profiles, send sequence                │
+│   clip.rs       clipboard snapshot/restore, image write (CF_DIBV5 + "PNG")           │
+│   cleanup.rs    structured AI cleanup over llm_client.rs                             │
+│   macros.rs     Macro CRUD, binding registration, variable expansion                 │
+│   vocab.rs      starter list, project import scan                                    │
+│   captures_db.rs  captures table + queries (shares Handy's history DB)               │
+│                                                                                      │
+│ Touched Handy files (kept small):                                                    │
+│   actions.rs       route final transcript → editor when capture window is open       │
+│   settings.rs      new fields with #[serde(default)]; new built-in prompt            │
+│   shortcut/handler.rs  "macro:" prefix lookup                                        │
+│   managers/history.rs  one migration: captures table                                 │
+│   tray.rs          menu items     lib.rs   vibe::init()     tauri.conf.json  brand   │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────── Frontend: src ──────────────────────────────────────┐
+│ capture/                                                                  NEW        │
+│   index.html, main.tsx      second Vite entry (like overlay/)                        │
+│   Selector.tsx              crosshair, drag, window/monitor pick                     │
+│   Editor.tsx                toolbar, caption bar, notes, keyboard map                │
+│   Annotations.tsx           SVG shapes + hit testing          shapes.ts (model, undo)│
+│   exportPng.ts              composite to canvas at physical px → PNG bytes           │
+│   useDictation.ts           listens to vibe://dictation + stream events              │
+│ components/settings/capture/   Capture page (send, profiles, folder, band, AI)  NEW  │
+│ components/settings/macros/    list + editor                                    NEW  │
+│ components/settings/history/   + Captures tab                              touched  │
+│ components/settings/CustomWords.tsx  + dev vocabulary / import buttons      touched  │
+│ components/onboarding/         + hotkeys + practice step                    touched  │
+│ Sidebar.tsx                    + Capture, Macros                            touched  │
+└──────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Staying upstream-friendly.** New code lives in `src-tauri/src/vibe/` and
-`src/capture/`. Changes to Handy's own files are limited to registering actions,
-adding settings fields (with `#[serde(default)]`), one routing branch at the
-paste call, sidebar entries, and a second Vite entry. That way
-`git fetch upstream && git merge upstream/main` stays painless.
+**New crates:** `xcap` (screen and window capture, Apache-2.0) is the only
+genuinely new dependency. `clipboard-win` (BSL-1.0, for writing several
+clipboard formats at once) and `image` are already in Handy's dependency tree
+and just become direct dependencies. `windows`, `enigo`, `rusqlite` and the
+clipboard plugin are already used directly.
 
-### Data model (added to `AppSettings`)
+### Commands (frontend → Rust)
+| Command | Purpose |
+|---|---|
+| `vibe_capture_info()` | monitor bounds, scale factor, frame URL, window rects for `Space` select |
+| `vibe_send({png, caption, notes, mode, submit})` | run the send pipeline (§5) |
+| `vibe_cancel()` | close the capture window, drop the frame |
+| `vibe_cleanup({caption, notes})` | AI cleanup, returns the same shape |
+| `vibe_toggle_dictation()` | mic button |
+| `macro_list/create/update/delete()` | macros (also re-register hotkeys) |
+| `captures_list/get/delete/star/resend/copy()` | capture history |
+| `vocab_add_starter()`, `vocab_scan_project(path)` | vocabulary |
+
+### Events (Rust → frontend)
+`vibe://frame-ready`, `vibe://dictation {text, final}`, `vibe://recording {active}`,
+`vibe://sent {captureId}`, plus Handy's existing stream events for live text.
+
+---
+
+## 4. Data model
 
 ```rust
-struct CaptureSettings {
-    send_mode: SendMode,          // PasteImageThenText | CopyOnly
-    include_text: bool,           // default true
-    save_folder: Option<PathBuf>, // None = don't save
-    caption_band: bool,           // burn caption into image, default true
+// Added to AppSettings; every field has #[serde(default)], so older settings files load.
+pub struct CaptureSettings {
+    pub enter_action: EnterAction,         // Send (default) | CopyOnly
+    pub always_submit: bool,               // false
+    pub always_cleanup: bool,              // false
+    pub cleanup_prompt_id: String,         // "vibe_coding_instruction"
+    pub caption_band: bool,                // true
+    pub include_text: bool,                // true
+    pub save_folder: Option<PathBuf>,      // None
+    pub include_path_in_text: bool,        // true (only when save_folder is set)
+    pub paste_gap_ms: u64,                 // 250
+    pub keep_warm_secs: u64,               // 60
+    pub default_color: AnnotColor,         // Pink
+    pub profiles: Vec<PasteProfile>,       // defaults in §1 F6
 }
-struct Macro {
-    id: String,          // binding id = "macro:<id>"
-    name: String,
-    body: String,
-    press_enter: bool,
+pub struct PasteProfile { pub process: String, pub mode: ProfileMode } // ImageText | PathText | CopyOnly
+pub struct Macro {
+    pub id: String,                        // binding id = "macro:<id>"
+    pub name: String,
+    pub body: String,
+    pub insert_before: InsertBefore,       // Nothing | Space (default) | Newline
+    pub submit: bool,                      // false
 }
-// hotkeys stay in Handy's `bindings` map, so the existing
-// shortcut recorder UI, conflict checks and persistence all just work.
+pub vibe_onboarding_done: bool,
+pub dev_vocab_seeded: bool,
+// Hotkeys for "capture" and "macro:<id>" live in Handy's existing `bindings` map.
+```
+
+```sql
+-- One new migration in managers/history.rs (same SQLite file)
+CREATE TABLE captures (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  timestamp INTEGER NOT NULL,
+  file_name TEXT NOT NULL,          -- PNG in <app data>/captures/
+  width INTEGER NOT NULL, height INTEGER NOT NULL,
+  caption TEXT NOT NULL,
+  notes_json TEXT NOT NULL,         -- ["note 1", "note 2"]
+  output_text TEXT NOT NULL,
+  annotations_json TEXT NOT NULL,   -- shapes, so "Open in editor" can re-annotate
+  source_png TEXT,                  -- un-annotated crop, for re-annotation
+  target_process TEXT,
+  saved BOOLEAN NOT NULL DEFAULT 0
+);
 ```
 
 ---
 
-## 4. Phases
+## 5. Pipelines
 
-Each phase ends with something you can run and use.
+### Capture
+1. Hotkey → `CaptureAction::start`. Record the foreground window (handle,
+   process name) and the cursor position.
+2. `xcap::Monitor::from_point(cursor)` → `capture_image()` (RGBA). Also list
+   windows on that monitor (`xcap::Window::all()`, filtered) for `Space` select.
+3. Store the frame in `CaptureState`. It's served as an uncompressed BMP from
+   memory at `capture://localhost/frame` (no disk, no base64 over IPC).
+4. Show the capture window: positioned at the monitor's origin and sized to
+   its physical bounds, always on top, no decorations, hidden from the taskbar,
+   focused. If the window still exists from a recent capture it's reused,
+   otherwise it's created.
+5. The frontend draws the frame. Selection coordinates are in CSS pixels × the
+   scale factor, which gives physical pixels.
 
-### Phase 0: Toolchain, baseline, rebrand (½–1 day)
-- Install: Rust (rustup, MSVC), VS 2022 Build Tools (C++ workload), CMake,
-  Vulkan SDK, Bun. Download the Silero VAD model (see `AGENTS.md`).
-- `bun run tauri dev` runs stock Handy on this machine. Record baseline RAM,
-  installer size and startup time.
-- Rebrand: `productName` → MaximusVibius, `identifier` → `com.bay714.maximusvibius`
-  (so it can sit beside a real Handy install), icons, tray strings, README with
-  Handy credit.
-- **Turn off the updater** (it points at Handy's releases) until we publish our own.
-- Default model → Canary 180M Flash.
-- ✅ Done when: the renamed app dictates into Notepad on Windows.
+### Dictation routing
+`actions.rs`, at the final paste call (around line 839): if the capture window
+exists and is visible, emit `vibe://dictation {text, final:true}` to it and skip
+pasting. Post-processing, filler removal and custom words still run first, so
+the editor gets the same cleaned text a normal paste would.
 
-### Phase 1: Capture and region select (1–2 days)
-- `xcap` grab of the monitor under the cursor; frame served through `capture://frame`.
-- Borderless, topmost, full-screen capture window. Dimmed frame, crosshair,
-  drag to select, size label, `Esc` cancels. Per-monitor DPI handled.
-- `capture` binding (`Alt+Shift+S`) in the Shortcuts settings.
-- ✅ Done when: the hotkey selects a region and `Shift+Enter` copies the crop to the clipboard.
+### Send
+1. Frontend: `exportPng` draws the crop at physical resolution, the scaled
+   annotations and the caption band, then encodes PNG bytes →
+   `vibe_send`. If **Always clean up** is on, `vibe_cleanup` runs first.
+2. Hide the capture window and start the keep-warm timer.
+3. Save the PNG (plus the un-annotated crop) and add a `captures` row. Copy the
+   PNG to the save folder if one is set.
+4. Pick the paste profile for the target process.
+5. Snapshot the clipboard (text, or image if there's no text).
+6. Restore focus to the target window. If Windows refuses, retry the
+   foreground-lock workaround, then confirm focus with `GetForegroundWindow`
+   (up to 300 ms). If focus can't be restored, fall back to Copy only and show
+   a toast.
+7. **Image + text:** write the image (`CF_DIBV5` plus the registered `PNG`
+   format) → `Ctrl+V` → wait `paste_gap_ms` → write the text → `Ctrl+V`.
+   **File path + text:** write `"{path}\n{text}"` → `Ctrl+V`.
+   **Copy only:** write the image and stop.
+8. If submitting, send Handy's submit key.
+9. Restore the clipboard after `paste_delay_after_ms`.
+10. Emit `vibe://sent` and show a toast ("Pasted image + 4 notes").
 
-### Phase 2: Caption, dictation, send (2–3 days)
-- Caption bar under the selection with a live "listening" state.
-- Dictation routing: while the capture window has focus, transcripts go to it
-  as events instead of being pasted.
-- Export: canvas composite (crop + caption band) → PNG → clipboard.
-- Send: restore focus to the stored window, paste the image, paste the text, restore the clipboard.
-- ✅ Done when: snap a button → speak → `Enter` → image and text appear in Claude/ChatGPT/Cursor chat.
-
-### Phase 3: Pins, boxes, arrows (1–2 days)
-- SVG annotation layer, pin numbering, per-pin note list, undo, delete, re-number.
-- Numbered list in the caption band and in the text output.
-- ✅ Done when: three pins with three spoken notes produce the output format above.
-
-### Phase 4: Prompt macros (1 day)
-- `macro:` prefix dispatch in `shortcut/handler.rs` → `MacroAction`.
-- Settings → Macros: list, add/edit/delete, hotkey recorder, "press Enter after".
-- Ships with 3 starter macros (editable).
-- ✅ Done when: `Alt+1` inserts a saved prompt into a half-typed chat message.
-
-### Phase 5: Polish and package (1–2 days)
-- Capture settings page, first-run tips, tray menu entries ("New capture", "Macros…").
-- Save-to-folder option and path in text.
-- Check the budgets; build a signed or unsigned MSI/NSIS installer from CI.
-- ✅ Done when: a fresh Windows machine installs it and completes all four workflows.
-
-**Total: roughly 7–11 working days.**
+### Macro
+`MacroAction::start` → expand variables (read `{clipboard}` before anything
+changes it) → add the insert-before prefix → Handy's `clipboard::paste` path
+(forced to clipboard paste, restore on) → optional submit key.
 
 ---
 
-## 5. Risks
+## 6. Settings and UI
+
+Sidebar: **General · Capture *(new)* · Macros *(new)* · History · Models ·
+Post-processing · Advanced · About** (Debug stays hidden behind `Ctrl+Shift+D`).
+
+| Page | Contents |
+|---|---|
+| Capture | Hotkey, Enter action, always submit, always clean up + prompt, caption band, include text, save folder + path in text, paste gap, keep-warm, default color, paste profiles table (add/edit/remove, "detect from running app") |
+| Macros | List with hotkey chips; editor with name, hotkey, body (dictation works), insert before, submit; variables help; restore starter macros |
+| History | Dictations / Captures tabs (F10) |
+| General | Handy's settings + a hotkey summary card |
+| Advanced → Custom words | Handy's list + "Restore developer vocabulary" + "Import from project…" |
+| Post-processing | Handy's page; the "Vibe coding instruction" prompt appears in the list |
+
+All new strings go through i18next (`en` first; other languages fall back to
+English). Handy's ESLint rule enforces this.
+
+---
+
+## 7. Lightweight budgets
+
+Measured against stock Handy on the same machine (recorded during the toolchain step):
+
+| Metric | Budget |
+|---|---|
+| Installer size | Handy + ≤ 3 MB |
+| Idle RAM (no capture window, model unloaded) | Handy + ≤ 5 MB |
+| Capture window JS bundle | ≤ 150 KB gzipped |
+| Hotkey → frozen frame visible | ≤ 150 ms (cold), ≤ 60 ms (warm) |
+| Enter → image pasted | ≤ 300 ms (excluding the paste gap) |
+| Capture window after close | destroyed after 60 s (configurable) |
+
+How we stay in budget: no canvas or drawing library, one on-demand webview,
+the frame served from memory, a small default model, Handy's model unloading
+left on, and no new background processes.
+
+---
+
+## 8. Build environment (Windows)
+
+Install once:
+`winget install Rustlang.Rustup Microsoft.VisualStudio.2022.BuildTools Kitware.CMake KhronosGroup.VulkanSDK Oven-sh.Bun`
+(Build Tools with the "Desktop development with C++" workload). Then:
+
+```bash
+bun install
+mkdir -p src-tauri/resources/models
+curl -o src-tauri/resources/models/silero_vad_v4.onnx https://blob.handy.computer/silero_vad_v4.onnx
+bun run tauri dev
+```
+
+Before each commit: `bun run lint`, `bun run format:check`, `cargo clippy`,
+`cargo test`.
+
+---
+
+## 9. Testing
+
+**Rust unit tests** (`cargo test`):
+- output text formatting (caption only, caption + notes, empty caption, path mode)
+- crop math across scale factors (1.0, 1.25, 1.5, 2.0) and negative monitor origins
+- paste-profile matching (case-insensitive, fallback)
+- macro variable expansion and insert-before
+- cleanup response validation (wrong note count → per-field fallback)
+- `captures` migration on a copy of an existing Handy database
+- dictation routing: capture window open → event; closed → paste
+
+**Frontend:** unit tests for `shapes.ts` (undo/redo, pin renumbering) with Bun's
+test runner, like Handy's existing `keyboard.test.ts`. Extend Handy's
+Playwright `app.spec.ts` for the Capture and Macros settings pages.
+
+**Manual matrix** (checked before each release):
+| Target | Image + text | Submit | Macro |
+|---|---|---|---|
+| Claude web (Edge, Chrome) | ☐ | ☐ | ☐ |
+| ChatGPT web | ☐ | ☐ | ☐ |
+| Claude desktop | ☐ | ☐ | ☐ |
+| Cursor chat | ☐ | ☐ | ☐ |
+| VS Code Copilot chat | ☐ | ☐ | ☐ |
+| Claude Code in Windows Terminal (path mode) | ☐ | ☐ | ☐ |
+
+Plus: 1 and 2 monitors at mixed 100%/150% scaling, high-contrast mode, dark/light
+theme, and an existing Handy install side by side.
+
+---
+
+## 10. Packaging and release
+- Adapt Handy's `.github/workflows/build.yml` to a Windows-only build that
+  produces NSIS and MSI installers on tag push. Remove Handy's signing and macOS
+  jobs for now.
+- **Updater:** generate our own minisign keypair (the private key goes in GitHub
+  secrets), point the updater at
+  `github.com/bay714/MaximusVibius/releases/latest/download/latest.json`.
+  Handy's endpoint and public key are removed.
+- **Code signing:** ships unsigned at first, so Windows SmartScreen will show a
+  "More info → Run anyway" prompt. Buying a signing certificate (or using Azure
+  Trusted Signing) can come later without changing the code.
+- `LICENSE`: MIT, keeping Handy's copyright line and adding ours.
+
+---
+
+## 11. Staying in sync with Handy
+- New code lives in `src-tauri/src/vibe/` and `src/capture/`. Changes to
+  Handy's files are limited to the "touched" list in §3.
+- Merge `upstream/main` every 2–4 weeks on a branch, run the test suite and the
+  manual matrix, then merge to `main`.
+- Never reformat Handy's files, and keep our settings fields grouped at the end
+  of `AppSettings`, so merges stay small.
+
+---
+
+## 12. Risks
 
 | Risk | Mitigation |
 |---|---|
-| Windows focus-stealing rules block `SetForegroundWindow` when returning focus | Store the HWND at hotkey time and use `AttachThreadInput` if needed. If it still fails, fall back to "copied, press Ctrl+V" with a toast. |
-| Some chat apps reject image paste, or drop the second paste | Small delay between the two pastes (configurable). Per-app "Copy only" fallback. |
-| Mixed-DPI multi-monitor setups shift the crop | Phase 1 tests 100%/150% across two monitors. Crop uses physical pixels from `xcap`. |
-| Handy keystroke hooks (`rdev`) and our full-screen window fighting over `Esc` | The capture window handles keys itself while focused. Handy's cancel binding stays off during capture. |
-| Upstream merge conflicts | Keep the changes to Handy's own files small (§3). Merge upstream every 2–4 weeks. |
+| Windows blocks returning focus to the previous window | Foreground-lock workaround and focus confirmation. If it still fails, fall back to Copy only with a toast. |
+| A chat app drops the second paste while the image is still attaching | Configurable paste gap. Per-app profiles. |
+| Electron/Chromium apps ignore `CF_DIB` images | Also write the registered `PNG` format, which Chromium reads first. |
+| Mixed-DPI crop offsets | Crop in physical pixels from `xcap`. Unit tests on scale factors. Manual 2-monitor check. |
+| Large vocabulary causes false word swaps (Handy's custom words are a fuzzy post-correction) | Curated, phonetically distinct starter list. Project import is opt-in with a checklist. Test against the default threshold. |
+| AI cleanup invents requirements or reorders notes | Strict prompt, structured output with a shape check, per-field fallback, always undoable. |
+| Hotkey conflicts (`Alt+Shift+S`, `Alt+1…4`) with the user's apps | Handy's recorder flags conflicts. Every hotkey can be changed. |
+| Handy's keyboard hook and the capture window both reacting to `Esc` | Turn off Handy's cancel binding while the capture window is open. |
+| Upstream merges conflict | Small changes to Handy's files (§11). Regular merges. |
 
-## 6. Later (not v1)
-- Browser extension: click a DOM element to attach its selector, outer HTML
-  and page URL to the capture. Very strong context for coding agents.
-- Macro steps (keys, delays, "start capture"), variables.
-- macOS/Linux packaging (the code paths already exist through Handy and `xcap`).
+---
+
+## 13. Build checklist (in dependency order)
+
+Each item is done when its acceptance check passes. Items at the same level
+can be built in parallel.
+
+**Foundation**
+- [ ] Install the toolchain and run stock Handy. Record the baseline budgets (§7).
+- [ ] Rebrand (name, identifier, icons, About credit). Remove Handy's updater endpoint and key.
+- [ ] Default model → Canary 180M Flash.
+- [ ] Add `vibe/` module skeleton, settings fields with defaults, the `captures`
+      migration, and the `capture` binding. Add the second Vite entry `src/capture/`.
+
+**Capture core** (needs Foundation)
+- [ ] `capture.rs` + `target.rs`: grab, `capture://` scheme, remember the target window. *(F2)*
+- [ ] `window.rs`: capture window lifecycle and keep-warm timer.
+- [ ] `Selector.tsx`: drag, window select, monitor select, DPI-correct crop. *(F2 check)*
+
+**Editor** (needs Capture core)
+- [ ] `shapes.ts` model with undo/redo and pin renumbering, plus tests.
+- [ ] `Annotations.tsx` + `Editor.tsx`: toolbar, caption bar, notes, keyboard map. *(F3 check)*
+- [ ] `exportPng.ts`: composite with caption band at physical resolution.
+
+**Voice and AI** (needs Editor)
+- [ ] Dictation routing in `actions.rs` + `useDictation.ts`, live text, mic button, overlay suppression. *(F4 check)*
+- [ ] `cleanup.rs` + the "Vibe coding instruction" prompt + `Ctrl+K`. *(F5 check)*
+
+**Output** (needs Editor; can run alongside Voice and AI)
+- [ ] `clip.rs`: snapshot/restore, `CF_DIBV5` + `PNG` image write.
+- [ ] `output.rs`: text composition, paste profiles, the send sequence, submit, toasts. *(F6, F7 checks)*
+- [ ] `captures_db.rs` + saving to the app data folder and the optional save folder.
+
+**Macros** (needs Foundation only, so it can start right after the skeleton)
+- [ ] `macros.rs`: CRUD, `macro:` dispatch, variables, insert-before, submit, starter macros. *(F8 check)*
+- [ ] Macros settings page. Macros tray submenu.
+
+**Vocabulary** (needs Foundation only)
+- [ ] `vocab.rs`: starter list, first-run seeding, project scan. Custom Words buttons. *(F9 check)*
+
+**History and shell** (needs Output)
+- [ ] Captures tab: grid, send again, copy, open in editor, star, delete, retention. *(F10)*
+- [ ] Capture settings page with the paste profiles table.
+- [ ] Tray items, onboarding step, sidebar. *(F11)*
+
+**Release** (needs everything above)
+- [ ] All Rust/Bun/Playwright tests pass. The manual matrix (§9) is fully checked.
+- [ ] Budgets (§7) are met, or the gaps are written down.
+- [ ] Windows CI build, own updater key, first tagged release `v0.1.0`.
+
+**Estimate:** about 12–16 working days for one developer, end to end.
+
+---
+
+## 14. Out of scope (for now)
+- Browser extension that attaches the clicked DOM element's selector, HTML and
+  URL to a capture.
+- Selections that span monitors. Scrolling or long-page capture. Video or GIF capture.
+- Macro steps beyond text (key sequences, delays, "start capture").
+- A macro search palette for people with more than ~10 macros.
+- macOS and Linux packaging. The code is written for them, but they aren't tested or shipped.

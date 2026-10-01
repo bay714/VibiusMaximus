@@ -97,6 +97,27 @@
     color: var(--muted); font-size: 11.5px; background: #13161c; }
   .cap-foot kbd { font-size: 10.5px; padding: 2px 5px; }
   .send { background: var(--accent); color: #fff; border-radius: 8px; padding: 6px 12px; font-weight: 600; font-size: 12px; }
+  .ai { display: inline-flex; gap: 6px; align-items: center; background: #8b5cf622; color: #ddd6fe; border: 1px solid #8b5cf655;
+    border-radius: 8px; padding: 4px 9px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .ai kbd { font-size: 10px; padding: 1px 4px; }
+  .select { display: inline-flex; gap: 8px; align-items: center; background: var(--bg); border: 1px solid var(--line);
+    border-radius: 8px; padding: 5px 10px; font-size: 13px; }
+  table.t { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+  table.t td, table.t th { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+  table.t th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+  .pill { display: inline-block; border-radius: 999px; padding: 2px 8px; font-size: 11px; background: var(--panel2); color: var(--text); }
+  .grid { position: absolute; left: 28px; right: 28px; top: 132px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .cardc { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .cardc.cur { border-color: var(--accent); }
+  .cardc .meta { padding: 8px 10px; font-size: 12px; }
+  .cardc .meta p { margin: 2px 0 0; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tabs { display: inline-flex; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 3px; gap: 2px; }
+  .tabs span { padding: 5px 12px; border-radius: 6px; color: var(--muted); font-size: 12.5px; }
+  .tabs .on { background: var(--panel2); color: var(--text); }
+  .menu { position: absolute; background: var(--panel2); border: 1px solid #3a4150; border-radius: 10px; padding: 5px;
+    box-shadow: 0 12px 30px #000a; font-size: 12.5px; width: 180px; }
+  .menu div { padding: 6px 10px; border-radius: 6px; }
+  .menu .cur { background: var(--accent); color: #fff; }
   .note { display: flex; gap: 10px; align-items: flex-start; padding: 6px 12px; font-size: 13px; }
   .note.active { background: #ff3b7f14; }
   .pin { position: absolute; width: 24px; height: 24px; border-radius: 50%; background: var(--mark); color: #fff;
@@ -187,7 +208,8 @@
     <div><kbd>Ctrl</kbd> <kbd>Space</kbd> hold to dictate (anywhere, incl. captions)</div>
     <div><kbd>Alt</kbd> <kbd>Shift</kbd> <kbd>S</kbd> capture</div>
     <div><kbd>Alt</kbd> <kbd>1</kbd>…<kbd>9</kbd> prompt macros</div>
-    <div>In editor: <kbd>B</kbd> box · <kbd>A</kbd> arrow · <kbd>P</kbd> pin · <kbd>Enter</kbd> send · <kbd>Esc</kbd> cancel</div>
+    <div><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Space</kbd> dictate + AI cleanup</div>
+    <div>In editor: <kbd>B</kbd> box · <kbd>A</kbd> arrow · <kbd>P</kbd> pin · <kbd>Ctrl</kbd><kbd>K</kbd> ✨ clean up · <kbd>Enter</kbd> send · <kbd>Ctrl</kbd><kbd>Enter</kbd> send + submit · <kbd>Esc</kbd> cancel</div>
   </div>
 </header>
 
@@ -217,7 +239,7 @@
         <div class="sep"></div><div class="tool">↶</div>
         <div class="sep"></div><div class="dot" style="background:#ff3b7f"></div><div class="dot" style="background:#facc15"></div><div class="dot" style="background:#22c55e"></div>
       </div>
-      <div class="caption" style="left:68px;top:392px;width:560px">
+      <div class="caption" style="left:68px;top:392px;width:720px">
         <div class="cap-row">
           <div class="mic live">🎙</div>
           <div class="cap-text">Stack the sign-up row on mobile and make the button full width
@@ -226,7 +248,7 @@
         </div>
         <div class="cap-foot">
           <span>Listening… release <kbd>Ctrl</kbd><kbd>Space</kbd> to stop</span>
-          <span><kbd>Enter</kbd> send · <kbd>Shift</kbd><kbd>Enter</kbd> copy · <kbd>Esc</kbd> cancel</span>
+          <span><kbd>Ctrl</kbd><kbd>K</kbd> ✨ clean up · <kbd>Enter</kbd> send · <kbd>Ctrl</kbd><kbd>Enter</kbd> send + submit · <kbd>Esc</kbd> cancel</span>
         </div>
       </div>
     </div>
@@ -253,6 +275,7 @@
         <div class="cap-row" style="border-bottom:1px solid var(--line)">
           <div class="mic">🎙</div>
           <div class="cap-text">Make the hero section mobile friendly and match our design system.</div>
+          <span class="ai">✨ Clean up <kbd>Ctrl</kbd><kbd>K</kbd></span>
         </div>
         <div class="note"><span class="pin">1</span>Input and button heights don't match. Both should be 44px, aligned to the top.</div>
         <div class="note"><span class="pin">2</span>Headline is too big on small screens. Clamp it between 28 and 40px.</div>
@@ -260,7 +283,7 @@
         <div class="note active"><span class="pin">4</span><span>Make this note smaller and <span style="color:var(--muted)">left aligned with the input</span><span class="caret"></span></span>
           <span style="margin-left:auto" class="wave" id="wave2"></span></div>
         <div class="cap-foot"><span>4 pins · <kbd>Del</kbd> removes the selected pin · pins renumber automatically</span>
-          <span><kbd>Enter</kbd> send · <kbd>Shift</kbd><kbd>Enter</kbd> copy · <kbd>Esc</kbd> cancel</span></div>
+          <span><kbd>Enter</kbd> send · <kbd>Ctrl</kbd><kbd>Enter</kbd> send + submit · <kbd>Shift</kbd><kbd>Enter</kbd> copy · <kbd>Esc</kbd> cancel</span></div>
       </div>
     </div>
   </section>
@@ -320,15 +343,16 @@ Make the hero section mobile friendly and match our design system.
             <div class="field"><label>Hotkey</label><span class="hk"><kbd>Alt</kbd> <kbd>2</kbd></span>
               <span style="color:var(--muted);font-size:12px;margin-left:8px">click, then press keys</span></div>
             <div class="field"><label>Prompt (dictate with <kbd>Ctrl</kbd><kbd>Space</kbd>, or type)</label>
-              <div class="inp area">Use our existing components and Tailwind tokens. Don't add new colors, fonts or spacing values. If a component is missing, tell me first instead of creating one.</div></div>
-            <div class="toggle"><span>Add a space or new line before the prompt if needed</span><span class="sw"></span></div>
-            <div class="toggle"><span>Press Enter after inserting</span><span class="sw off"></span></div>
+              <div class="inp area" style="height:110px">Use our existing components and Tailwind tokens. Don't add new colors, fonts or spacing values. If a component is missing, tell me first instead of creating one.</div></div>
+            <div class="toggle"><span>Insert before</span><span class="select">Space ▾</span></div>
+            <div class="toggle"><span>Press submit after inserting</span><span class="sw off"></span></div>
+            <div style="color:var(--muted);font-size:11.5px;padding-top:6px">Variables: <code>{clipboard}</code> <code>{date}</code> <code>{time}</code></div>
           </div>
         </div>
       </div>
       <div class="tray"><div style="color:var(--muted);font-size:11px;padding:2px 10px">Tray menu</div>
         <div class="cur">New capture <span>Alt+Shift+S</span></div>
-        <div>Macros… <span></span></div>
+        <div>Macros <span>▸</span></div>
         <hr />
         <div>Settings <span></span></div>
         <div>Quit <span></span></div>
@@ -356,6 +380,103 @@ Make the hero section mobile friendly and match our design system.
         </div>
       </div>
       <div class="bigkey" style="right:24px;top:150px"><kbd>Alt</kbd><kbd>2</kbd></div>
+    </div>
+  </section>
+
+  <!-- E1 -->
+  <section>
+    <div class="flow">AI cleanup · optional</div>
+    <h2>Rambled? Press <kbd>Ctrl</kbd> <kbd>K</kbd> to tidy everything into clear instructions</h2>
+    <p class="step">This uses the AI provider set up in Post-processing (Anthropic, OpenAI, Groq or a local Ollama). The number and order of notes is kept, nothing is invented, and <kbd>Ctrl</kbd><kbd>Z</kbd> brings back what you said.</p>
+    <div class="screen" style="height:330px;background:var(--bg)">
+      <div class="split" style="position:absolute;inset:20px;gap:20px">
+        <div class="caption" style="position:relative">
+          <div class="cap-row" style="border-bottom:1px solid var(--line)"><b style="font-size:12px;color:var(--muted)">WHAT YOU SAID</b></div>
+          <div class="note">um so basically this whole top part needs to like work on phones better and also look like the rest of our stuff</div>
+          <div class="note"><span class="pin">1</span>the box and the button aren't the same height, they should both be I think 44</div>
+          <div class="note"><span class="pin">2</span>this title is way too huge on mobile, maybe make it scale down to like 28</div>
+          <div class="note"><span class="pin">3</span>just get rid of this picture thing on small screens</div>
+        </div>
+        <div class="caption" style="position:relative;border-color:var(--accent)">
+          <div class="cap-row" style="border-bottom:1px solid var(--line)"><b style="font-size:12px;color:var(--accent2)">✨ AFTER CLEAN UP</b><span style="margin-left:auto;color:var(--muted);font-size:11.5px"><kbd>Ctrl</kbd><kbd>Z</kbd> to undo</span></div>
+          <div class="note">Make the hero section responsive and consistent with the existing design system.</div>
+          <div class="note"><span class="pin">1</span>Set the email input and the Sign up button to the same height: 44px.</div>
+          <div class="note"><span class="pin">2</span>Scale the headline down on mobile, to a minimum of 28px.</div>
+          <div class="note"><span class="pin">3</span>Hide the hero illustration on small screens.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- D1 -->
+  <section>
+    <div class="flow">Settings · Capture</div>
+    <h2>Choose what Send does, per app</h2>
+    <p class="step">Chat apps and browsers get the image, then the text. Terminals get a saved file path plus the text, which Claude Code and other terminal agents can read. Anything else can be set to copy only.</p>
+    <div class="screen">
+      <div class="win">
+        <div class="win-title"><b>MaximusVibius</b> — Settings</div>
+        <div class="side">
+          <div>General</div>
+          <div class="cur">Capture <span class="new">new</span></div>
+          <div>Macros <span class="new">new</span></div>
+          <div>History</div><div>Models</div><div>Post-processing</div><div>Advanced</div><div>About</div>
+        </div>
+        <div class="content">
+          <h3>Capture</h3>
+          <p class="sub">Hotkey <kbd>Alt</kbd> <kbd>Shift</kbd> <kbd>S</kbd> · click to change</p>
+          <div style="position:absolute;left:28px;top:100px;width:330px">
+            <div class="toggle"><span>Enter does</span><span class="select">Send ▾</span></div>
+            <div class="toggle"><span>Always submit after Send</span><span class="sw off"></span></div>
+            <div class="toggle"><span>Always ✨ clean up on send</span><span class="sw off"></span></div>
+            <div class="toggle"><span>Print caption on the image</span><span class="sw"></span></div>
+            <div class="toggle"><span>Paste text after the image</span><span class="sw"></span></div>
+            <div class="toggle"><span>Also save to folder</span><span class="select">Off ▾</span></div>
+            <div class="toggle"><span>Pause between pastes</span><span class="select">250 ms ▾</span></div>
+            <div class="toggle"><span>Annotation color</span><span><span class="dot" style="display:inline-block;margin:0 3px;background:#ff3b7f;outline:2px solid #fff"></span><span class="dot" style="display:inline-block;margin:0 3px;background:#facc15"></span><span class="dot" style="display:inline-block;margin:0 3px;background:#22c55e"></span></span></div>
+          </div>
+          <div class="medit" style="left:380px;top:100px;padding:12px">
+            <div style="font-weight:600;margin:2px 4px 8px">Paste profiles</div>
+            <table class="t">
+              <tr><th>App</th><th>Send as</th></tr>
+              <tr><td>Any other app</td><td><span class="pill">Image + text</span></td></tr>
+              <tr><td>WindowsTerminal.exe</td><td><span class="pill">File path + text</span></td></tr>
+              <tr><td>pwsh.exe</td><td><span class="pill">File path + text</span></td></tr>
+              <tr><td>cmd.exe</td><td><span class="pill">File path + text</span></td></tr>
+              <tr><td>wezterm-gui.exe</td><td><span class="pill">File path + text</span></td></tr>
+              <tr><td>Slack.exe</td><td><span class="pill">Copy only</span></td></tr>
+            </table>
+            <div style="display:flex;gap:10px;margin-top:12px">
+              <div class="madd" style="flex:1;padding:8px">＋ Add app</div>
+              <div class="madd" style="flex:1;padding:8px">◎ Pick a running app</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- D2 -->
+  <section>
+    <div class="flow">History · Captures</div>
+    <h2>Every capture is saved. Send it again, copy it, or re-annotate it</h2>
+    <p class="step">Captures sit next to your dictations in History. Starred items are kept forever, and the rest follow your history limit.</p>
+    <div class="screen">
+      <div class="win">
+        <div class="win-title"><b>MaximusVibius</b> — Settings</div>
+        <div class="side">
+          <div>General</div><div>Capture</div><div>Macros</div>
+          <div class="cur">History</div><div>Models</div><div>Post-processing</div><div>Advanced</div><div>About</div>
+        </div>
+        <div class="content">
+          <h3>History</h3>
+          <div style="margin-top:14px"><span class="tabs"><span>Dictations</span><span class="on">Captures</span></span></div>
+          <div class="grid" id="hgrid"></div>
+          <div class="menu" style="left:440px;top:300px">
+            <div class="cur">Send again…</div><div>Copy image</div><div>Copy text</div><div>Open in editor</div><div>Show in folder</div><div style="color:#f87171">Delete</div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 </main>
@@ -406,6 +527,24 @@ Make the hero section mobile friendly and match our design system.
           <b>3</b> Hide illustration below 768px &nbsp; <b>4</b> Smaller note, left aligned</div>
       </div>
     </div>`;
+
+  // History grid thumbnails.
+  const shot = (x, y, w, h, cw) => {
+    const k = cw / w;
+    return `<div class="crop" style="width:${cw}px;height:${h * k}px"><div style="position:absolute;left:0;top:0;width:960px;height:600px;transform:scale(${k});transform-origin:0 0">
+      <div style="position:absolute;left:${-x}px;top:${-y}px;width:960px;height:600px">${site()}</div></div></div>`;
+  };
+  const items = [
+    [56, 96, 864, 300, "Make the hero section mobile friendly…", "4 notes · Claude · 2 min ago", "★"],
+    [68, 280, 482, 100, "Stack the sign-up row on mobile…", "Cursor · 9 min ago", ""],
+    [560, 50, 400, 120, "Nav links need more spacing…", "Terminal (path) · 1 h ago", ""],
+    [60, 100, 520, 120, "Headline font should be Inter Tight…", "ChatGPT · yesterday", "★"],
+    [600, 100, 320, 270, "Replace this card with a code preview…", "2 notes · Claude · yesterday", ""],
+    [60, 400, 640, 60, "Logo strip should scroll on mobile…", "Copied · Mon", ""],
+  ];
+  document.getElementById("hgrid").innerHTML = items.map(([x, y, w, h, cap, meta, star], i) => `
+    <div class="cardc${i === 1 ? " cur" : ""}"><div style="height:96px;overflow:hidden;background:#fff;display:flex;align-items:center">${shot(x, y, w, h, 222)}</div>
+      <div class="meta"><div style="display:flex;justify-content:space-between"><b style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${cap}</b><span style="color:#facc15">${star}</span></div><p>${meta}</p></div></div>`).join("");
 </script>
 </body>
 </html>
