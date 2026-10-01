@@ -14,6 +14,32 @@ so macOS/Linux stay possible.
 
 Mockups: [`docs/mockups/README.md`](mockups/README.md) (screenshots) and [`docs/mockups/workflow.html`](mockups/workflow.html) (live, open in a browser).
 
+## Priorities
+
+**Phase 1: build now.** This is the core loop: capture → annotate → speak → paste, plus macros.
+| In | Notes |
+|---|---|
+| Rebrand, CPU-only build, Canary 180M default | No Vulkan SDK needed. Smaller and lighter. |
+| F2 Capture, F3 Editor (box, arrow, pin), F4 Voice in editor | All new code. |
+| F5 AI cleanup | Reuses Handy's post-processing. Mostly UI. |
+| F6 Send with paste profiles, F7 Auto-submit | New paste sequence. The submit key comes from Handy. |
+| F8 Prompt macros | Reuses Handy's hotkeys and paste. |
+| F9 Starter developer vocabulary | One list added to Handy's custom words. |
+| Tray: *New capture* | One menu item. |
+
+**Phase 2: later.** F10 Capture history, F11 Board, project vocabulary import,
+onboarding practice step, tray Macros submenu, CI installer, and our own updater.
+
+**What's already done by Handy:** dictation, speech models, hotkey recording,
+paste/clipboard handling, AI post-processing, custom words, auto-submit,
+settings storage, tray, and the dictation history.
+**What's new code:** the capture window, the annotation editor, the image +
+text paste sequence, paste profiles, macros, and (Phase 2) the board.
+
+**Time:** Phase 1 is about 1–2 days of build work, plus your hands-on testing
+on Windows. The first compile takes roughly 15–30 minutes, and later ones are
+incremental.
+
 **Contents:** 1 Features · 2 Hotkeys · 3 Architecture · 4 Data model ·
 5 Pipelines · 6 Settings & UI · 7 Lightweight budgets · 8 Build environment ·
 9 Testing · 10 Packaging & release · 11 Upstream sync · 12 Risks ·
@@ -266,7 +292,7 @@ same board copies as one sheet image that pastes into ChatGPT.
 - **Tray** additions: *New capture* (with its hotkey), *Open board*, a *Macros*
   submenu, and *Copy last capture text*.
 - **Onboarding:** Handy's steps (microphone permission, model download), with
-  **Canary 180M Flash** (139 MB) pre-selected, then one new step: a hotkey card
+  **Canary 180M Flash** (218 MB) pre-selected, then one new step: a hotkey card
   and a "Try it: capture this window" practice capture.
 - **Branding:** name, `com.bay714.maximusvibius` identifier (a separate data
   folder, so it can sit beside a real Handy install), icons, tray tooltip,
@@ -726,7 +752,7 @@ can be built in parallel.
 - [ ] Budgets (§7) are met, or the gaps are written down.
 - [ ] Windows CI build, own updater key, first tagged release `v0.1.0`.
 
-**Estimate:** about 15–20 working days for one developer, end to end (the Board adds 3–4).
+**Order:** Phase 1 items are Foundation → Capture core → Editor → Voice and AI → Output → Macros → Vocabulary. Phase 2 items are Board, History, and the Release items.
 
 ---
 
