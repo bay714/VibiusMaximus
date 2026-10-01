@@ -12,7 +12,7 @@ adds the capture editor, prompt macros, and the glue that makes them one
 workflow. **Windows first**; anything Windows-only sits behind `#[cfg(windows)]`
 so macOS/Linux stay possible.
 
-Mockups: [`docs/mockups/workflow.html`](mockups/workflow.html), open in a browser.
+Mockups: [`docs/mockups/README.md`](mockups/README.md) (screenshots) and [`docs/mockups/workflow.html`](mockups/workflow.html) (live, open in a browser).
 
 **Contents:** 1 Features · 2 Hotkeys · 3 Architecture · 4 Data model ·
 5 Pipelines · 6 Settings & UI · 7 Lightweight budgets · 8 Build environment ·
