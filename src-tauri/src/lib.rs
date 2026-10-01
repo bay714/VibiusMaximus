@@ -94,7 +94,63 @@ fn build_console_filter() -> env_filter::Filter {
     builder.build()
 }
 
+/// Build the settings window. MaximusVibius destroys it on close to free its
+/// web view, so this also runs whenever the window is reopened from the tray.
+fn build_main_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow> {
+    // Create main window programmatically so we can set data_directory
+    // for portable mode (redirects WebView2 cache to portable Data dir)
+    let mut win_builder =
+        tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("/".into()))
+            .title("MaximusVibius")
+            .inner_size(680.0, 570.0)
+            .min_inner_size(680.0, 570.0)
+            .resizable(true)
+            .maximizable(true)
+            .visible(false);
+
+    if let Some(data_dir) = portable::data_dir() {
+        win_builder = win_builder.data_directory(data_dir.join("webview"));
+    }
+
+    let main_window = win_builder.build()?;
+
+    // Disable WebView2 browser accelerators (F5, F6, Ctrl+F, F12, ...).
+    // A settings window has no use for them, and pressing F6 while
+    // recording a shortcut was reported to turn the whole window white
+    // (cjpais/Handy#1940), likely by triggering WebView2 focus cycling.
+    // DevTools stays enabled; only the F12 accelerator is lost.
+    #[cfg(target_os = "windows")]
+    {
+        let _ = main_window.with_webview(|webview| unsafe {
+            use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Settings3;
+            use windows::core::Interface;
+
+            let result = webview
+                .controller()
+                .CoreWebView2()
+                .and_then(|core| core.Settings())
+                .and_then(|settings| settings.cast::<ICoreWebView2Settings3>())
+                .and_then(|settings| settings.SetAreBrowserAcceleratorKeysEnabled(false));
+
+            if let Err(error) = result {
+                log::warn!("Failed to disable WebView2 browser accelerators: {error}");
+            }
+        });
+    }
+
+    Ok(main_window)
+}
+
 fn show_main_window(app: &AppHandle) {
+    if app.get_webview_window("main").is_none() {
+        match build_main_window(app) {
+            Ok(_) => {
+                #[cfg(any(target_os = "windows", target_os = "macos"))]
+                shortcut::apply_window_theme(app, get_settings(app).theme);
+            }
+            Err(e) => log::error!("Failed to recreate main window: {}", e),
+        }
+    }
     if let Some(main_window) = app.get_webview_window("main") {
         if let Err(e) = main_window.unminimize() {
             log::error!("Failed to unminimize webview window: {}", e);
@@ -939,48 +995,7 @@ pub fn run(cli_args: CliArgs) {
                 return Ok(());
             }
 
-            // Create main window programmatically so we can set data_directory
-            // for portable mode (redirects WebView2 cache to portable Data dir)
-            let mut win_builder =
-                tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("/".into()))
-                    .title("MaximusVibius")
-                    .inner_size(680.0, 570.0)
-                    .min_inner_size(680.0, 570.0)
-                    .resizable(true)
-                    .maximizable(true)
-                    .visible(false);
-
-            if let Some(data_dir) = portable::data_dir() {
-                win_builder = win_builder.data_directory(data_dir.join("webview"));
-            }
-
-            // Only used on Windows, to disable WebView2 browser accelerators.
-            #[cfg_attr(not(target_os = "windows"), allow(unused_variables))]
-            let main_window = win_builder.build()?;
-
-            // Disable WebView2 browser accelerators (F5, F6, Ctrl+F, F12, ...).
-            // A settings window has no use for them, and pressing F6 while
-            // recording a shortcut was reported to turn the whole window white
-            // (cjpais/Handy#1940), likely by triggering WebView2 focus cycling.
-            // DevTools stays enabled; only the F12 accelerator is lost.
-            #[cfg(target_os = "windows")]
-            {
-                let _ = main_window.with_webview(|webview| unsafe {
-                    use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Settings3;
-                    use windows::core::Interface;
-
-                    let result = webview
-                        .controller()
-                        .CoreWebView2()
-                        .and_then(|core| core.Settings())
-                        .and_then(|settings| settings.cast::<ICoreWebView2Settings3>())
-                        .and_then(|settings| settings.SetAreBrowserAcceleratorKeysEnabled(false));
-
-                    if let Err(error) = result {
-                        log::warn!("Failed to disable WebView2 browser accelerators: {error}");
-                    }
-                });
-            }
+            build_main_window(app.handle())?;
 
             let mut settings = get_settings(app.handle());
 
@@ -1058,6 +1073,18 @@ pub fn run(cli_args: CliArgs) {
         })
         .on_window_event(|window, event| match event {
             tauri::WindowEvent::CloseRequested { api, .. } => {
+                // MaximusVibius: on Windows, let the settings window actually close
+                // (destroying its web view) when the tray can bring it back. Handy
+                // only hides it, which keeps the web view's memory in use.
+                #[cfg(target_os = "windows")]
+                {
+                    let settings = get_settings(window.app_handle());
+                    let tray_available =
+                        settings.show_tray_icon && !window.app_handle().state::<CliArgs>().no_tray;
+                    if window.label() == "main" && tray_available {
+                        return;
+                    }
+                }
                 api.prevent_close();
                 let _res = window.hide();
 
@@ -1110,6 +1137,11 @@ pub fn run(cli_args: CliArgs) {
                 tray::recreate_tray_icon(app);
             }
             show_main_window(app);
+        }
+        // Closing the settings window must not quit the tray app; explicit
+        // quits (app.exit) carry an exit code and still go through.
+        tauri::RunEvent::ExitRequested { code: None, api, .. } => {
+            api.prevent_exit();
         }
         // Teardown transcribe.cpp before exit
         tauri::RunEvent::Exit => {

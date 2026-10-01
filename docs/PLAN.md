@@ -20,7 +20,8 @@ Mockups: [`docs/mockups/README.md`](mockups/README.md) (screenshots) and [`docs/
 | In | Notes |
 |---|---|
 | Rebrand, CPU-only build, Canary 180M default | No Vulkan SDK needed. Smaller and lighter. |
-| F2 Capture, F3 Editor (box, arrow, pin), F4 Voice in editor | All new code. |
+| F2 Capture, F3 Editor (Excalidraw + Pin), F4 Voice in editor | xcap and Excalidraw do the heavy lifting; new code is the glue. |
+| Lightweight rules (§2a) | Settings window destroyed on close, model unload at 2 min, on-demand windows. |
 | F5 AI cleanup | Reuses Handy's post-processing. Mostly UI. |
 | F6 Send with paste profiles, F7 Auto-submit | New paste sequence. The submit key comes from Handy. |
 | F8 Prompt macros | Reuses Handy's hotkeys and paste. |
@@ -79,7 +80,11 @@ the selection's handles to adjust it.
   pin. It flips above the selection when there's no room below.
 - Tool keys are plain letters when no text field has focus, and need `Alt`
   (`Alt+B`) while typing.
-- All drawing is a small custom SVG layer. No canvas library.
+- The editor is **Excalidraw** (MIT), embedded, with the screenshot as a locked
+  background image. Its rectangle, arrow, text, undo/redo and colour tools are
+  used as-is. The only new tool is **Pin**: a numbered circle placed with
+  Excalidraw's API, plus its note row. Excalidraw loads only when the capture
+  window opens (see §2a).
 
 **Done when:** you can place, move, delete, undo and redo boxes, arrows and 10+
 pins, and the numbering stays correct.
@@ -215,17 +220,18 @@ images (for example five alternatives ChatGPT generated, saved to a folder), and
 text, laid out next to each other. Quick Send (F6) stays the same. The Board is
 for when one capture isn't enough.
 
-**Layout: structured, not freeform.** A board is a vertical list of
-**sections**. Each section has an optional title, a row or grid of images, a
-note under each image, and a text box. A **Prompt** box at the top holds the
-overall request. Everything snaps into place, so images always line up with
-their text, and the order on screen is the order the AI reads. A freeform
-canvas (tldraw/Excalidraw style) was considered and rejected: it adds about
-1 MB+ of JS, and freeform positions don't turn into an ordered prompt.
+**Layout: the same Excalidraw canvas as the editor.** You place images and text
+boxes freely, and Excalidraw's own align, distribute, group and **frame** tools
+keep them tidy. A **Prompt** text box is pinned at the top. A **frame** groups an
+image with its notes (for example, "Options" holding five images).
 
-**Labels.** Every image gets a label the text can refer to. By default images
-are numbered across the board (Image 1, 2, 3…). A section can switch to
-**Options** labels (A, B, C…), which suits a set of alternatives.
+**Reading order.** For Send, the board is read top to bottom, then left to
+right, by frame, then by element. That turns the canvas into an ordered list
+of images and text.
+
+**Labels.** Every image gets a small label badge the text can refer to. By
+default images are numbered (Image 1, 2, 3…). A frame can switch to **Options**
+labels (A, B, C…), which suits a set of alternatives.
 
 **Adding images:**
 - From a capture: **`Alt+Enter`** in the capture editor sends it to the board
@@ -242,9 +248,8 @@ are numbered across the board (Image 1, 2, 3…). A section can switch to
   are copied into the board, so moving or deleting the originals later doesn't
   break it.
 
-**Editing:** drag to reorder images and sections, or move an image to another
-section. Double-click an image to open it in the capture editor and add pins,
-boxes or arrows. Delete removes an item, with undo. Every text field takes
+**Editing:** everything is ordinary Excalidraw: move, resize, align, and draw
+boxes, arrows and pins straight onto any image. Delete removes an item, with undo. Every text field takes
 dictation (`Ctrl+Space`), and `Ctrl+K` runs AI cleanup on the whole board. The
 board saves automatically.
 
@@ -330,6 +335,27 @@ same board copies as one sheet image that pastes into ChatGPT.
 
 All global hotkeys can be changed in Settings → Shortcuts.
 
+## 2a. Lightweight rules (non-negotiable)
+
+The goal is an app you forget is running: **0% CPU and minimal memory while
+idle.** Anything not in use is not loaded.
+
+| What | Rule |
+|---|---|
+| **Idle state** | Only the Rust process, the tray icon and Handy's small recording overlay. No settings window, no capture/board window, no speech model in memory, no timers or polling. |
+| **Settings window** | Destroyed when closed (Handy only hides it, keeping its web view in memory). Recreated from the tray, which takes under a second. |
+| **Capture window** | Created when the hotkey is pressed, destroyed as soon as you send or cancel. "Keep warm" for faster repeat snaps is opt-in. |
+| **Board window** | Same: exists only while open. The inbox folder is checked only while it's open. |
+| **Excalidraw** | A separate code chunk loaded only by the capture and board windows. It never loads in the settings window or the overlay. Fonts and assets are bundled locally, so it never fetches from the internet. |
+| **Speech model** | Loaded on the first dictation and unloaded after **2 minutes** idle (Handy's default is 5). Canary 180M reloads fast. |
+| **GPU** | No GPU backend (no Vulkan). Nothing initialises graphics drivers for speech. |
+| **Screenshot frame** | Kept in memory only while the capture window is open, then dropped. |
+| **Background work** | None. No file watchers, no update checks (off), no analytics. AI cleanup calls happen only when you ask. |
+
+**Checked against Task Manager** before every release: idle CPU 0%, idle memory
+no higher than stock Handy with its settings window closed, and memory back to
+the idle level within a few seconds of closing the capture or board window.
+
 ---
 
 ## 3. Architecture
@@ -345,7 +371,7 @@ All global hotkeys can be changed in Settings → Shortcuts.
 │ vibe/                                                                      NEW       │
 │   mod.rs        init, state registration, commands                                   │
 │   capture.rs    xcap grab, CaptureState {frame, monitor, target}, capture:// scheme  │
-│   window.rs     create/show/hide/destroy capture window, 60 s warm timer             │
+│   window.rs     create on hotkey, destroy on close (no warm timer by default)        │
 │   target.rs     foreground HWND + process name, restore focus (Windows)              │
 │   output.rs     compose text, save PNG, paste profiles, send sequence                │
 │   clip.rs       clipboard snapshot/restore, image write (CF_DIBV5 + "PNG")           │
@@ -367,7 +393,7 @@ All global hotkeys can be changed in Settings → Shortcuts.
 │   index.html, main.tsx      second Vite entry (like overlay/)                        │
 │   Selector.tsx              crosshair, drag, window/monitor pick                     │
 │   Editor.tsx                toolbar, caption bar, notes, keyboard map                │
-│   Annotations.tsx           SVG shapes + hit testing          shapes.ts (model, undo)│
+│   ExcalidrawHost.tsx        lazy-loaded Excalidraw, locked background, Pin tool     │
 │   exportPng.ts              composite to canvas at physical px → PNG bytes           │
 │   useDictation.ts           listens to vibe://dictation + stream events              │
 │ board/                                                                    NEW        │
@@ -429,7 +455,7 @@ pub struct CaptureSettings {
     pub save_folder: Option<PathBuf>,      // None
     pub include_path_in_text: bool,        // true (only when save_folder is set)
     pub paste_gap_ms: u64,                 // 250
-    pub keep_warm_secs: u64,               // 60
+    pub keep_warm_secs: u64,               // 0 = destroy on close (default)
     pub default_color: AnnotColor,         // Pink
     pub profiles: Vec<PasteProfile>,       // defaults in §1 F6
 }
@@ -592,13 +618,12 @@ Measured against stock Handy on the same machine (recorded during the toolchain 
 |---|---|
 | Installer size | Handy + ≤ 3 MB |
 | Idle RAM (no capture window, model unloaded) | Handy + ≤ 5 MB |
-| Capture window JS bundle | ≤ 150 KB gzipped |
-| Board window JS bundle | ≤ 120 KB gzipped (no drag-and-drop or canvas library) |
+| Capture/board JS | Excalidraw chunk loaded only when those windows open. Settings/overlay bundles must not grow. |
 | Hotkey → frozen frame visible | ≤ 150 ms (cold), ≤ 60 ms (warm) |
 | Enter → image pasted | ≤ 300 ms (excluding the paste gap) |
-| Capture window after close | destroyed after 60 s (configurable) |
+| Capture/board window after close | destroyed immediately (keep-warm is opt-in) |
 
-How we stay in budget: no canvas or drawing library, one on-demand webview,
+How we stay in budget: Excalidraw only in on-demand windows, windows destroyed on close,
 the frame served from memory, a small default model, Handy's model unloading
 left on, and no new background processes.
 
@@ -635,7 +660,7 @@ Before each commit: `bun run lint`, `bun run format:check`, `cargo clippy`,
 - board import: format detection, thumbnail size, copy-in, cascade delete
 - board send order and the file-path profile block
 
-**Frontend:** unit tests for `shapes.ts` (undo/redo, pin renumbering) and `compile.ts` (labels, numbering across sections, Options letters) with Bun's
+**Frontend:** unit tests for the Pin tool (numbering, renumber on delete) and `compile.ts` (labels, numbering across sections, Options letters) with Bun's
 test runner, like Handy's existing `keyboard.test.ts`. Extend Handy's
 Playwright `app.spec.ts` for the Capture and Macros settings pages.
 
@@ -715,8 +740,8 @@ can be built in parallel.
 - [ ] `Selector.tsx`: drag, window select, monitor select, DPI-correct crop. *(F2 check)*
 
 **Editor** (needs Capture core)
-- [ ] `shapes.ts` model with undo/redo and pin renumbering, plus tests.
-- [ ] `Annotations.tsx` + `Editor.tsx`: toolbar, caption bar, notes, keyboard map. *(F3 check)*
+- [ ] `ExcalidrawHost.tsx`: lazy-load, local fonts and assets, locked background, Pin tool, plus tests.
+- [ ] `Editor.tsx`: caption bar, notes, keyboard map around Excalidraw. *(F3 check)*
 - [ ] `exportPng.ts`: composite with caption band at physical resolution.
 
 **Voice and AI** (needs Editor)
