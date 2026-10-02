@@ -71,6 +71,9 @@ regex = "1"
 whatlang = "0.16"
 isolang = "2"
 chrono = "0.4"
+# MaximusVibius: screen capture and PNG decoding for the capture window.
+xcap = "0.9.8"
+image = { version = "0.25", default-features = false, features = ["png"] }
 rusqlite = { version = "0.37", features = ["bundled"] }
 tar = "0.4.44"
 flate2 = "1.0"

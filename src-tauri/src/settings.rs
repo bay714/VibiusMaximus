@@ -898,6 +898,17 @@ pub fn get_default_settings() -> AppSettings {
         },
     );
     bindings.insert(
+        "capture".to_string(),
+        ShortcutBinding {
+            id: "capture".to_string(),
+            name: "Capture Screen".to_string(),
+            description: "Freezes the screen so you can select, annotate and send a region."
+                .to_string(),
+            default_binding: "alt+shift+s".to_string(),
+            current_binding: "alt+shift+s".to_string(),
+        },
+    );
+    bindings.insert(
         "cancel".to_string(),
         ShortcutBinding {
             id: "cancel".to_string(),

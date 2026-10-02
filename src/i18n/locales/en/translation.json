@@ -179,6 +179,10 @@
           "transcribe_with_post_process": {
             "name": "Post-Processing Hotkey",
             "description": "Optional: A dedicated hotkey that always applies AI post-processing to your transcription."
+          },
+          "capture": {
+            "name": "Capture Shortcut",
+            "description": "Freeze the screen, select a region, annotate it and send it to the app you were using."
           }
         },
         "errors": {
@@ -714,5 +718,20 @@
     "learnMore": "How to fix",
     "recorderBlocked": "Can't record shortcuts right now — macOS Secure Input is blocking key events. Resolve the Secure Input warning first.",
     "dismiss": "Dismiss"
+  },
+  "vibe": {
+    "capture": {
+      "selectHint": "Drag to select · Ctrl+A for the whole screen · Esc to cancel",
+      "captionPlaceholder": "Say or type what to change… (hold Ctrl+Space to dictate)",
+      "notePlaceholder": "Note for pin {{n}}…",
+      "pin": "Pin",
+      "pinHint": "Click the screenshot to drop numbered pins",
+      "send": "Send",
+      "sendSubmit": "Send + submit",
+      "copy": "Copy",
+      "cancel": "Cancel",
+      "sending": "Sending…",
+      "error": "Couldn't send: {{error}}"
+    }
   }
 }

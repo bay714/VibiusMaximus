@@ -836,6 +836,14 @@ impl ShortcutAction for TranscribeAction {
                                         return;
                                     }
 
+                                    // MaximusVibius: dictation while the capture editor is
+                                    // open fills its focused field instead of pasting.
+                                    if crate::vibe::capture::deliver_dictation(&ah_clone, &final_text) {
+                                        utils::hide_recording_overlay(&ah_clone);
+                                        set_tray_state(&ah_clone, TrayIconState::Idle);
+                                        return;
+                                    }
+
                                     match utils::paste(final_text, ah_clone.clone()) {
                                         Ok(()) => debug!(
                                             "Text pasted successfully in {:?}",
@@ -955,6 +963,10 @@ pub static ACTION_MAP: Lazy<HashMap<String, Arc<dyn ShortcutAction>>> = Lazy::ne
     map.insert(
         "cancel".to_string(),
         Arc::new(CancelAction) as Arc<dyn ShortcutAction>,
+    );
+    map.insert(
+        "capture".to_string(),
+        Arc::new(crate::vibe::capture::CaptureAction) as Arc<dyn ShortcutAction>,
     );
     map.insert(
         "test".to_string(),

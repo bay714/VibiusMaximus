@@ -24,6 +24,7 @@ mod transcription_coordinator;
 mod tray;
 mod tray_i18n;
 mod utils;
+mod vibe;
 
 pub use cli::CliArgs;
 #[cfg(debug_assertions)]
@@ -835,7 +836,16 @@ pub fn run(cli_args: CliArgs) {
         )
         .expect("Failed to export typescript bindings");
 
-    let invoke_handler = specta_builder.invoke_handler();
+    let specta_handler = specta_builder.invoke_handler();
+    // MaximusVibius commands move raw bytes, so they bypass tauri-specta.
+    let vibe_handler = vibe::invoke_handler();
+    let invoke_handler = move |invoke: tauri::ipc::Invoke<tauri::Wry>| {
+        if vibe::is_vibe_command(invoke.message.command()) {
+            vibe_handler(invoke)
+        } else {
+            specta_handler(invoke)
+        }
+    };
 
     // The headless path must run as its own instance (see the single-instance
     // note below), not forward to an already-running app.
@@ -942,6 +952,7 @@ pub fn run(cli_args: CliArgs) {
             Some(vec![]),
         ))
         .manage(cli_args.clone())
+        .manage(vibe::capture::CaptureState::default())
         .setup(move |app| {
             #[cfg(target_os = "windows")]
             log::info!(
