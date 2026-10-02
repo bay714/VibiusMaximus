@@ -1,0 +1,23 @@
+{
+  "name": "vibiusmaximus-video",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Motion-graphic how-to video for VibiusMaximus, built with Remotion",
+  "type": "module",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "stills": "remotion still src/index.ts HowTo out/stills/scene1-hook.png --frame=125 && remotion still src/index.ts HowTo out/stills/scene3-capture.png --frame=835 && remotion still src/index.ts HowTo out/stills/scene5-board.png --frame=1380",
+    "render": "remotion render src/index.ts HowTo out/vibiusmaximus-how-to.mp4",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.532",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "remotion": "4.0.532"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.8",
+    "typescript": "5.8.3"
+  }
+}
