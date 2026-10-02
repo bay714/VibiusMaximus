@@ -1,0 +1,85 @@
+{
+  "voice": "en-US-AndrewMultilingualNeural",
+  "vo": [
+    {
+      "id": "01-hook",
+      "start": 0.3,
+      "duration": 4.258
+    },
+    {
+      "id": "02-dictate",
+      "start": 5.3,
+      "duration": 6.635
+    },
+    {
+      "id": "03-capture",
+      "start": 12.3,
+      "duration": 4.023
+    },
+    {
+      "id": "04-pins",
+      "start": 16.8,
+      "duration": 5.198
+    },
+    {
+      "id": "05-caption",
+      "start": 22.4,
+      "duration": 2.299
+    },
+    {
+      "id": "06-cleanup",
+      "start": 25.6,
+      "duration": 3.788
+    },
+    {
+      "id": "07-send",
+      "start": 30.3,
+      "duration": 4.441
+    },
+    {
+      "id": "08-terminal",
+      "start": 36.1,
+      "duration": 3.318
+    },
+    {
+      "id": "09-board",
+      "start": 40.3,
+      "duration": 5.46
+    },
+    {
+      "id": "10-board-send",
+      "start": 46.4,
+      "duration": 5.355
+    },
+    {
+      "id": "11-macro",
+      "start": 52.3,
+      "duration": 1.933
+    },
+    {
+      "id": "12-macro-2",
+      "start": 54.9,
+      "duration": 2.821
+    },
+    {
+      "id": "13-wall",
+      "start": 59.4,
+      "duration": 2.586
+    },
+    {
+      "id": "14-summary",
+      "start": 65.7,
+      "duration": 5.303
+    },
+    {
+      "id": "15-light",
+      "start": 71.3,
+      "duration": 5.747
+    },
+    {
+      "id": "16-outro",
+      "start": 77.6,
+      "duration": 3.239
+    }
+  ]
+}

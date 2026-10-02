@@ -3,6 +3,7 @@ import { useCurrentFrame } from "remotion";
 import { lerp, pop, ramp, typedWords } from "../anim";
 import { Caret, ChatComposer, ChatWindow } from "../components/ChatWindow";
 import { KeyCombo } from "../components/Keycap";
+import { Sfx } from "../components/Sfx";
 import { Place, Scene } from "../components/Stage";
 import { Waveform } from "../components/Waveform";
 import { C } from "../theme";
@@ -101,6 +102,8 @@ export const S2Dictate: React.FC = () => {
         </Place>
       </div>
       <RecordingPill />
+      <Sfx at={HOLD_AT + 2} name="pop" volume={0.22} />
+      <Sfx at={TEXT_AT} name="drop" volume={0.2} />
       <KeyCombo keys={["Ctrl", "Space"]} at={HOLD_AT} hold={RELEASE - HOLD_AT} />
     </Scene>
   );

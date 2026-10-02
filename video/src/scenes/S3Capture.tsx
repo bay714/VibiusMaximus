@@ -1,5 +1,6 @@
 import React from "react";
 import { KeyCombo } from "../components/Keycap";
+import { Sfx } from "../components/Sfx";
 import { Scene } from "../components/Stage";
 import { SCENES } from "../timeline";
 import { CaptureStage, T } from "./capture/CaptureStage";
@@ -17,6 +18,13 @@ export const S3Capture: React.FC = () => (
     ]}
   >
     <CaptureStage />
+    <Sfx at={T.freeze} name="shutter" volume={0.45} />
+    <Sfx at={T.editorIn} name="whoosh" volume={0.25} />
+    <Sfx at={T.boxEnd} name="drop" volume={0.18} />
+    {T.pins.map((at) => (
+      <Sfx key={at} at={at} name="pop" volume={0.32} />
+    ))}
+    <Sfx at={T.cleanKey + 4} name="sparkle" volume={0.35} />
     <KeyCombo keys={["Alt", "Shift", "S"]} at={T.combo} hold={22} pos="topRight" />
     <KeyCombo keys={["B"]} at={T.boxKey} hold={8} pos="topRight" />
     <KeyCombo keys={["Alt", "P"]} at={T.pinKey} hold={10} pos="topRight" />

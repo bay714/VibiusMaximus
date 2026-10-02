@@ -116,7 +116,7 @@ export const ChatWindow: React.FC<{
         ))}
       </div>
       <div style={{ flex: 1, position: "relative", display: "flex", flexDirection: "column" }}>
-        <div style={{ flex: 1, position: "relative", padding: "24px 48px 0" }}>{children}</div>
+        <div style={{ flex: 1, position: "relative", overflow: "hidden", padding: "24px 48px 0" }}>{children}</div>
         <div style={{ padding: "12px 40px 22px" }}>{composer}</div>
         {overlay}
       </div>

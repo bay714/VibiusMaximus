@@ -7,8 +7,10 @@
   "scripts": {
     "studio": "remotion studio src/index.ts",
     "stills": "remotion still src/index.ts HowTo out/stills/scene1-hook.png --frame=125 && remotion still src/index.ts HowTo out/stills/scene3-capture.png --frame=835 && remotion still src/index.ts HowTo out/stills/scene5-board.png --frame=1380",
-    "render": "remotion render src/index.ts HowTo out/vibiusmaximus-how-to.mp4",
-    "typecheck": "tsc --noEmit"
+    "render": "remotion render src/index.ts HowTo out/raw.mp4 && node scripts/master.mjs out/raw.mp4 out/vibiusmaximus-how-to.mp4",
+    "typecheck": "tsc --noEmit",
+    "audio": ".venv/Scripts/python audio/build.py all",
+    "audio:vo": ".venv/Scripts/python audio/build.py vo"
   },
   "dependencies": {
     "@remotion/cli": "4.0.532",

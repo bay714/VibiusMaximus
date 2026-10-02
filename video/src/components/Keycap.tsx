@@ -2,6 +2,7 @@ import React from "react";
 import { interpolateColors, useCurrentFrame } from "remotion";
 import { pop, ramp } from "../anim";
 import { C, FONT } from "../theme";
+import { Sfx } from "./Sfx";
 
 /** A single key. `press` 0→1 pushes it down and lights it violet. */
 export const Keycap: React.FC<{ label: string; size?: number; press?: number }> = ({
@@ -69,7 +70,8 @@ export const KeyCombo: React.FC<{
   const f = useCurrentFrame();
   const start = at - 8;
   const end = at + hold + 18;
-  if (f < start || f > end) return null;
+  const clicks = keys.map((k, i) => <Sfx key={`click${i}`} at={at + i * 3} name="click" volume={0.32} />);
+  if (f < start || f > end) return <>{clicks}</>;
 
   const enter = pop(f, start, { damping: 15, stiffness: 220, mass: 0.7 });
   const exit = ramp(f, at + hold + 6, end);
@@ -86,7 +88,9 @@ export const KeyCombo: React.FC<{
   const centred = pos === "top" || pos === "bottom";
 
   return (
-    <div
+    <>
+      {clicks}
+      <div
       style={{
         position: "absolute",
         ...place,
@@ -114,6 +118,7 @@ export const KeyCombo: React.FC<{
           </React.Fragment>
         );
       })}
-    </div>
+      </div>
+    </>
   );
 };

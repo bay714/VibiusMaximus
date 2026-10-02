@@ -2,13 +2,14 @@ import React from "react";
 import { useCurrentFrame } from "remotion";
 import { pop, ramp } from "../anim";
 import { Keycap } from "../components/Keycap";
+import { Sfx } from "../components/Sfx";
 import { Scene } from "../components/Stage";
 import { Wordmark } from "../components/Wordmark";
 import { C } from "../theme";
 import { SCENES } from "../timeline";
 
-const STATS_OUT = 138;
-const MARK_AT = 150;
+const STATS_OUT = 182;
+const MARK_AT = 195;
 
 const StatCard: React.FC<{ at: number; value: React.ReactNode; label: string; accent: string; size?: number }> = ({
   at,
@@ -64,10 +65,16 @@ export const S7Outro: React.FC = () => {
       dur={SCENES.outro}
       fadeOut={16}
       captions={[
-        { from: 8, to: 134, text: "Lightweight: nothing runs until you need it." },
-        { from: 168, to: 300, text: "Show it. Say it. Paste it." },
+        { from: 8, to: 178, text: "Lightweight: nothing runs until you need it." },
+        { from: 208, to: 330, text: "Show it. Say it. Paste it." },
       ]}
     >
+      {[14, 26, 38].map((at) => (
+        <Sfx key={at} at={at} name="drop" volume={0.35} />
+      ))}
+      {[0, 1, 2, 3].map((i) => (
+        <Sfx key={i} at={MARK_AT + 24 + i * 6} name="pop" volume={0.14} />
+      ))}
       {statsOut < 1 && (
         <div style={{ position: "absolute", inset: 0, opacity: 1 - statsOut, transform: `translateY(${statsOut * -30}px)` }}>
           <div

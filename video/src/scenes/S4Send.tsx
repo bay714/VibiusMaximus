@@ -4,6 +4,7 @@ import { easeInOut, pop, ramp } from "../anim";
 import { AcmeCrop, CLEAN, NOTES } from "../components/AcmePage";
 import { Bubble, Caret, ChatComposer, ChatWindow } from "../components/ChatWindow";
 import { KeyCombo } from "../components/Keycap";
+import { Sfx } from "../components/Sfx";
 import { Place, Scene } from "../components/Stage";
 import { Toast } from "../components/Toast";
 import { Window } from "../components/Window";
@@ -157,6 +158,12 @@ export const S4Send: React.FC = () => {
         </AbsoluteFill>
       )}
       <KeyCombo keys={["Enter"]} at={ENTER} hold={8} pos="topRight" />
+      <Sfx at={ENTER + 6} name="whoosh" volume={0.35} />
+      <Sfx at={IMAGE_AT} name="drop" volume={0.35} />
+      <Sfx at={TEXT_AT + 18} name="chime" volume={0.3} />
+      <Sfx at={CUT - 4} name="whoosh" volume={0.25} />
+      <Sfx at={TERM_PASTE} name="drop" volume={0.25} />
+      <Sfx at={TERM_PASTE + 12} name="chime" volume={0.3} />
       <KeyCombo keys={["Enter"]} at={TERM_ENTER} hold={6} pos="topRight" />
     </Scene>
   );

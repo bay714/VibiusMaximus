@@ -1,6 +1,7 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { lerp, pop, ramp } from "../anim";
+import { Sfx } from "../components/Sfx";
 import { Scene } from "../components/Stage";
 import { Wordmark } from "../components/Wordmark";
 import { C } from "../theme";
@@ -18,6 +19,11 @@ export const S1Hook: React.FC = () => {
 
   return (
     <Scene dur={SCENES.hook} fadeIn={6}>
+      {PHRASES.map((p, i) => (
+        <Sfx key={p} at={6 + i * 15} name="pop" volume={0.18} />
+      ))}
+      <Sfx at={64} name="whoosh" volume={0.3} />
+      <Sfx at={72} name="sparkle" volume={0.18} />
       <AbsoluteFill
         style={{ background: "radial-gradient(800px 420px at 50% 52%, #8b5cf622, transparent 70%)", opacity: mark }}
       />

@@ -1,0 +1,21 @@
+{
+  "voice": "en-US-AndrewMultilingualNeural",
+  "lines": [
+    { "id": "01-hook", "start": 0.3, "text": "Show it. Say it. Paste it. Meet VibiusMaximus." },
+    { "id": "02-dictate", "start": 5.3, "text": "Hold Control Space and just talk. It runs offline, in any app, right where your cursor is." },
+    { "id": "03-capture", "start": 12.3, "text": "Alt Shift S freezes the screen. Drag over what to change." },
+    { "id": "04-pins", "start": 16.8, "text": "Draw a box, then Alt P drops numbered pins. Say a note for each." },
+    { "id": "05-caption", "start": 22.4, "text": "Hold Control Space for the main request." },
+    { "id": "06-cleanup", "start": 25.6, "text": "Rambled? Control K turns it into a clean instruction." },
+    { "id": "07-send", "start": 30.3, "text": "Press Enter. The marked-up image goes into your chat, then the numbered notes." },
+    { "id": "08-terminal", "start": 36.1, "text": "Terminals get a file path instead, ready for Claude Code." },
+    { "id": "09-board", "start": 40.3, "text": "Bigger ask? Alt Shift B opens a board for screenshots, design options and notes." },
+    { "id": "10-board-send", "start": 46.4, "text": "Control Enter sends all six images in order, labelled to match the prompt." },
+    { "id": "11-macro", "start": 52.3, "text": "Mid-message? Press Alt 2," },
+    { "id": "12-macro-2", "start": 54.9, "text": "and a saved prompt lands right at your cursor." },
+    { "id": "13-wall", "start": 59.4, "text": "Got a wall of text back? Type your follow-up," },
+    { "id": "14-summary", "start": 65.7, "text": "then Alt 4 adds your summary prompt. One key, your favourite prompts." },
+    { "id": "15-light", "start": 71.3, "text": "Zero CPU when idle. Windows only when you use them. An eighteen megabyte installer." },
+    { "id": "16-outro", "start": 77.6, "text": "VibiusMaximus. Show it, say it, paste it." }
+  ]
+}

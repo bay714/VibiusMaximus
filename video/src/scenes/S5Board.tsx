@@ -7,6 +7,7 @@ import { Cursor } from "../components/Cursor";
 import { Kbd, KeyCombo } from "../components/Keycap";
 import { Label, OptionTile, type OptionVariant } from "../components/OptionTile";
 import { PinBadge } from "../components/Pin";
+import { Sfx } from "../components/Sfx";
 import { Place, Scene } from "../components/Stage";
 import { Toast } from "../components/Toast";
 import { Window } from "../components/Window";
@@ -380,6 +381,16 @@ export const S5Board: React.FC = () => {
         </AbsoluteFill>
       )}
       <KeyCombo keys={["Alt", "Shift", "B"]} at={OPEN_KEY} hold={14} />
+      <Sfx at={OPEN} name="whoosh" volume={0.35} />
+      <Sfx at={CURRENT_AT} name="drop" volume={0.25} />
+      {OPTIONS.map((o, i) => (
+        <Sfx key={o.v} at={DROP + i * 6} name="drop" volume={0.22} />
+      ))}
+      <Sfx at={OUT} name="whoosh" volume={0.35} />
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <Sfx key={i} at={ATTACH_AT + i * 4} name="pop" volume={0.14} />
+      ))}
+      <Sfx at={TEXT_AT + 20} name="chime" volume={0.3} />
       <KeyCombo keys={["Ctrl", "Enter"]} at={SEND_KEY} hold={10} />
     </Scene>
   );
