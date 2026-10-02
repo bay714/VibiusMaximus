@@ -118,7 +118,9 @@ fn send_blocking(app: &AppHandle, meta: SendMeta, png: Vec<u8>) -> Result<(), St
     }
 
     // Let the target app read the clipboard before restoring it.
-    std::thread::sleep(Duration::from_millis(settings.paste_delay_after_ms.max(200)));
+    std::thread::sleep(Duration::from_millis(
+        settings.paste_delay_after_ms.max(200),
+    ));
     if let Some(text) = saved_text {
         let _ = clipboard.write_text(text);
     }
@@ -132,7 +134,7 @@ fn send_blocking(app: &AppHandle, meta: SendMeta, png: Vec<u8>) -> Result<(), St
     Ok(())
 }
 
-fn paste(enigo_state: &EnigoState) -> Result<(), String> {
+pub(super) fn paste(enigo_state: &EnigoState) -> Result<(), String> {
     let mut enigo = enigo_state.0.lock().map_err(|e| e.to_string())?;
     send_paste_ctrl_v(&mut enigo, PASTE_HOLD_MS)
 }

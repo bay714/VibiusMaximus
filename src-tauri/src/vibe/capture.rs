@@ -36,18 +36,22 @@ pub struct CaptureAction;
 
 impl ShortcutAction for CaptureAction {
     fn start(&self, app: &AppHandle, _binding_id: &str, _shortcut_str: &str) {
-        let app = app.clone();
-        // Grabbing the screen takes tens of milliseconds; keep it off the
-        // shortcut thread.
-        std::thread::spawn(move || {
-            if let Err(e) = start_capture(&app) {
-                error!("Capture failed: {}", e);
-                close(&app);
-            }
-        });
+        begin(app);
     }
 
     fn stop(&self, _app: &AppHandle, _binding_id: &str, _shortcut_str: &str) {}
+}
+
+/// Start a capture (hotkey or tray). Grabbing the screen takes tens of
+/// milliseconds, so it runs off the calling thread.
+pub fn begin(app: &AppHandle) {
+    let app = app.clone();
+    std::thread::spawn(move || {
+        if let Err(e) = start_capture(&app) {
+            error!("Capture failed: {}", e);
+            close(&app);
+        }
+    });
 }
 
 fn start_capture(app: &AppHandle) -> Result<(), String> {
@@ -65,7 +69,10 @@ fn start_capture(app: &AppHandle) -> Result<(), String> {
     let monitor = match xcap::Monitor::from_point(cx, cy) {
         Ok(m) => m,
         Err(e) => {
-            warn!("No monitor at cursor ({}, {}): {}; using the first", cx, cy, e);
+            warn!(
+                "No monitor at cursor ({}, {}): {}; using the first",
+                cx, cy, e
+            );
             xcap::Monitor::all()
                 .map_err(|e| e.to_string())?
                 .into_iter()

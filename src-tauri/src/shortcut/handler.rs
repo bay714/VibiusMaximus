@@ -50,6 +50,14 @@ pub fn handle_shortcut_event(
         return;
     }
 
+    // MaximusVibius prompt macros: `macro:<id>` fires on press.
+    if let Some(macro_id) = binding_id.strip_prefix(crate::vibe::macros::BINDING_PREFIX) {
+        if is_pressed {
+            crate::vibe::macros::fire(app, macro_id);
+        }
+        return;
+    }
+
     let Some(action) = ACTION_MAP.get(binding_id) else {
         warn!(
             "No action defined in ACTION_MAP for shortcut ID '{}'. Shortcut: '{}', Pressed: {}",

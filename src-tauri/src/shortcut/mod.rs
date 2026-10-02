@@ -53,6 +53,8 @@ pub fn init_shortcuts(app: &AppHandle) {
             }
         }
     }
+
+    crate::vibe::on_shortcuts_ready(app);
 }
 
 /// Register the cancel shortcut (called when recording starts)
@@ -492,6 +494,9 @@ fn register_all_shortcuts_for_implementation(
     if !reset_bindings.is_empty() {
         settings::write_settings(app, current_settings);
     }
+
+    // MaximusVibius macro hotkeys aren't in Handy's defaults.
+    crate::vibe::macros::register_all(app);
 
     reset_bindings
 }

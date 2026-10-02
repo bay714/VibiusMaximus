@@ -27,7 +27,10 @@
   left: 0;
   background: #8b5cf6;
   color: #fff;
-  font: 600 11px/1 "Segoe UI", system-ui, sans-serif;
+  font:
+    600 11px/1 "Segoe UI",
+    system-ui,
+    sans-serif;
   padding: 4px 6px;
   border-radius: 4px;
   white-space: nowrap;
@@ -101,7 +104,10 @@
   border-radius: 50%;
   background: #ff3b7f;
   color: #fff;
-  font: 700 11px/22px "Segoe UI", system-ui, sans-serif;
+  font:
+    700 11px/22px "Segoe UI",
+    system-ui,
+    sans-serif;
   text-align: center;
 }
 .vibe-foot {

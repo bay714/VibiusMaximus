@@ -359,6 +359,9 @@ fn initialize_core_logic(app_handle: &AppHandle) {
             "copy_last_transcript" => {
                 tray::copy_last_transcript(app);
             }
+            "vibe_capture" => {
+                vibe::capture::begin(app);
+            }
             "unload_model" => {
                 let transcription_manager = app.state::<Arc<TranscriptionManager>>();
                 if !transcription_manager.is_model_loaded() {
@@ -1151,7 +1154,9 @@ pub fn run(cli_args: CliArgs) {
         }
         // Closing the settings window must not quit the tray app; explicit
         // quits (app.exit) carry an exit code and still go through.
-        tauri::RunEvent::ExitRequested { code: None, api, .. } => {
+        tauri::RunEvent::ExitRequested {
+            code: None, api, ..
+        } => {
             api.prevent_exit();
         }
         // Teardown transcribe.cpp before exit

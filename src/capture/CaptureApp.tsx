@@ -1,4 +1,10 @@
-import React, { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { captureReady, closeCapture, loadFrame } from "./api";
 import type { Crop } from "./Editor";
@@ -13,7 +19,10 @@ interface Rect {
   h: number;
 }
 
-const normalize = (a: { x: number; y: number }, b: { x: number; y: number }): Rect => ({
+const normalize = (
+  a: { x: number; y: number },
+  b: { x: number; y: number },
+): Rect => ({
   x: Math.min(a.x, b.x),
   y: Math.min(a.y, b.y),
   w: Math.abs(a.x - b.x),
@@ -57,7 +66,19 @@ export default function CaptureApp() {
     const out = document.createElement("canvas");
     out.width = width;
     out.height = height;
-    out.getContext("2d")?.drawImage(canvas, Math.round(r.x * sx), Math.round(r.y * sy), width, height, 0, 0, width, height);
+    out
+      .getContext("2d")
+      ?.drawImage(
+        canvas,
+        Math.round(r.x * sx),
+        Math.round(r.y * sy),
+        width,
+        height,
+        0,
+        0,
+        width,
+        height,
+      );
     setCrop({ dataURL: out.toDataURL("image/png"), width, height, scale: sx });
   }, []);
 
@@ -111,7 +132,9 @@ export default function CaptureApp() {
           )}
         </div>
       )}
-      {ready && !rect && <div className="vibe-hint">{t("vibe.capture.selectHint")}</div>}
+      {ready && !rect && (
+        <div className="vibe-hint">{t("vibe.capture.selectHint")}</div>
+      )}
       {crop && (
         <Suspense fallback={null}>
           <Editor crop={crop} />

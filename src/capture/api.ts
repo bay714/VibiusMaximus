@@ -44,3 +44,11 @@ export function formatText(caption: string, notes: string[]): string {
   });
   return lines.filter(Boolean).join("\n");
 }
+
+/** AI cleanup through Handy's post-processing provider. */
+export function cleanupText(
+  caption: string,
+  notes: string[],
+): Promise<{ caption: string; notes: string[] }> {
+  return invoke("vibe_cleanup", { input: { caption, notes } });
+}

@@ -7,14 +7,24 @@ import {
   convertToExcalidrawElements,
   exportToBlob,
 } from "@excalidraw/excalidraw";
-import type { BinaryFileData, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
+import type {
+  BinaryFileData,
+  ExcalidrawImperativeAPI,
+} from "@excalidraw/excalidraw/types";
 import type { FileId } from "@excalidraw/excalidraw/element/types";
 import "@excalidraw/excalidraw/index.css";
-import { closeCapture, formatText, sendCapture, type SendMode } from "./api";
+import {
+  cleanupText,
+  closeCapture,
+  formatText,
+  sendCapture,
+  type SendMode,
+} from "./api";
 
 // Fonts are bundled under /public/excalidraw so Excalidraw never fetches them
 // from a CDN.
-(window as unknown as { EXCALIDRAW_ASSET_PATH: string }).EXCALIDRAW_ASSET_PATH = "/excalidraw/";
+(window as unknown as { EXCALIDRAW_ASSET_PATH: string }).EXCALIDRAW_ASSET_PATH =
+  "/excalidraw/";
 
 export interface Crop {
   dataURL: string;
@@ -33,6 +43,17 @@ interface Note {
 type Skeleton = Parameters<typeof convertToExcalidrawElements>[0];
 
 const PIN_COLOR = "#ff3b7f";
+// Key names and symbols, not translatable text.
+const KEYS = {
+  cleanup: "Ctrl+K",
+  pin: "Alt+P",
+  cancel: "Esc",
+  copy: "Shift+Enter",
+  sendSubmit: "Ctrl+Enter",
+  send: "Enter",
+} as const;
+const PIN_ICON = "①";
+const SPARKLE = "✨";
 const FILE_ID = "vibe-capture" as FileId;
 const isTextField = (el: Element | null) =>
   el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement;
@@ -45,6 +66,11 @@ export default function Editor({ crop }: { crop: Crop }) {
   const [pinMode, setPinMode] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cleaning, setCleaning] = useState(false);
+  const [beforeCleanup, setBeforeCleanup] = useState<{
+    caption: string;
+    notes: Note[];
+  } | null>(null);
   const fields = useRef(new Map<string, HTMLInputElement>());
   const lastField = useRef<string>("caption");
   const pinModeRef = useRef(pinMode);
@@ -95,7 +121,11 @@ export default function Editor({ crop }: { crop: Crop }) {
   );
 
   useEffect(() => {
-    if (api) setTimeout(() => api.scrollToContent(undefined, { fitToContent: true }), 50);
+    if (api)
+      setTimeout(
+        () => api.scrollToContent(undefined, { fitToContent: true }),
+        50,
+      );
   }, [api]);
 
   // Dictation (Ctrl+Space) lands in the last focused field instead of being pasted.
@@ -103,13 +133,22 @@ export default function Editor({ crop }: { crop: Crop }) {
     const unlisten = listen<string>("vibe://dictation", ({ payload }) => {
       const key = lastField.current;
       const el = fields.current.get(key);
-      const current = key === "caption" ? caption : (notes.find((n) => n.pinId === key)?.text ?? "");
-      const at = el && document.activeElement === el ? (el.selectionStart ?? current.length) : current.length;
+      const current =
+        key === "caption"
+          ? caption
+          : (notes.find((n) => n.pinId === key)?.text ?? "");
+      const at =
+        el && document.activeElement === el
+          ? (el.selectionStart ?? current.length)
+          : current.length;
       const before = current.slice(0, at);
       const sep = before && !/\s$/.test(before) ? " " : "";
       const next = `${before}${sep}${payload.trim()}${current.slice(at)}`;
       if (key === "caption") setCaption(next);
-      else setNotes((ns) => ns.map((n) => (n.pinId === key ? { ...n, text: next } : n)));
+      else
+        setNotes((ns) =>
+          ns.map((n) => (n.pinId === key ? { ...n, text: next } : n)),
+        );
     });
     return () => {
       unlisten.then((f) => f());
@@ -159,30 +198,111 @@ export default function Editor({ crop }: { crop: Crop }) {
     });
   }, [api, addPin]);
 
-  // A deleted pin removes its note.
+  // A deleted pin removes its note, and the remaining pins are renumbered.
   const onChange = useCallback(
-    (elements: readonly { id: string; isDeleted: boolean; customData?: Record<string, unknown> }[]) => {
+    (
+      elements: readonly {
+        id: string;
+        isDeleted: boolean;
+        customData?: Record<string, unknown>;
+      }[],
+    ) => {
       const live = new Set(
-        elements.filter((e) => !e.isDeleted && e.customData?.vibePin).map((e) => e.id),
+        elements
+          .filter((e) => !e.isDeleted && e.customData?.vibePin)
+          .map((e) => e.id),
       );
-      setNotes((ns) => (ns.every((n) => live.has(n.pinId)) ? ns : ns.filter((n) => live.has(n.pinId))));
+      setNotes((ns) =>
+        ns.every((n) => live.has(n.pinId))
+          ? ns
+          : ns.filter((n) => live.has(n.pinId)),
+      );
     },
     [],
   );
+
+  useEffect(() => {
+    if (!api) return;
+    const order = new Map(notes.map((n, i) => [n.pinId, String(i + 1)]));
+    const scene = api.getSceneElements();
+    const stale = scene.filter(
+      (e) =>
+        e.type === "text" &&
+        e.containerId &&
+        order.has(e.containerId) &&
+        e.text !== order.get(e.containerId),
+    );
+    if (stale.length === 0) return;
+    api.updateScene({
+      elements: scene.map((e) => {
+        if (e.type !== "text" || !e.containerId || !order.has(e.containerId))
+          return e;
+        const text = order.get(e.containerId) ?? e.text;
+        if (text === e.text) return e;
+        return {
+          ...e,
+          text,
+          originalText: text,
+          version: e.version + 1,
+          versionNonce: Math.floor(Math.random() * 2 ** 31),
+          updated: Date.now(),
+        };
+      }),
+    });
+  }, [api, notes]);
+
+  const cleanup = useCallback(async () => {
+    if (cleaning) return;
+    setCleaning(true);
+    setError(null);
+    try {
+      const result = await cleanupText(
+        caption,
+        notes.map((n) => n.text),
+      );
+      setBeforeCleanup({ caption, notes });
+      setCaption(result.caption);
+      setNotes((ns) =>
+        ns.map((n, i) => ({ ...n, text: result.notes[i] ?? n.text })),
+      );
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setCleaning(false);
+    }
+  }, [cleaning, caption, notes]);
+
+  const undoCleanup = useCallback(() => {
+    if (!beforeCleanup) return;
+    setCaption(beforeCleanup.caption);
+    setNotes((ns) =>
+      ns.map((n) => beforeCleanup.notes.find((b) => b.pinId === n.pinId) ?? n),
+    );
+    setBeforeCleanup(null);
+  }, [beforeCleanup]);
 
   const exportPng = useCallback(async (): Promise<Uint8Array> => {
     if (!api) throw new Error("Editor not ready");
     const shot = await exportToBlob({
       elements: api.getSceneElements(),
       files: api.getFiles(),
-      appState: { exportBackground: true, viewBackgroundColor: "#ffffff", exportWithDarkMode: false },
+      appState: {
+        exportBackground: true,
+        viewBackgroundColor: "#ffffff",
+        exportWithDarkMode: false,
+      },
       mimeType: "image/png",
       exportPadding: 0,
     });
     const image = await createImageBitmap(shot);
 
     // Caption band under the image, so it makes sense even without the text.
-    const lines = formatText(caption, notes.map((n) => n.text)).split("\n").filter(Boolean);
+    const lines = formatText(
+      caption,
+      notes.map((n) => n.text),
+    )
+      .split("\n")
+      .filter(Boolean);
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Canvas unavailable");
@@ -213,9 +333,13 @@ export default function Editor({ crop }: { crop: Crop }) {
       ctx.fillStyle = "#f3f4f6";
       ctx.font = `${font}px "Segoe UI", system-ui, sans-serif`;
       ctx.textBaseline = "top";
-      wrapped.forEach((l, i) => ctx.fillText(l, pad, image.height + pad + i * lineH));
+      wrapped.forEach((l, i) =>
+        ctx.fillText(l, pad, image.height + pad + i * lineH),
+      );
     }
-    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/png"));
+    const blob = await new Promise<Blob | null>((r) =>
+      canvas.toBlob(r, "image/png"),
+    );
     if (!blob) throw new Error("PNG export failed");
     return new Uint8Array(await blob.arrayBuffer());
   }, [api, caption, notes, crop.scale]);
@@ -227,7 +351,15 @@ export default function Editor({ crop }: { crop: Crop }) {
       setError(null);
       try {
         const png = await exportPng();
-        await sendCapture(png, formatText(caption, notes.map((n) => n.text)), mode, submit);
+        await sendCapture(
+          png,
+          formatText(
+            caption,
+            notes.map((n) => n.text),
+          ),
+          mode,
+          submit,
+        );
       } catch (e) {
         setError(String(e));
         setBusy(false);
@@ -248,19 +380,28 @@ export default function Editor({ crop }: { crop: Crop }) {
         return;
       }
       if (inExcalidrawText) return;
-      if (e.key === "Enter" && (isTextField(target) || target === document.body)) {
+      if (e.key === "k" && e.ctrlKey) {
+        e.preventDefault();
+        cleanup();
+        return;
+      }
+      if (
+        e.key === "Enter" &&
+        (isTextField(target) || target === document.body)
+      ) {
         e.preventDefault();
         if (e.shiftKey) send("copyOnly", false);
         else send("send", e.ctrlKey);
       } else if (e.key === "Escape") {
-        const selected = api && Object.keys(api.getAppState().selectedElementIds).length > 0;
+        const selected =
+          api && Object.keys(api.getAppState().selectedElementIds).length > 0;
         if (!selected && !pinModeRef.current) closeCapture();
         else if (pinModeRef.current) setPinMode(false);
       }
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [api, send]);
+  }, [api, send, cleanup]);
 
   const bindField = (key: string) => (el: HTMLInputElement | null) => {
     if (el) fields.current.set(key, el);
@@ -305,14 +446,32 @@ export default function Editor({ crop }: { crop: Crop }) {
             onFocus={() => (lastField.current = "caption")}
             onChange={(e) => setCaption(e.target.value)}
           />
+          {beforeCleanup ? (
+            <button type="button" className="vibe-btn" onClick={undoCleanup}>
+              {t("vibe.capture.undoCleanup")}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="vibe-btn"
+              disabled={cleaning}
+              onClick={cleanup}
+            >
+              {SPARKLE}{" "}
+              {cleaning
+                ? t("vibe.capture.cleaning")
+                : t("vibe.capture.cleanup")}
+              <kbd>{KEYS.cleanup}</kbd>
+            </button>
+          )}
           <button
             type="button"
             className={`vibe-btn${pinMode ? " on" : ""}`}
             title={t("vibe.capture.pinHint")}
             onClick={() => setPinMode((p) => !p)}
           >
-            ① {t("vibe.capture.pin")}
-            <kbd>Alt+P</kbd>
+            {PIN_ICON} {t("vibe.capture.pin")}
+            <kbd>{KEYS.pin}</kbd>
           </button>
         </div>
         {notes.map((note, i) => (
@@ -326,7 +485,9 @@ export default function Editor({ crop }: { crop: Crop }) {
               onFocus={() => (lastField.current = note.pinId)}
               onChange={(e) =>
                 setNotes((ns) =>
-                  ns.map((n) => (n.pinId === note.pinId ? { ...n, text: e.target.value } : n)),
+                  ns.map((n) =>
+                    n.pinId === note.pinId ? { ...n, text: e.target.value } : n,
+                  ),
                 )
               }
             />
@@ -335,26 +496,53 @@ export default function Editor({ crop }: { crop: Crop }) {
       </div>
       <div className="vibe-foot">
         {error ? (
-          <span className="vibe-error">{t("vibe.capture.error", { error })}</span>
+          <span className="vibe-error">
+            {t("vibe.capture.error", { error })}
+          </span>
         ) : (
-          <span>{pinMode ? t("vibe.capture.pinHint") : busy ? t("vibe.capture.sending") : ""}</span>
+          <span>
+            {pinMode
+              ? t("vibe.capture.pinHint")
+              : busy
+                ? t("vibe.capture.sending")
+                : ""}
+          </span>
         )}
         <span style={{ flex: 1 }} />
-        <button type="button" className="vibe-btn" onClick={() => closeCapture()}>
+        <button
+          type="button"
+          className="vibe-btn"
+          onClick={() => closeCapture()}
+        >
           {t("vibe.capture.cancel")}
-          <kbd>Esc</kbd>
+          <kbd>{KEYS.cancel}</kbd>
         </button>
-        <button type="button" className="vibe-btn" disabled={busy} onClick={() => send("copyOnly", false)}>
+        <button
+          type="button"
+          className="vibe-btn"
+          disabled={busy}
+          onClick={() => send("copyOnly", false)}
+        >
           {t("vibe.capture.copy")}
-          <kbd>Shift+Enter</kbd>
+          <kbd>{KEYS.copy}</kbd>
         </button>
-        <button type="button" className="vibe-btn" disabled={busy} onClick={() => send("send", true)}>
+        <button
+          type="button"
+          className="vibe-btn"
+          disabled={busy}
+          onClick={() => send("send", true)}
+        >
           {t("vibe.capture.sendSubmit")}
-          <kbd>Ctrl+Enter</kbd>
+          <kbd>{KEYS.sendSubmit}</kbd>
         </button>
-        <button type="button" className="vibe-btn primary" disabled={busy} onClick={() => send("send", false)}>
+        <button
+          type="button"
+          className="vibe-btn primary"
+          disabled={busy}
+          onClick={() => send("send", false)}
+        >
           {t("vibe.capture.send")}
-          <kbd>Enter</kbd>
+          <kbd>{KEYS.send}</kbd>
         </button>
       </div>
     </div>

@@ -119,7 +119,10 @@ fn should_use_streaming_overlay(style: OverlayStyle, is_streaming: bool) -> bool
     style == OverlayStyle::Live && is_streaming
 }
 
-async fn post_process_transcription(settings: &AppSettings, transcription: &str) -> Option<String> {
+pub(crate) async fn post_process_transcription(
+    settings: &AppSettings,
+    transcription: &str,
+) -> Option<String> {
     if is_blank_transcription(transcription) {
         debug!("Post-processing skipped because the transcription is empty");
         return None;
@@ -838,7 +841,10 @@ impl ShortcutAction for TranscribeAction {
 
                                     // MaximusVibius: dictation while the capture editor is
                                     // open fills its focused field instead of pasting.
-                                    if crate::vibe::capture::deliver_dictation(&ah_clone, &final_text) {
+                                    if crate::vibe::capture::deliver_dictation(
+                                        &ah_clone,
+                                        &final_text,
+                                    ) {
                                         utils::hide_recording_overlay(&ah_clone);
                                         set_tray_state(&ah_clone, TrayIconState::Idle);
                                         return;
