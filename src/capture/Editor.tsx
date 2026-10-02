@@ -137,6 +137,17 @@ export default function Editor({ crop }: { crop: Crop }) {
       .catch(() => undefined);
   }, []);
 
+  // Focus the caption without letting the browser scroll the frozen frame,
+  // and undo any scroll a focused field triggers later.
+  useEffect(() => {
+    fields.current.get("caption")?.focus({ preventScroll: true });
+    const pin = () => {
+      if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
+    };
+    window.addEventListener("scroll", pin, true);
+    return () => window.removeEventListener("scroll", pin, true);
+  }, []);
+
   // Dictation (Ctrl+Space) lands in the last focused field instead of being pasted.
   useEffect(() => {
     const unlisten = listen<string>("vibe://dictation", ({ payload }) => {
@@ -194,7 +205,10 @@ export default function Editor({ crop }: { crop: Crop }) {
       const pinId = created[0].id;
       setNotes((ns) => [...ns, { pinId, text: "" }]);
       lastField.current = pinId;
-      setTimeout(() => fields.current.get(pinId)?.focus(), 0);
+      setTimeout(
+        () => fields.current.get(pinId)?.focus({ preventScroll: true }),
+        0,
+      );
     },
     [api, crop.scale, notes.length],
   );
@@ -451,7 +465,6 @@ export default function Editor({ crop }: { crop: Crop }) {
           <input
             ref={bindField("caption")}
             className="vibe-input"
-            autoFocus
             value={caption}
             placeholder={t("vibe.capture.captionPlaceholder")}
             onFocus={() => (lastField.current = "caption")}

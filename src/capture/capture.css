@@ -1,6 +1,7 @@
 .vibe-capture {
   position: fixed;
   inset: 0;
+  overflow: clip;
   cursor: crosshair;
   user-select: none;
   font-family: "Segoe UI", system-ui, sans-serif;
@@ -62,18 +63,24 @@
   border: 1px solid #2a2f3a;
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-  overflow: hidden;
+  /* clip, not hidden: a hidden box can still be scrolled when a field is
+     focused, which slid the screenshot out of view. */
+  overflow: clip;
   cursor: default;
   color: #e8eaf0;
 }
 .vibe-canvas {
   position: relative;
-  flex: 1;
-  min-height: 0;
+  /* Height comes from the inline style. flex: 1 here would override it
+     (flex-basis 0 in an auto-height column) and collapse the canvas. */
+  flex: none;
 }
 .vibe-panel {
   border-top: 1px solid #2a2f3a;
   font-size: 13px;
+  /* Many pins scroll here instead of pushing the editor off screen. */
+  max-height: 30vh;
+  overflow-y: auto;
 }
 .vibe-row {
   display: flex;
