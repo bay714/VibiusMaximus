@@ -1,10 +1,59 @@
 # MaximusVibius
 
-Voice-first capture for AI vibe coding: snap part of the screen, dictate what to change, and paste the
-image and instructions into any AI chat. Fire saved prompts with one key.
+Voice-first capture for AI vibe coding on Windows. Snap part of the screen, say what to change,
+and paste the image and instructions into any AI chat or terminal. Fire saved prompts with one key.
+
+## What it does
+
+| Shortcut | What happens |
+|---|---|
+| `Ctrl+Space` (hold) | Dictate into any app (Handy's offline speech-to-text, Canary 180M by default) |
+| `Ctrl+Shift+Space` | Dictate with AI cleanup (set a provider in Settings → Post-processing) |
+| `Alt+Shift+S` | **Capture**: freeze the screen, drag a region, annotate it in Excalidraw, drop numbered pins, speak a caption |
+| `Alt+Shift+B` | **Board**: build a prompt from several images and text boxes |
+| `Alt+1` … `Alt+4` | **Prompt macros**: insert a saved prompt at the cursor (edit in Settings → Macros) |
+
+In the capture editor:
+
+| Key | Action |
+|---|---|
+| `Enter` | Paste the image, then the caption, into the app you came from |
+| `Ctrl+Enter` | Same, then press Enter to submit |
+| `Shift+Enter` | Copy the image only |
+| `Alt+Enter` | Add to the board instead |
+| `Alt+P` | Pin mode: click to drop numbered pins, each with a note |
+| `Ctrl+K` | ✨ AI cleanup of the caption and notes (undoable) |
+| `Esc` | Cancel |
+
+Terminals (Windows Terminal, PowerShell, cmd) get a saved file path plus the text instead of an
+image, which suits Claude Code and other terminal agents. Every capture is kept in Settings → Captures.
+
+**Lightweight by design:** the capture and board windows exist only while open and Excalidraw loads
+only inside them; the settings window is freed when closed; the speech model unloads after 2 minutes;
+no GPU backend, no update checks, no background polling. See [docs/PLAN.md §2a](docs/PLAN.md).
+
+## Build (Windows)
+
+Prerequisites: Rust (rustup), Bun, Visual Studio 2022 Build Tools (C++ workload) and CMake.
+The Vulkan SDK is **not** needed: MaximusVibius builds CPU-only.
+
+```bash
+bun install
+mkdir -p src-tauri/resources/models
+curl -o src-tauri/resources/models/silero_vad_v4.onnx https://blob.handy.computer/silero_vad_v4.onnx
+bun run tauri dev        # run
+bun run tauri build      # installers in src-tauri/target/release/bundle/
+```
+
+Tests: `bun src/board/compile.test.ts` and `cd src-tauri && cargo test --lib vibe`.
+CI: the **MaximusVibius Windows build** workflow runs on demand or on `v*` tags and uploads unsigned installers.
+
+## Docs
 
 - **Plan:** [docs/PLAN.md](docs/PLAN.md)
-- **Workflow mockups:** [docs/mockups/workflow.html](docs/mockups/workflow.html) (open in a browser)
+- **Mockups:** [docs/mockups/README.md](docs/mockups/README.md)
+- Our code lives in `src-tauri/src/vibe/`, `src/capture/`, `src/board/` and
+  `src/components/settings/{macros,captures}/`; changes to Handy's own files are kept small.
 
 MaximusVibius is a fork of [Handy](https://github.com/cjpais/Handy) by CJ Pais (MIT). Handy's original README follows.
 

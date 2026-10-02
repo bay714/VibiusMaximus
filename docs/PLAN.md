@@ -14,6 +14,28 @@ so macOS/Linux stay possible.
 
 Mockups: [`docs/mockups/README.md`](mockups/README.md) (screenshots) and [`docs/mockups/workflow.html`](mockups/workflow.html) (live, open in a browser).
 
+## Status (2026-10-01)
+
+**Built** (compiles; unit tests pass; **not yet tested by hand**):
+- Rebrand, CPU-only build, Canary default, update checks off, settings window freed on close, model unload at 2 min
+- F2 Capture, F3 Excalidraw editor with numbered Pins, F4 voice into the editor
+- F5 AI cleanup (`Ctrl+K`), F6 Send (image then text; terminals get a file path), F7 submit (`Ctrl+Enter`)
+- F8 Prompt macros (Settings → Macros, `Alt+1…4` starters, `{clipboard}`/`{date}`/`{time}`)
+- F9 Starter developer vocabulary
+- F10 Capture history (Settings → Captures)
+- F11 Board (`Alt+Shift+B`, `Alt+Enter` from the editor)
+- Tray: *New capture*, *Open board*. Windows CI workflow (unsigned installers)
+
+**How it differs from the plan above:**
+- The capture editor is a centred panel over the frozen screen, not attached to the selection (Excalidraw needs room for its toolbar).
+- Capture history is PNG + JSON files in the app data folder, not a database table (lighter, no migration).
+- The board is a free Excalidraw canvas; reading order (top to bottom, left to right) turns it into ordered images plus one prompt with `[Image n]` markers.
+- Paste profiles are a built-in list (terminals → file path), with no settings table yet.
+
+**Not built yet:** a Capture settings page (always-submit, paste gap, caption band toggle, custom paste profiles),
+project vocabulary import, the onboarding practice step, the board inbox folder, our own updater key, code signing,
+and translations of the new strings beyond English.
+
 ## Priorities
 
 **Phase 1: build now.** This is the core loop: capture → annotate → speak → paste, plus macros.

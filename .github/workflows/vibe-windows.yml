@@ -1,0 +1,81 @@
+# MaximusVibius: Windows-only build. Runs when started by hand or when a
+# version tag (v*) is pushed; never on ordinary pushes, to save Actions minutes.
+# Produces unsigned NSIS and MSI installers as workflow artifacts.
+name: MaximusVibius Windows build
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+concurrency:
+  group: vibe-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      # Same as Handy: link Microsoft's baseline ONNX Runtime (SSE2 + runtime
+      # dispatch) so the app starts on pre-Haswell CPUs too.
+      - name: Install ONNX Runtime
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $ORT_VERSION = "1.24.2"
+          $url = "https://github.com/microsoft/onnxruntime/releases/download/v$ORT_VERSION/onnxruntime-win-x64-$ORT_VERSION.zip"
+          Invoke-WebRequest -Uri $url -OutFile ort.zip
+          Expand-Archive -Path ort.zip -DestinationPath ort-dist -Force
+          $ortLib = (Resolve-Path "ort-dist/onnxruntime-win-x64-$ORT_VERSION/lib").Path
+          Add-Content -Path $env:GITHUB_ENV -Value "ORT_LIB_LOCATION=$ortLib"
+          Add-Content -Path $env:GITHUB_ENV -Value "ORT_PREFER_DYNAMIC_LINK=1"
+
+      # Same as Handy: ship the VC++ runtime next to the exe so it starts on
+      # machines without the Microsoft redistributable.
+      - name: Locate VC++ runtime redist
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsRoot = & $vswhere -latest -products * -property installationPath
+          $redistVersion = (Get-Content (Join-Path $vsRoot "VC\Auxiliary\Build\Microsoft.VCRedistVersion.default.txt")).Trim()
+          $archDir = Join-Path $vsRoot "VC\Redist\MSVC\$redistVersion\x64"
+          $crt = Get-ChildItem $archDir -Directory -Filter "Microsoft.VC*.CRT" | Sort-Object Name | Select-Object -Last 1
+          $omp = Get-ChildItem $archDir -Directory -Filter "Microsoft.VC*.OpenMP" | Sort-Object Name | Select-Object -Last 1
+          Add-Content -Path $env:GITHUB_ENV -Value "HANDY_VC_REDIST_DIRS=$($crt.FullName);$($omp.FullName)"
+
+      - name: Download voice-activity model
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force src-tauri/resources/models | Out-Null
+          Invoke-WebRequest -Uri https://blob.handy.computer/silero_vad_v4.onnx -OutFile src-tauri/resources/models/silero_vad_v4.onnx
+
+      - run: bun install
+
+      - name: Tests
+        shell: pwsh
+        run: |
+          bun src/board/compile.test.ts
+          cd src-tauri
+          cargo test --lib vibe
+
+      - name: Build installers
+        run: bun run tauri build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MaximusVibius-windows
+          path: |
+            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/msi/*.msi
