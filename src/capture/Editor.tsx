@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import {
   Excalidraw,
@@ -68,6 +69,7 @@ export default function Editor({ crop }: { crop: Crop }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cleaning, setCleaning] = useState(false);
+  const [captionBand, setCaptionBand] = useState(true);
   const [beforeCleanup, setBeforeCleanup] = useState<{
     caption: string;
     notes: Note[];
@@ -128,6 +130,12 @@ export default function Editor({ crop }: { crop: Crop }) {
         50,
       );
   }, [api]);
+
+  useEffect(() => {
+    invoke<{ captionBand: boolean }>("vibe_capture_settings_get")
+      .then((o) => setCaptionBand(o.captionBand))
+      .catch(() => undefined);
+  }, []);
 
   // Dictation (Ctrl+Space) lands in the last focused field instead of being pasted.
   useEffect(() => {
@@ -324,7 +332,8 @@ export default function Editor({ crop }: { crop: Crop }) {
       }
       wrapped.push(cur);
     }
-    const band = wrapped.length ? pad * 2 + wrapped.length * lineH : 0;
+    const band =
+      captionBand && wrapped.length ? pad * 2 + wrapped.length * lineH : 0;
     canvas.width = Math.max(image.width, 1);
     canvas.height = image.height + band;
     ctx.drawImage(image, 0, 0);
@@ -343,7 +352,7 @@ export default function Editor({ crop }: { crop: Crop }) {
     );
     if (!blob) throw new Error("PNG export failed");
     return new Uint8Array(await blob.arrayBuffer());
-  }, [api, caption, notes, crop.scale]);
+  }, [api, caption, notes, crop.scale, captionBand]);
 
   const send = useCallback(
     async (mode: SendMode, submit: boolean) => {

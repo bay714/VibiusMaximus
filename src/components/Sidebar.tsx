@@ -9,6 +9,7 @@ import {
   Cpu,
   Keyboard,
   Images,
+  Camera,
 } from "lucide-react";
 import HandyTextLogo from "./icons/HandyTextLogo";
 import HandyHand from "./icons/HandyHand";
@@ -23,6 +24,7 @@ import {
   ModelsSettings,
   MacrosSettings,
   CapturesSettings,
+  CaptureSettings,
 } from "./settings";
 
 export type SidebarSection = keyof typeof SECTIONS_CONFIG;
@@ -47,6 +49,12 @@ export const SECTIONS_CONFIG = {
     labelKey: "sidebar.general",
     icon: HandyHand,
     component: GeneralSettings,
+    enabled: () => true,
+  },
+  capture: {
+    labelKey: "sidebar.capture",
+    icon: Camera,
+    component: CaptureSettings,
     enabled: () => true,
   },
   macros: {

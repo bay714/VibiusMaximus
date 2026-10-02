@@ -195,7 +195,8 @@ fn send_blocking(app: &AppHandle, meta: BoardSendMeta, pngs: Vec<Vec<u8>>) -> Re
     }
     std::thread::sleep(std::time::Duration::from_millis(80));
 
-    let items = if target.is_terminal() {
+    let options = super::prefs::get(app);
+    let items = if options.is_terminal(&target.process) {
         // Terminals get file paths, one per image, then the text.
         let mut lines = Vec::new();
         for png in &pngs {
@@ -208,7 +209,7 @@ fn send_blocking(app: &AppHandle, meta: BoardSendMeta, pngs: Vec<Vec<u8>>) -> Re
         items.push(Item::Text(meta.text.clone()));
         items
     };
-    output::paste_items(app, &target, items, meta.submit)
+    output::paste_items(app, &target, items, meta.submit || options.always_submit)
 }
 
 #[cfg(test)]

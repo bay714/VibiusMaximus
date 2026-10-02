@@ -8,6 +8,7 @@ mod history;
 mod keys;
 pub mod macros;
 pub mod output;
+mod prefs;
 mod store;
 pub mod target;
 mod vocab;
@@ -36,6 +37,8 @@ pub fn invoke_handler() -> impl Fn(Invoke<tauri::Wry>) -> bool + Send + Sync + '
         board::vibe_board_target,
         board::vibe_board_send,
         board::vibe_read_image,
+        prefs::vibe_capture_settings_get,
+        prefs::vibe_capture_settings_set,
         macros::vibe_macros_list,
         macros::vibe_macro_save,
         macros::vibe_macro_delete,

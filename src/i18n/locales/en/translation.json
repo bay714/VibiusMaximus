@@ -18,7 +18,8 @@
     "debug": "Debug",
     "about": "About",
     "macros": "Macros",
-    "captures": "Captures"
+    "captures": "Captures",
+    "capture": "Capture"
   },
   "onboarding": {
     "subtitle": "To get started, choose a transcription model",
@@ -791,6 +792,23 @@
       "copiedImage": "Image copied.",
       "copiedText": "Text copied.",
       "addedToBoard": "Added to the board."
+    },
+    "captureSettings": {
+      "title": "Capture",
+      "alwaysSubmit": "Always submit after Send",
+      "alwaysSubmitDescription": "Press the submit key after every Send, as if you used Ctrl+Enter.",
+      "captionBand": "Print the caption on the image",
+      "captionBandDescription": "Adds a band under the screenshot with the caption and numbered notes.",
+      "includeText": "Paste the caption after the image",
+      "includeTextDescription": "Paste the caption and notes as text after the image, which AI models read most reliably.",
+      "pasteGap": "Pause between pastes (ms)",
+      "pasteGapDescription": "Gives the chat app time to attach each image before the next paste.",
+      "profilesTitle": "Per-app behaviour",
+      "profilesDescription": "Match apps by their program name, one per line (for example chrome.exe).",
+      "terminalApps": "Send a file path instead of an image",
+      "terminalAppsDescription": "Terminals can't take pasted images, so these apps get the saved PNG's path plus the text.",
+      "copyOnlyApps": "Only copy, don't paste",
+      "copyOnlyAppsDescription": "Send just copies the image for these apps; you paste it yourself."
     }
   }
 }

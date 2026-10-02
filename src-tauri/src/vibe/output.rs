@@ -3,7 +3,7 @@
 
 use super::capture::{self, CaptureState};
 use super::target::{self, Target};
-use super::{board, history};
+use super::{board, history, prefs};
 use crate::clipboard::send_return_key;
 use crate::input::{send_paste_ctrl_v, EnigoState};
 use crate::settings::get_settings;
@@ -16,8 +16,6 @@ use tauri_plugin_clipboard_manager::ClipboardExt;
 
 /// How long the modifier is held during Ctrl+V (see `send_paste_ctrl_v`).
 const PASTE_HOLD_MS: u64 = 40;
-/// Pause after pasting an image so the chat app can attach it before the next paste.
-const PASTE_GAP_MS: u64 = 250;
 
 #[derive(Deserialize, PartialEq, Eq, Clone, Copy, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -86,16 +84,23 @@ fn send_capture(app: &AppHandle, meta: SendMeta, png: Vec<u8>) -> Result<(), Str
         return Ok(());
     }
 
+    let options = prefs::get(app);
+    let copy_only = meta.mode == SendMode::CopyOnly
+        || target
+            .as_ref()
+            .is_some_and(|t| options.is_copy_only(&t.process));
+
     // Hand focus back while our window is still in front (Windows only lets the
     // foreground process do that), then close the capture window.
     let focused = match (&target, meta.mode) {
+        _ if copy_only => false,
         (Some(t), SendMode::Send) => target::focus(t),
         _ => false,
     };
     capture::close(app);
 
-    if meta.mode == SendMode::CopyOnly || !focused {
-        if meta.mode == SendMode::Send {
+    if copy_only || !focused {
+        if !copy_only {
             warn!("Couldn't return focus to the previous window; copied the image instead");
         }
         return copy_png(app, &png);
@@ -103,15 +108,22 @@ fn send_capture(app: &AppHandle, meta: SendMeta, png: Vec<u8>) -> Result<(), Str
     let target = target.unwrap_or_default();
     std::thread::sleep(Duration::from_millis(80));
 
-    let items = if target.is_terminal() {
-        vec![Item::Text(join_nonempty(&[&record.path, &meta.text]))]
+    let text = if options.include_text {
+        meta.text.as_str()
+    } else {
+        ""
+    };
+    let items = if options.is_terminal(&target.process) {
+        vec![Item::Text(join_nonempty(&[&record.path, text]))]
+    } else if text.trim().is_empty() {
+        vec![Item::Png(png)]
     } else {
         vec![
             Item::Png(png),
-            Item::Text(join_nonempty(&["[screenshot above]", &meta.text])),
+            Item::Text(join_nonempty(&["[screenshot above]", text])),
         ]
     };
-    paste_items(app, &target, items, meta.submit)
+    paste_items(app, &target, items, meta.submit || options.always_submit)
 }
 
 /// Paste each item in order into the focused window, then restore the
@@ -129,6 +141,7 @@ pub fn paste_items(
         .try_state::<EnigoState>()
         .ok_or("Keyboard input not initialised")?;
 
+    let gap = prefs::get(app).paste_gap_ms;
     let count = items.len();
     for (i, item) in items.into_iter().enumerate() {
         match item {
@@ -145,7 +158,7 @@ pub fn paste_items(
         }
         paste(&enigo_state)?;
         if i + 1 < count {
-            std::thread::sleep(Duration::from_millis(PASTE_GAP_MS));
+            std::thread::sleep(Duration::from_millis(gap));
         }
     }
 

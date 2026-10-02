@@ -9,6 +9,7 @@ export { PostProcessingSettings } from "./post-processing/PostProcessingSettings
 export { ModelsSettings } from "./models/ModelsSettings";
 export { MacrosSettings } from "./macros/MacrosSettings";
 export { CapturesSettings } from "./captures/CapturesSettings";
+export { CaptureSettings } from "./capture/CaptureSettings";
 
 // Individual setting components
 export { MicrophoneSelector } from "./MicrophoneSelector";

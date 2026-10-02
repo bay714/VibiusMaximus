@@ -7,25 +7,6 @@ pub struct Target {
     pub process: String,
 }
 
-impl Target {
-    /// Terminals get a file path instead of an image, since they can't accept
-    /// pasted images (Claude Code and similar agents read image paths).
-    pub fn is_terminal(&self) -> bool {
-        const TERMINALS: &[&str] = &[
-            "windowsterminal.exe",
-            "openconsole.exe",
-            "conhost.exe",
-            "cmd.exe",
-            "pwsh.exe",
-            "powershell.exe",
-            "wezterm-gui.exe",
-            "alacritty.exe",
-        ];
-        let process = self.process.to_ascii_lowercase();
-        TERMINALS.contains(&process.as_str())
-    }
-}
-
 #[cfg(target_os = "windows")]
 pub fn foreground() -> Option<Target> {
     use windows::core::PWSTR;

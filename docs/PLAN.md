@@ -24,16 +24,17 @@ Mockups: [`docs/mockups/README.md`](mockups/README.md) (screenshots) and [`docs/
 - F9 Starter developer vocabulary
 - F10 Capture history (Settings → Captures)
 - F11 Board (`Alt+Shift+B`, `Alt+Enter` from the editor)
+- Settings → Capture: always submit, caption band, paste text after image, pause between pastes, per-app lists (file path for terminals, copy only)
 - Tray: *New capture*, *Open board*. Windows CI workflow (unsigned installers)
+- Release build: NSIS installer 18.1 MB (Handy 0.9.7: 19.4 MB), MSI 36.3 MB (Handy: 37.6 MB)
 
 **How it differs from the plan above:**
 - The capture editor is a centred panel over the frozen screen, not attached to the selection (Excalidraw needs room for its toolbar).
 - Capture history is PNG + JSON files in the app data folder, not a database table (lighter, no migration).
 - The board is a free Excalidraw canvas; reading order (top to bottom, left to right) turns it into ordered images plus one prompt with `[Image n]` markers.
-- Paste profiles are a built-in list (terminals → file path), with no settings table yet.
+- Paste profiles are two editable app lists (file path / copy only) rather than a table.
 
-**Not built yet:** a Capture settings page (always-submit, paste gap, caption band toggle, custom paste profiles),
-project vocabulary import, the onboarding practice step, the board inbox folder, our own updater key, code signing,
+**Not built yet:** project vocabulary import, the onboarding practice step, the board inbox folder, our own updater key, code signing,
 and translations of the new strings beyond English.
 
 ## Priorities
