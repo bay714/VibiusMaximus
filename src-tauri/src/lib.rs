@@ -95,14 +95,14 @@ fn build_console_filter() -> env_filter::Filter {
     builder.build()
 }
 
-/// Build the settings window. MaximusVibius destroys it on close to free its
+/// Build the settings window. VibiusMaximus destroys it on close to free its
 /// web view, so this also runs whenever the window is reopened from the tray.
 fn build_main_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow> {
     // Create main window programmatically so we can set data_directory
     // for portable mode (redirects WebView2 cache to portable Data dir)
     let mut win_builder =
         tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("/".into()))
-            .title("MaximusVibius")
+            .title("VibiusMaximus")
             .inner_size(680.0, 570.0)
             .min_inner_size(680.0, 570.0)
             .resizable(true)
@@ -843,7 +843,7 @@ pub fn run(cli_args: CliArgs) {
         .expect("Failed to export typescript bindings");
 
     let specta_handler = specta_builder.invoke_handler();
-    // MaximusVibius commands move raw bytes, so they bypass tauri-specta.
+    // VibiusMaximus commands move raw bytes, so they bypass tauri-specta.
     let vibe_handler = vibe::invoke_handler();
     let invoke_handler = move |invoke: tauri::ipc::Invoke<tauri::Wry>| {
         if vibe::is_vibe_command(invoke.message.command()) {
@@ -1095,7 +1095,7 @@ pub fn run(cli_args: CliArgs) {
                 if window.label() == vibe::board::BOARD_WINDOW {
                     return;
                 }
-                // MaximusVibius: on Windows, let the settings window actually close
+                // VibiusMaximus: on Windows, let the settings window actually close
                 // (destroying its web view) when the tray can bring it back. Handy
                 // only hides it, which keeps the web view's memory in use.
                 #[cfg(target_os = "windows")]

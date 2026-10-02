@@ -510,7 +510,7 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
         None::<&str>,
     )?;
     let quit_i = MenuItem::with_id(app, "quit", &strings.quit, true, quit_accelerator)?;
-    // MaximusVibius
+    // VibiusMaximus
     let new_capture_i = MenuItem::with_id(app, "vibe_capture", "New capture", true, None::<&str>)?;
     let open_board_i = MenuItem::with_id(app, "vibe_board", "Open board", true, None::<&str>)?;
     let separator = || PredefinedMenuItem::separator(app);

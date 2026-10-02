@@ -495,7 +495,7 @@ fn register_all_shortcuts_for_implementation(
         settings::write_settings(app, current_settings);
     }
 
-    // MaximusVibius macro hotkeys aren't in Handy's defaults.
+    // VibiusMaximus macro hotkeys aren't in Handy's defaults.
     crate::vibe::macros::register_all(app);
 
     reset_bindings

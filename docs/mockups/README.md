@@ -1,4 +1,4 @@
-# MaximusVibius mockups
+# VibiusMaximus mockups
 
 Static screenshots of [`workflow.html`](workflow.html). Open that file in a browser to see the live version.
 The build plan is in [`../PLAN.md`](../PLAN.md).

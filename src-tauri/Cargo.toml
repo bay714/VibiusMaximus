@@ -71,7 +71,7 @@ regex = "1"
 whatlang = "0.16"
 isolang = "2"
 chrono = "0.4"
-# MaximusVibius: screen capture and PNG decoding for the capture window.
+# VibiusMaximus: screen capture and PNG decoding for the capture window.
 xcap = "0.9.8"
 image = { version = "0.25", default-features = false, features = ["png"] }
 rusqlite = { version = "0.37", features = ["bundled"] }
@@ -145,7 +145,7 @@ winreg = "0.55"
 # handy.exe and we ship zero DLLs, which sidesteps the installer's per-DLL
 # signtool verify entirely. CI pins -DGGML_NATIVE=OFF (see build.yml) so the
 # static build targets a portable ARM baseline, not the build runner's CPU.
-# MaximusVibius: CPU-only on x86_64 (no Vulkan SDK needed, fewer DLLs). The
+# VibiusMaximus: CPU-only on x86_64 (no Vulkan SDK needed, fewer DLLs). The
 # default Canary model is small enough that GPU acceleration isn't needed.
 [target.'cfg(all(windows, target_arch = "x86_64"))'.dependencies]
 transcribe-cpp = { version = "0.2.4", default-features = false, features = [

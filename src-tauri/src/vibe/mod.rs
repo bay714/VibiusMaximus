@@ -1,4 +1,4 @@
-//! MaximusVibius additions to Handy: screen capture, send-to-chat and prompt
+//! VibiusMaximus additions to Handy: screen capture, send-to-chat and prompt
 //! macros. Kept in its own module so merges from upstream Handy stay small.
 
 pub mod board;
@@ -15,7 +15,7 @@ mod vocab;
 
 use tauri::ipc::Invoke;
 
-/// MaximusVibius commands. They are registered outside Handy's tauri-specta
+/// VibiusMaximus commands. They are registered outside Handy's tauri-specta
 /// builder: some move raw bytes (the screen frame and the exported PNG), which
 /// specta can't describe, and keeping them apart avoids churn in Handy's
 /// generated `bindings.ts`.

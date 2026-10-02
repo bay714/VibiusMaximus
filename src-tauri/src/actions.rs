@@ -839,7 +839,7 @@ impl ShortcutAction for TranscribeAction {
                                         return;
                                     }
 
-                                    // MaximusVibius: dictation while the capture editor is
+                                    // VibiusMaximus: dictation while the capture editor is
                                     // open fills its focused field instead of pasting.
                                     if crate::vibe::capture::deliver_dictation(
                                         &ah_clone,

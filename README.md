@@ -1,4 +1,4 @@
-# MaximusVibius
+# VibiusMaximus
 
 Voice-first capture for AI vibe coding on Windows. Snap part of the screen, say what to change,
 and paste the image and instructions into any AI chat or terminal. Fire saved prompts with one key.
@@ -35,7 +35,7 @@ no GPU backend, no update checks, no background polling. See [docs/PLAN.md §2a]
 ## Build (Windows)
 
 Prerequisites: Rust (rustup), Bun, Visual Studio 2022 Build Tools (C++ workload) and CMake.
-The Vulkan SDK is **not** needed: MaximusVibius builds CPU-only.
+The Vulkan SDK is **not** needed: VibiusMaximus builds CPU-only.
 
 ```bash
 bun install
@@ -46,7 +46,7 @@ bun run tauri build      # installers in src-tauri/target/release/bundle/
 ```
 
 Tests: `bun src/board/compile.test.ts` and `cd src-tauri && cargo test --lib vibe`.
-CI: the **MaximusVibius Windows build** workflow runs on demand or on `v*` tags and uploads unsigned installers.
+CI: the **VibiusMaximus Windows build** workflow runs on demand or on `v*` tags and uploads unsigned installers.
 
 ## Docs
 
@@ -55,7 +55,7 @@ CI: the **MaximusVibius Windows build** workflow runs on demand or on `v*` tags 
 - Our code lives in `src-tauri/src/vibe/`, `src/capture/`, `src/board/` and
   `src/components/settings/{macros,captures}/`; changes to Handy's own files are kept small.
 
-MaximusVibius is a fork of [Handy](https://github.com/cjpais/Handy) by CJ Pais (MIT). Handy's original README follows.
+VibiusMaximus is a fork of [Handy](https://github.com/cjpais/Handy) by CJ Pais (MIT). Handy's original README follows.
 
 ---
 

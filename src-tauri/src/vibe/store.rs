@@ -1,4 +1,4 @@
-//! MaximusVibius's own settings file (`vibe.json`), kept apart from Handy's
+//! VibiusMaximus's own settings file (`vibe.json`), kept apart from Handy's
 //! `settings_store.json` so upstream settings changes never conflict with ours.
 
 use serde::{de::DeserializeOwned, Serialize};

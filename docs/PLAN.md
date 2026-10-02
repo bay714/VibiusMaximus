@@ -1,10 +1,10 @@
-# MaximusVibius — Full Build Plan
+# VibiusMaximus — Full Build Plan
 
 > Voice-first capture for AI vibe coding. Snap part of the screen, say what to
 > change, and paste the image and instructions into any AI chat or terminal.
 > Fire saved prompts with one key.
 
-MaximusVibius is a fork of [Handy](https://github.com/cjpais/Handy) (MIT, Tauri 2:
+VibiusMaximus is a fork of [Handy](https://github.com/cjpais/Handy) (MIT, Tauri 2:
 Rust + React/TypeScript). Handy already provides offline speech-to-text
 (Whisper, Parakeet, **Canary** and others), global hotkeys, AI post-processing,
 custom vocabulary, history, a tray app, and paste-into-the-active-app. This plan
@@ -322,7 +322,7 @@ same board copies as one sheet image that pastes into ChatGPT.
 - **Onboarding:** Handy's steps (microphone permission, model download), with
   **Canary 180M Flash** (218 MB) pre-selected, then one new step: a hotkey card
   and a "Try it: capture this window" practice capture.
-- **Branding:** name, `com.bay714.maximusvibius` identifier (a separate data
+- **Branding:** name, `com.bay714.vibiusmaximus` identifier (a separate data
   folder, so it can sit beside a real Handy install), icons, tray tooltip,
   window titles, and an About page that credits Handy.
 
@@ -708,7 +708,7 @@ theme, and an existing Handy install side by side.
   jobs for now.
 - **Updater:** generate our own minisign keypair (the private key goes in GitHub
   secrets), point the updater at
-  `github.com/bay714/MaximusVibius/releases/latest/download/latest.json`.
+  `github.com/bay714/VibiusMaximus/releases/latest/download/latest.json`.
   Handy's endpoint and public key are removed.
 - **Code signing:** ships unsigned at first, so Windows SmartScreen will show a
   "More info → Run anyway" prompt. Buying a signing certificate (or using Azure

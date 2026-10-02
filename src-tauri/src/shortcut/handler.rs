@@ -50,7 +50,7 @@ pub fn handle_shortcut_event(
         return;
     }
 
-    // MaximusVibius prompt macros: `macro:<id>` fires on press.
+    // VibiusMaximus prompt macros: `macro:<id>` fires on press.
     if let Some(macro_id) = binding_id.strip_prefix(crate::vibe::macros::BINDING_PREFIX) {
         if is_pressed {
             crate::vibe::macros::fire(app, macro_id);

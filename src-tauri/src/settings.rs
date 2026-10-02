@@ -136,7 +136,7 @@ pub enum OverlayStyle {
 pub enum ModelUnloadTimeout {
     Never,
     Immediately,
-    // MaximusVibius: unload sooner to keep idle memory low (Handy: Min5).
+    // VibiusMaximus: unload sooner to keep idle memory low (Handy: Min5).
     #[default]
     Min2,
     Min5,
