@@ -4,6 +4,9 @@ An 82 s motion-graphic walkthrough with voiceover, music and UI sound effects, b
 [Remotion](https://www.remotion.dev) (React → MP4). This folder is its own project: nothing
 here is part of the app build.
 
+**Watch it:** [`vibiusmaximus-how-to.mp4`](vibiusmaximus-how-to.mp4) (the latest render, committed for
+convenience; `bun run render` writes a fresh one to `out/`).
+
 ```bash
 cd video
 bun install
