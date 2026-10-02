@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 
-export type SendMode = "send" | "copyOnly";
+export type SendMode = "send" | "copyOnly" | "board";
 
 export interface Frame {
   width: number;

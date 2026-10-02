@@ -362,6 +362,9 @@ fn initialize_core_logic(app_handle: &AppHandle) {
             "vibe_capture" => {
                 vibe::capture::begin(app);
             }
+            "vibe_board" => {
+                vibe::board::open(app);
+            }
             "unload_model" => {
                 let transcription_manager = app.state::<Arc<TranscriptionManager>>();
                 if !transcription_manager.is_model_loaded() {
@@ -956,6 +959,7 @@ pub fn run(cli_args: CliArgs) {
         ))
         .manage(cli_args.clone())
         .manage(vibe::capture::CaptureState::default())
+        .manage(vibe::board::BoardState::default())
         .setup(move |app| {
             #[cfg(target_os = "windows")]
             log::info!(
@@ -1087,6 +1091,10 @@ pub fn run(cli_args: CliArgs) {
         })
         .on_window_event(|window, event| match event {
             tauri::WindowEvent::CloseRequested { api, .. } => {
+                // The board is rebuilt on demand, so let it close for real.
+                if window.label() == vibe::board::BOARD_WINDOW {
+                    return;
+                }
                 // MaximusVibius: on Windows, let the settings window actually close
                 // (destroying its web view) when the tray can bring it back. Handy
                 // only hides it, which keeps the web view's memory in use.

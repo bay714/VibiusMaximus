@@ -8,6 +8,7 @@ import {
   Sparkles,
   Cpu,
   Keyboard,
+  Images,
 } from "lucide-react";
 import HandyTextLogo from "./icons/HandyTextLogo";
 import HandyHand from "./icons/HandyHand";
@@ -21,6 +22,7 @@ import {
   PostProcessingSettings,
   ModelsSettings,
   MacrosSettings,
+  CapturesSettings,
 } from "./settings";
 
 export type SidebarSection = keyof typeof SECTIONS_CONFIG;
@@ -51,6 +53,12 @@ export const SECTIONS_CONFIG = {
     labelKey: "sidebar.macros",
     icon: Keyboard,
     component: MacrosSettings,
+    enabled: () => true,
+  },
+  captures: {
+    labelKey: "sidebar.captures",
+    icon: Images,
+    component: CapturesSettings,
     enabled: () => true,
   },
   history: {

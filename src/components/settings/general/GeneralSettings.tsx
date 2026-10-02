@@ -22,6 +22,7 @@ export const GeneralSettings: React.FC = () => {
       <SettingsGroup title={t("settings.general.title")}>
         <ShortcutInput shortcutId="transcribe" grouped={true} />
         <ShortcutInput shortcutId="capture" grouped={true} />
+        <ShortcutInput shortcutId="board" grouped={true} />
         <ShortcutActivationSetting descriptionMode="tooltip" grouped={true} />
         {/* Cancel shortcut remains hidden on Linux because of dynamic shortcut instability. */}
         {!isLinux && <ShortcutInput shortcutId="cancel" grouped={true} />}

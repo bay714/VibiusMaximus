@@ -1,8 +1,9 @@
-//! Send a finished capture: paste the image, then the text, into the window
-//! the user came from, and put their clipboard back afterwards.
+//! Paste captures into the window the user came from: images first, then
+//! text, then the user's clipboard is put back.
 
 use super::capture::{self, CaptureState};
-use super::target;
+use super::target::{self, Target};
+use super::{board, history};
 use crate::clipboard::send_return_key;
 use crate::input::{send_paste_ctrl_v, EnigoState};
 use crate::settings::get_settings;
@@ -15,7 +16,7 @@ use tauri_plugin_clipboard_manager::ClipboardExt;
 
 /// How long the modifier is held during Ctrl+V (see `send_paste_ctrl_v`).
 const PASTE_HOLD_MS: u64 = 40;
-/// Pause after pasting the image so the chat app can attach it before the text.
+/// Pause after pasting an image so the chat app can attach it before the next paste.
 const PASTE_GAP_MS: u64 = 250;
 
 #[derive(Deserialize, PartialEq, Eq, Clone, Copy, Debug)]
@@ -23,6 +24,8 @@ const PASTE_GAP_MS: u64 = 250;
 enum SendMode {
     Send,
     CopyOnly,
+    /// Add to the board instead of sending.
+    Board,
 }
 
 #[derive(Deserialize, Debug)]
@@ -34,19 +37,28 @@ struct SendMeta {
     submit: bool,
 }
 
+/// One thing to paste.
+pub enum Item {
+    Png(Vec<u8>),
+    Text(String),
+}
+
 /// Body: `[meta length u32 LE][meta JSON][PNG bytes]`.
 #[tauri::command]
 pub async fn vibe_send(app: AppHandle, request: Request<'_>) -> Result<(), String> {
     let InvokeBody::Raw(body) = request.body() else {
         return Err("Expected a raw request body".into());
     };
-    let (meta, png) = parse_body(body)?;
-    tauri::async_runtime::spawn_blocking(move || send_blocking(&app, meta, png))
+    let (meta_bytes, png) = split_body(body)?;
+    let meta: SendMeta = serde_json::from_slice(meta_bytes).map_err(|e| e.to_string())?;
+    let png = png.to_vec();
+    tauri::async_runtime::spawn_blocking(move || send_capture(&app, meta, png))
         .await
         .map_err(|e| e.to_string())?
 }
 
-fn parse_body(body: &[u8]) -> Result<(SendMeta, Vec<u8>), String> {
+/// Split `[meta length u32 LE][meta][rest]`.
+pub(super) fn split_body(body: &[u8]) -> Result<(&[u8], &[u8]), String> {
     if body.len() < 4 {
         return Err("Request body too short".into());
     }
@@ -55,18 +67,25 @@ fn parse_body(body: &[u8]) -> Result<(SendMeta, Vec<u8>), String> {
     if body.len() < meta_end {
         return Err("Request body truncated".into());
     }
-    let meta: SendMeta = serde_json::from_slice(&body[4..meta_end]).map_err(|e| e.to_string())?;
-    Ok((meta, body[meta_end..].to_vec()))
+    Ok((&body[4..meta_end], &body[meta_end..]))
 }
 
-fn send_blocking(app: &AppHandle, meta: SendMeta, png: Vec<u8>) -> Result<(), String> {
-    let image = image::load_from_memory_with_format(&png, image::ImageFormat::Png)
-        .map_err(|e| e.to_string())?
-        .to_rgba8();
-    let (width, height) = image.dimensions();
-    let clip_image = tauri::image::Image::new_owned(image.into_raw(), width, height);
-
+fn send_capture(app: &AppHandle, meta: SendMeta, png: Vec<u8>) -> Result<(), String> {
     let target = app.state::<CaptureState>().target();
+    let target_name = target
+        .as_ref()
+        .map(|t| t.process.clone())
+        .unwrap_or_default();
+    let record = history::save(app, &png, &meta.text, &target_name)?;
+
+    if meta.mode == SendMode::Board {
+        capture::close(app);
+        board::set_target(app, target);
+        board::add_to_inbox(app, &record.path);
+        board::open(app);
+        return Ok(());
+    }
+
     // Hand focus back while our window is still in front (Windows only lets the
     // foreground process do that), then close the capture window.
     let focused = match (&target, meta.mode) {
@@ -75,43 +94,62 @@ fn send_blocking(app: &AppHandle, meta: SendMeta, png: Vec<u8>) -> Result<(), St
     };
     capture::close(app);
 
-    let clipboard = app.clipboard();
     if meta.mode == SendMode::CopyOnly || !focused {
         if meta.mode == SendMode::Send {
             warn!("Couldn't return focus to the previous window; copied the image instead");
         }
-        return clipboard
-            .write_image(&clip_image)
-            .map_err(|e| e.to_string());
+        return copy_png(app, &png);
     }
     let target = target.unwrap_or_default();
     std::thread::sleep(Duration::from_millis(80));
 
+    let items = if target.is_terminal() {
+        vec![Item::Text(join_nonempty(&[&record.path, &meta.text]))]
+    } else {
+        vec![
+            Item::Png(png),
+            Item::Text(join_nonempty(&["[screenshot above]", &meta.text])),
+        ]
+    };
+    paste_items(app, &target, items, meta.submit)
+}
+
+/// Paste each item in order into the focused window, then restore the
+/// clipboard. Terminals can't take images, so callers convert those to paths.
+pub fn paste_items(
+    app: &AppHandle,
+    target: &Target,
+    items: Vec<Item>,
+    submit: bool,
+) -> Result<(), String> {
+    let clipboard = app.clipboard();
     let saved_text = clipboard.read_text().ok();
     let settings = get_settings(app);
     let enigo_state = app
         .try_state::<EnigoState>()
         .ok_or("Keyboard input not initialised")?;
 
-    if target.is_terminal() {
-        let path = save_png(app, &png)?;
-        let text = join_nonempty(&[path.as_str(), meta.text.as_str()]);
-        clipboard.write_text(text).map_err(|e| e.to_string())?;
+    let count = items.len();
+    for (i, item) in items.into_iter().enumerate() {
+        match item {
+            Item::Png(png) => {
+                let image = decode(&png)?;
+                clipboard.write_image(&image).map_err(|e| e.to_string())?;
+            }
+            Item::Text(text) => {
+                if text.trim().is_empty() {
+                    continue;
+                }
+                clipboard.write_text(text).map_err(|e| e.to_string())?;
+            }
+        }
         paste(&enigo_state)?;
-    } else {
-        clipboard
-            .write_image(&clip_image)
-            .map_err(|e| e.to_string())?;
-        paste(&enigo_state)?;
-        if !meta.text.trim().is_empty() {
+        if i + 1 < count {
             std::thread::sleep(Duration::from_millis(PASTE_GAP_MS));
-            let text = join_nonempty(&["[screenshot above]", meta.text.as_str()]);
-            clipboard.write_text(text).map_err(|e| e.to_string())?;
-            paste(&enigo_state)?;
         }
     }
 
-    if meta.submit {
+    if submit {
         std::thread::sleep(Duration::from_millis(120));
         let mut enigo = enigo_state.0.lock().map_err(|e| e.to_string())?;
         send_return_key(&mut enigo, settings.auto_submit_key)?;
@@ -124,14 +162,32 @@ fn send_blocking(app: &AppHandle, meta: SendMeta, png: Vec<u8>) -> Result<(), St
     if let Some(text) = saved_text {
         let _ = clipboard.write_text(text);
     }
-    info!(
-        "Capture sent to {} ({}x{}, terminal: {})",
-        target.process,
+    info!("Pasted {} item(s) into {}", count, target.process);
+    Ok(())
+}
+
+fn decode(png: &[u8]) -> Result<tauri::image::Image<'static>, String> {
+    let image = image::load_from_memory_with_format(png, image::ImageFormat::Png)
+        .map_err(|e| e.to_string())?
+        .to_rgba8();
+    let (width, height) = image.dimensions();
+    Ok(tauri::image::Image::new_owned(
+        image.into_raw(),
         width,
         height,
-        target.is_terminal()
-    );
-    Ok(())
+    ))
+}
+
+pub fn copy_png(app: &AppHandle, png: &[u8]) -> Result<(), String> {
+    app.clipboard()
+        .write_image(&decode(png)?)
+        .map_err(|e| e.to_string())
+}
+
+pub fn copy_text(app: &AppHandle, text: &str) -> Result<(), String> {
+    app.clipboard()
+        .write_text(text.to_string())
+        .map_err(|e| e.to_string())
 }
 
 pub(super) fn paste(enigo_state: &EnigoState) -> Result<(), String> {
@@ -139,7 +195,7 @@ pub(super) fn paste(enigo_state: &EnigoState) -> Result<(), String> {
     send_paste_ctrl_v(&mut enigo, PASTE_HOLD_MS)
 }
 
-fn join_nonempty(parts: &[&str]) -> String {
+pub(super) fn join_nonempty(parts: &[&str]) -> String {
     parts
         .iter()
         .map(|p| p.trim())
@@ -148,41 +204,26 @@ fn join_nonempty(parts: &[&str]) -> String {
         .join("\n")
 }
 
-/// Save the PNG under the app data folder and return its path.
-fn save_png(app: &AppHandle, png: &[u8]) -> Result<String, String> {
-    let dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| e.to_string())?
-        .join("captures");
-    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let name = chrono::Local::now()
-        .format("capture-%Y%m%d-%H%M%S%3f.png")
-        .to_string();
-    let path = dir.join(name);
-    std::fs::write(&path, png).map_err(|e| e.to_string())?;
-    Ok(path.to_string_lossy().into_owned())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn parses_meta_and_png() {
+    fn splits_meta_and_rest() {
         let meta = br#"{"text":"hi","mode":"copyOnly","submit":false}"#;
         let mut body = (meta.len() as u32).to_le_bytes().to_vec();
         body.extend_from_slice(meta);
         body.extend_from_slice(b"PNGDATA");
-        let (m, png) = parse_body(&body).unwrap();
-        assert_eq!(m.text, "hi");
-        assert_eq!(m.mode, SendMode::CopyOnly);
-        assert_eq!(png, b"PNGDATA");
+        let (m, rest) = split_body(&body).unwrap();
+        let parsed: SendMeta = serde_json::from_slice(m).unwrap();
+        assert_eq!(parsed.text, "hi");
+        assert_eq!(parsed.mode, SendMode::CopyOnly);
+        assert_eq!(rest, b"PNGDATA");
     }
 
     #[test]
     fn rejects_truncated_body() {
-        assert!(parse_body(&[10, 0, 0, 0, b'{']).is_err());
+        assert!(split_body(&[10, 0, 0, 0, b'{']).is_err());
     }
 
     #[test]

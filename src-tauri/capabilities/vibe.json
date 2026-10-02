@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "vibe",
-  "description": "MaximusVibius capture window",
-  "windows": ["capture"],
-  "permissions": ["core:default"]
+  "description": "MaximusVibius capture and board windows",
+  "windows": ["capture", "board"],
+  "permissions": ["core:default", "dialog:default"]
 }

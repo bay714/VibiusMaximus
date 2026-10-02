@@ -17,7 +17,8 @@
     "history": "History",
     "debug": "Debug",
     "about": "About",
-    "macros": "Macros"
+    "macros": "Macros",
+    "captures": "Captures"
   },
   "onboarding": {
     "subtitle": "To get started, choose a transcription model",
@@ -184,6 +185,10 @@
           "capture": {
             "name": "Capture Shortcut",
             "description": "Freeze the screen, select a region, annotate it and send it to the app you were using."
+          },
+          "board": {
+            "name": "Board Shortcut",
+            "description": "Open the board to build a prompt from several images and notes."
           }
         },
         "errors": {
@@ -735,7 +740,8 @@
       "error": "Couldn't send: {{error}}",
       "cleanup": "Clean up",
       "cleaning": "Cleaning up…",
-      "undoCleanup": "Undo clean up"
+      "undoCleanup": "Undo clean up",
+      "toBoard": "Add to board"
     },
     "macros": {
       "title": "Prompt macros",
@@ -755,6 +761,36 @@
       "delete": "Delete",
       "empty": "No macros yet.",
       "saved": "Saved"
+    },
+    "board": {
+      "images": "Images",
+      "addFiles": "Add images…",
+      "clear": "Clear board",
+      "clearConfirm": "Clear everything on the board?",
+      "hint": "Drop or paste images, add text boxes, then send. Images are sent top to bottom, left to right.",
+      "copyText": "Copy text",
+      "copyImage": "Copy as one image",
+      "send": "Send",
+      "sendTo": "Send to {{app}}",
+      "noTarget": "Open the board from the app you want to send to.",
+      "sent": "Sent.",
+      "copiedImage": "Board copied as one image.",
+      "copiedText": "Prompt text copied."
+    },
+    "captures": {
+      "title": "Captures",
+      "description": "Every capture you send or copy is kept here (the newest 200, plus anything starred).",
+      "empty": "No captures yet. Press Alt+Shift+S to make one.",
+      "noText": "(no caption)",
+      "copyImage": "Copy image",
+      "copyText": "Copy text",
+      "toBoard": "Add to board",
+      "star": "Star (keep forever)",
+      "showInFolder": "Show in folder",
+      "delete": "Delete",
+      "copiedImage": "Image copied.",
+      "copiedText": "Text copied.",
+      "addedToBoard": "Added to the board."
     }
   }
 }

@@ -512,6 +512,7 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
     let quit_i = MenuItem::with_id(app, "quit", &strings.quit, true, quit_accelerator)?;
     // MaximusVibius
     let new_capture_i = MenuItem::with_id(app, "vibe_capture", "New capture", true, None::<&str>)?;
+    let open_board_i = MenuItem::with_id(app, "vibe_board", "Open board", true, None::<&str>)?;
     let separator = || PredefinedMenuItem::separator(app);
 
     let menu = if inputs.busy {
@@ -562,6 +563,7 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
                 &version_i,
                 &separator()?,
                 &new_capture_i,
+                &open_board_i,
                 &copy_last_transcript_i,
                 &separator()?,
                 &model_submenu,

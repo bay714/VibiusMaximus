@@ -1,8 +1,10 @@
 //! MaximusVibius additions to Handy: screen capture, send-to-chat and prompt
 //! macros. Kept in its own module so merges from upstream Handy stay small.
 
+pub mod board;
 pub mod capture;
 pub mod cleanup;
+mod history;
 mod keys;
 pub mod macros;
 pub mod output;
@@ -23,6 +25,17 @@ pub fn invoke_handler() -> impl Fn(Invoke<tauri::Wry>) -> bool + Send + Sync + '
         capture::vibe_close,
         output::vibe_send,
         cleanup::vibe_cleanup,
+        history::vibe_captures_list,
+        history::vibe_capture_delete,
+        history::vibe_capture_star,
+        history::vibe_capture_copy,
+        history::vibe_capture_to_board,
+        board::vibe_board_load,
+        board::vibe_board_save,
+        board::vibe_board_take_inbox,
+        board::vibe_board_target,
+        board::vibe_board_send,
+        board::vibe_read_image,
         macros::vibe_macros_list,
         macros::vibe_macro_save,
         macros::vibe_macro_delete,

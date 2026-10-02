@@ -49,6 +49,7 @@ const KEYS = {
   pin: "Alt+P",
   cancel: "Esc",
   copy: "Shift+Enter",
+  board: "Alt+Enter",
   sendSubmit: "Ctrl+Enter",
   send: "Enter",
 } as const;
@@ -390,7 +391,8 @@ export default function Editor({ crop }: { crop: Crop }) {
         (isTextField(target) || target === document.body)
       ) {
         e.preventDefault();
-        if (e.shiftKey) send("copyOnly", false);
+        if (e.altKey) send("board", false);
+        else if (e.shiftKey) send("copyOnly", false);
         else send("send", e.ctrlKey);
       } else if (e.key === "Escape") {
         const selected =
@@ -516,6 +518,15 @@ export default function Editor({ crop }: { crop: Crop }) {
         >
           {t("vibe.capture.cancel")}
           <kbd>{KEYS.cancel}</kbd>
+        </button>
+        <button
+          type="button"
+          className="vibe-btn"
+          disabled={busy}
+          onClick={() => send("board", false)}
+        >
+          {t("vibe.capture.toBoard")}
+          <kbd>{KEYS.board}</kbd>
         </button>
         <button
           type="button"

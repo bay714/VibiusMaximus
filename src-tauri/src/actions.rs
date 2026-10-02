@@ -971,6 +971,10 @@ pub static ACTION_MAP: Lazy<HashMap<String, Arc<dyn ShortcutAction>>> = Lazy::ne
         Arc::new(CancelAction) as Arc<dyn ShortcutAction>,
     );
     map.insert(
+        "board".to_string(),
+        Arc::new(crate::vibe::board::BoardAction) as Arc<dyn ShortcutAction>,
+    );
+    map.insert(
         "capture".to_string(),
         Arc::new(crate::vibe::capture::CaptureAction) as Arc<dyn ShortcutAction>,
     );

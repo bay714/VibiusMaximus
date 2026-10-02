@@ -909,6 +909,17 @@ pub fn get_default_settings() -> AppSettings {
         },
     );
     bindings.insert(
+        "board".to_string(),
+        ShortcutBinding {
+            id: "board".to_string(),
+            name: "Open Board".to_string(),
+            description: "Opens the board for building a prompt from many images and notes."
+                .to_string(),
+            default_binding: "alt+shift+b".to_string(),
+            current_binding: "alt+shift+b".to_string(),
+        },
+    );
+    bindings.insert(
         "cancel".to_string(),
         ShortcutBinding {
             id: "cancel".to_string(),
