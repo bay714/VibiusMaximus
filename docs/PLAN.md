@@ -34,7 +34,7 @@ Mockups: [`docs/mockups/README.md`](mockups/README.md) (screenshots) and [`docs/
 - The board is a free Excalidraw canvas; reading order (top to bottom, left to right) turns it into ordered images plus one prompt with `[Image n]` markers.
 - Paste profiles are two editable app lists (file path / copy only) rather than a table.
 
-**Not built yet:** project vocabulary import, the onboarding practice step, the board inbox folder, our own updater key, code signing,
+**Not built yet:** project vocabulary import, the onboarding practice step, the board inbox folder, code signing,
 and translations of the new strings beyond English.
 
 ## Priorities
@@ -706,10 +706,15 @@ theme, and an existing Handy install side by side.
 - Adapt Handy's `.github/workflows/build.yml` to a Windows-only build that
   produces NSIS and MSI installers on tag push. Remove Handy's signing and macOS
   jobs for now.
-- **Updater:** generate our own minisign keypair (the private key goes in GitHub
-  secrets), point the updater at
-  `github.com/bay714/VibiusMaximus/releases/latest/download/latest.json`.
-  Handy's endpoint and public key are removed.
+- **Updater (done):** our own minisign keypair. The private key and its
+  password are the `TAURI_SIGNING_PRIVATE_KEY*` GitHub secrets, with a backup in
+  `~/.tauri/vibiusmaximus.key*` on Bay's PC. The app's "Check for updates"
+  reads `github.com/bay714/VibiusMaximus/releases/latest/download/latest.json`,
+  which only works while the repo is public. Losing the key means existing
+  installs can't update; they'd have to reinstall by hand.
+- **Shipping an update:** bump the version in `tauri.conf.json`, `Cargo.toml`
+  and `package.json`, commit, push a matching `v*` tag. `vibe-windows.yml`
+  builds and publishes the release with `latest.json`.
 - **Code signing:** ships unsigned at first, so Windows SmartScreen will show a
   "More info → Run anyway" prompt. Buying a signing certificate (or using Azure
   Trusted Signing) can come later without changing the code.
