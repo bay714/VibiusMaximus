@@ -1,0 +1,23 @@
+# VibiusMaximus: Dependabot opens a weekly PR when xcap or Excalidraw ship a
+# new version. Handy's own dependencies are left out on purpose: they arrive
+# with the Handy upstream sync (workflows/handy-sync.yml), so our Cargo.lock
+# and bun.lock don't drift away from Handy's and upstream merges stay small.
+version: 2
+updates:
+  - package-ecosystem: bun
+    directory: "/"
+    schedule:
+      interval: weekly
+    allow:
+      - dependency-name: "@excalidraw/excalidraw"
+    commit-message:
+      prefix: "chore"
+
+  - package-ecosystem: cargo
+    directory: "/src-tauri"
+    schedule:
+      interval: weekly
+    allow:
+      - dependency-name: "xcap"
+    commit-message:
+      prefix: "chore"

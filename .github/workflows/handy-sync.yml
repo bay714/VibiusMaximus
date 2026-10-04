@@ -1,0 +1,125 @@
+# VibiusMaximus: once a week, check Handy (cjpais/Handy) for new commits and
+# open (or refresh) one pull request that merges them into main. Conflicts,
+# usually on lines we rebranded, show on the PR; fix them there or locally.
+# Merge the PR with "Create a merge commit" (not squash) so git remembers which
+# Handy commits are already in, and the next sync only brings the new ones.
+name: Handy upstream sync
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 14 * * 1" # Mondays 14:00 UTC
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: handy-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # The checkout gains an `upstream` remote below, and gh prefers that one
+      # by default; pin it to this repo so PRs never land on Handy's.
+      GH_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ github.token }}
+      BRANCH: handy-upstream
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Fetch Handy
+        id: fetch
+        run: |
+          git remote add upstream https://github.com/cjpais/Handy.git
+          git fetch --no-tags upstream main
+          echo "new=$(git rev-list --count --no-merges HEAD..upstream/main)" >> "$GITHUB_OUTPUT"
+
+      - name: Update the sync branch
+        id: branch
+        if: steps.fetch.outputs.new != '0'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          open_pr=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
+          if [ -n "$open_pr" ]; then
+            # Keep any conflict fixes already pushed to the open PR's branch.
+            git fetch origin "$BRANCH"
+            git checkout -B "$BRANCH" "origin/$BRANCH"
+            if ! git merge --no-edit upstream/main; then
+              git merge --abort
+              echo "result=conflict" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            force=""
+          else
+            # No open PR: any leftover branch is from a merged sync, so restart.
+            git checkout -B "$BRANCH" upstream/main
+            force="--force"
+          fi
+          # GITHUB_TOKEN may not push commits that change workflow files. If
+          # Handy changed one, fall back to an issue with the manual steps.
+          if git push $force origin "$BRANCH" 2>push.err; then
+            echo "result=pushed" >> "$GITHUB_OUTPUT"
+          elif grep -qi "workflow" push.err; then
+            cat push.err
+            echo "result=manual" >> "$GITHUB_OUTPUT"
+          else
+            cat push.err
+            exit 1
+          fi
+
+      - name: Open or refresh the pull request
+        if: steps.branch.outputs.result == 'pushed'
+        run: |
+          {
+            echo "Handy has **${{ steps.fetch.outputs.new }}** new commit(s) since our last sync:"
+            echo
+            echo '```'
+            git log --oneline --no-merges origin/main..upstream/main
+            echo '```'
+            echo
+            echo "If GitHub reports conflicts, they are usually on lines we rebranded (name, identifier, updater, signing). Keep ours and take Handy's other changes."
+            echo
+            echo "**Merge with \"Create a merge commit\", not squash or rebase**, so the next sync only brings newer commits."
+          } > body.md
+          pr=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
+          if [ -z "$pr" ]; then
+            gh pr create --base main --head "$BRANCH" --title "chore: merge upstream Handy" --body-file body.md
+          else
+            gh pr edit "$pr" --body-file body.md
+          fi
+
+      - name: Ask for a manual merge
+        if: steps.branch.outputs.result == 'manual' || steps.branch.outputs.result == 'conflict'
+        run: |
+          {
+            echo "Handy has **${{ steps.fetch.outputs.new }}** new commit(s), but the sync job couldn't update the \`$BRANCH\` branch on its own (result: \`${{ steps.branch.outputs.result }}\`)."
+            echo
+            echo "- \`manual\`: Handy changed a workflow file, which the Actions token isn't allowed to push."
+            echo "- \`conflict\`: Handy's new commits conflict with fixes already on \`$BRANCH\`."
+            echo
+            echo "Merge locally instead:"
+            echo
+            echo '```sh'
+            echo "git fetch upstream"
+            echo "git checkout -B $BRANCH origin/main"
+            echo "git merge upstream/main   # fix any conflicts, then commit"
+            echo "git push -u origin $BRANCH"
+            echo '```'
+            echo
+            echo "Then open a PR from \`$BRANCH\` into \`main\` and merge it with a merge commit."
+          } > body.md
+          title="Handy upstream sync needs a manual merge"
+          issue=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number')
+          if [ -z "$issue" ]; then
+            gh issue create --title "$title" --body-file body.md
+          else
+            gh issue edit "$issue" --body-file body.md
+          fi

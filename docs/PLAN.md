@@ -722,6 +722,12 @@ theme, and an existing Handy install side by side.
   Handy's files are limited to the "touched" list in §3.
 - Merge `upstream/main` every 2–4 weeks on a branch, run the test suite and the
   manual matrix, then merge to `main`.
+- `.github/workflows/handy-sync.yml` checks Handy every Monday and opens (or
+  refreshes) a `chore: merge upstream Handy` PR from the `handy-upstream`
+  branch. Merge it with a merge commit, never squash. If the job can't push
+  (Handy changed a workflow file), it opens an issue with the manual steps.
+- `.github/dependabot.yml` opens weekly PRs for new xcap and Excalidraw
+  versions only. Handy's other dependencies come in with the upstream merges.
 - Never reformat Handy's files, and keep our settings fields grouped at the end
   of `AppSettings`, so merges stay small.
 
