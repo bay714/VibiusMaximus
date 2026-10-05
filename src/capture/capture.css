@@ -15,12 +15,12 @@
 .vibe-dim {
   position: absolute;
   inset: 0;
-  background: rgba(11, 13, 18, 0.55);
+  background: rgba(18, 12, 9, 0.55);
 }
 .vibe-selection {
   position: absolute;
   outline: 2px solid #c08a43;
-  box-shadow: 0 0 0 9999px rgba(11, 13, 18, 0.65);
+  box-shadow: 0 0 0 9999px rgba(18, 12, 9, 0.65);
 }
 .vibe-size {
   position: absolute;
@@ -41,8 +41,8 @@
   left: 50%;
   bottom: 28px;
   transform: translateX(-50%);
-  background: rgba(17, 24, 39, 0.92);
-  color: #e5e7eb;
+  background: rgba(27, 21, 18, 0.92);
+  color: #f1e6d6;
   padding: 8px 14px;
   border-radius: 999px;
   font-size: 12px;
@@ -59,15 +59,15 @@
   transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
-  background: #171a21;
-  border: 1px solid #2a2f3a;
+  background: #1b1512;
+  border: 1px solid #3a2c24;
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
   /* clip, not hidden: a hidden box can still be scrolled when a field is
      focused, which slid the screenshot out of view. */
   overflow: clip;
   cursor: default;
-  color: #e8eaf0;
+  color: #f1e6d6;
 }
 .vibe-canvas {
   position: relative;
@@ -76,7 +76,7 @@
   flex: none;
 }
 .vibe-panel {
-  border-top: 1px solid #2a2f3a;
+  border-top: 1px solid #3a2c24;
   font-size: 13px;
   /* Many pins scroll here instead of pushing the editor off screen. */
   max-height: 30vh;
@@ -89,7 +89,7 @@
   padding: 8px 12px;
 }
 .vibe-row + .vibe-row {
-  border-top: 1px solid #22262f;
+  border-top: 1px solid #2b211b;
 }
 /* The note whose pin is selected on the screenshot. */
 .vibe-row.active {
@@ -100,7 +100,7 @@
 }
 .vibe-remove {
   padding: 4px 9px;
-  color: #9aa1b2;
+  color: #a8988a;
 }
 .vibe-remove:hover {
   color: #f87171;
@@ -112,8 +112,8 @@
 }
 .vibe-tool {
   background: #fff;
-  border: 1px solid #d4d7de;
-  color: #1f2430;
+  border: 1px solid #dccdb6;
+  color: #221814;
   border-radius: 8px;
   padding: 6px 10px;
   font:
@@ -144,10 +144,10 @@
 }
 .vibe-input {
   flex: 1;
-  background: #0f1115;
-  border: 1px solid #2a2f3a;
+  background: #120d0b;
+  border: 1px solid #3a2c24;
   border-radius: 8px;
-  color: #e8eaf0;
+  color: #f1e6d6;
   padding: 7px 10px;
   font: inherit;
   outline: none;
@@ -173,15 +173,15 @@
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  background: #13161c;
-  border-top: 1px solid #2a2f3a;
-  color: #9aa1b2;
+  background: #150f0c;
+  border-top: 1px solid #3a2c24;
+  color: #a8988a;
   font-size: 12px;
 }
 .vibe-btn {
-  background: #1e222b;
-  border: 1px solid #2a2f3a;
-  color: #e8eaf0;
+  background: #241b16;
+  border: 1px solid #3a2c24;
+  color: #f1e6d6;
   border-radius: 8px;
   padding: 6px 12px;
   font: inherit;
@@ -189,7 +189,7 @@
   white-space: nowrap;
 }
 .vibe-btn:hover {
-  border-color: #3a4150;
+  border-color: #4d3a2f;
 }
 .vibe-btn:disabled {
   opacity: 0.5;

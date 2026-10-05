@@ -558,9 +558,9 @@ export default function Editor({
     canvas.height = image.height + band;
     ctx.drawImage(image, 0, 0);
     if (band) {
-      ctx.fillStyle = "#111827";
+      ctx.fillStyle = "#1b1512";
       ctx.fillRect(0, image.height, canvas.width, band);
-      ctx.fillStyle = "#f3f4f6";
+      ctx.fillStyle = "#f1e6d6";
       ctx.font = `${font}px "Segoe UI", system-ui, sans-serif`;
       ctx.textBaseline = "top";
       wrapped.forEach((l, i) =>
