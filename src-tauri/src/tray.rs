@@ -135,7 +135,9 @@ pub enum AppTheme {
 
 /// Gets the current app theme, with Linux defaulting to Colored theme
 pub fn get_current_theme(app: &AppHandle) -> AppTheme {
-    if cfg!(target_os = "linux") {
+    // VibiusMaximus: the red-and-bronze shield reads on light and dark
+    // taskbars alike, so Windows uses the colored icons too.
+    if cfg!(any(target_os = "linux", target_os = "windows")) {
         // On Linux, always use the colored theme
         AppTheme::Colored
     } else {
@@ -195,7 +197,7 @@ pub fn get_icon_path(theme: AppTheme, state: TrayIconState, warning: bool) -> &'
             AppTheme::Light => "resources/tray_idle_warning_dark.png",
             // Linux never sets the warning flag (Secure Input is macOS-only),
             // but fall back to the normal icon just in case.
-            AppTheme::Colored => "resources/handy.png",
+            AppTheme::Colored => "resources/handy_warning.png",
         };
     }
     match (theme, state) {

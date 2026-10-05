@@ -33,6 +33,10 @@ are ordinary objects: drag to move, `Delete` or the note's × to remove, `Ctrl+Z
 are pasted as text ("1. …", "2. …") and printed under the image. Double-click a capture in
 Settings → Captures to open it in the editor again.
 
+**Boards are saved:** every board is kept. **☰ Boards** in the board's bar lists them with
+previews: open an old one, rename it, delete it, or start a **New board**. **Clear board** empties
+only the open one.
+
 **Alt+C, then Alt+V:** many chat apps take only the image from one paste. After `Alt+C` (in a capture
 or on the board), press `Alt+V` in any app within 5 minutes: it pastes each image, then the text.
 Alt+V goes back to normal after that one paste.

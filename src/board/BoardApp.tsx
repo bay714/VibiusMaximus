@@ -29,6 +29,7 @@ import {
   type Note,
 } from "../capture/pins";
 import { matches, useKeys } from "../capture/keys";
+import { BoardsPanel, type BoardMeta } from "./BoardsPanel";
 
 // Fonts are bundled under /public/excalidraw so Excalidraw never fetches them.
 (window as unknown as { EXCALIDRAW_ASSET_PATH: string }).EXCALIDRAW_ASSET_PATH =
@@ -37,6 +38,30 @@ import { matches, useKeys } from "../capture/keys";
 type Skeleton = NonNullable<Parameters<typeof convertToExcalidrawElements>[0]>;
 type InitialData = { elements?: unknown; files?: unknown; appState?: unknown };
 
+/** The open board: its details and the scene to start from. */
+interface OpenBoard {
+  meta: BoardMeta;
+  initial: InitialData;
+}
+
+/** A preview is refreshed at most this often while editing. */
+const THUMB_EVERY_MS = 20_000;
+
+function toOpenBoard(loaded: {
+  meta: BoardMeta;
+  scene: string | null;
+}): OpenBoard {
+  let initial: InitialData = {};
+  try {
+    if (loaded.scene) initial = JSON.parse(loaded.scene) as InitialData;
+  } catch {
+    initial = {};
+  }
+  return { meta: loaded.meta, initial };
+}
+
+// Symbol, not translatable text.
+const BOARDS_ICON = "☰";
 const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp", "gif", "bmp"];
 /** Imported images are laid out at most this wide on the board. */
 const MAX_PLACED_WIDTH = 520;
@@ -85,7 +110,11 @@ const mimeFor = (path: string) => {
 export default function BoardApp() {
   const { t } = useTranslation();
   const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null);
-  const [initial, setInitial] = useState<InitialData | null>(null);
+  const [board, setBoard] = useState<OpenBoard | null>(null);
+  const [showBoards, setShowBoards] = useState(false);
+  const boardId = useRef<string | null>(null);
+  boardId.current = board?.meta.id ?? null;
+  const lastThumb = useRef(0);
   const [target, setTarget] = useState<string | null>(null);
   const [status, setStatus] = useState<string>("");
   const [busy, setBusy] = useState(false);
@@ -104,6 +133,7 @@ export default function BoardApp() {
     selectPin,
     removePin,
     handleChange,
+    reset: resetPins,
   } = usePins(api, {
     onPlaced: (pinId) =>
       setTimeout(() => noteFields.current.get(pinId)?.focus(), 0),
@@ -112,22 +142,45 @@ export default function BoardApp() {
   notesRef.current = notes;
 
   useEffect(() => {
-    invoke<string | null>("vibe_board_load").then((json) => {
-      try {
-        setInitial(json ? (JSON.parse(json) as InitialData) : {});
-      } catch {
-        setInitial({});
-      }
-    });
+    invoke<{ meta: BoardMeta; scene: string | null }>("vibe_board_load")
+      .then((loaded) => setBoard(toOpenBoard(loaded)))
+      .catch((e) => setStatus(String(e)));
     invoke<string | null>("vibe_board_target").then(setTarget);
   }, []);
 
-  // Save shortly after the last change. Each pin carries its note in
-  // customData, so notes come back with the board.
-  const scheduleSave = useCallback(() => {
-    if (!api) return;
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => {
+  /** A small preview for the board list. */
+  const saveThumb = useCallback(
+    async (id: string) => {
+      if (!api) return;
+      const elements = api.getSceneElements();
+      if (elements.length === 0) return;
+      lastThumb.current = Date.now();
+      const blob = await exportToBlob({
+        elements,
+        files: api.getFiles(),
+        appState: { exportBackground: true, viewBackgroundColor: "#ffffff" },
+        mimeType: "image/png",
+        maxWidthOrHeight: 360,
+      });
+      const png = new Uint8Array(await blob.arrayBuffer());
+      const idBytes = new TextEncoder().encode(id);
+      const body = new Uint8Array(4 + idBytes.length + png.length);
+      new DataView(body.buffer).setUint32(0, idBytes.length, true);
+      body.set(idBytes, 4);
+      body.set(png, 4 + idBytes.length);
+      await invoke("vibe_board_thumb", body);
+    },
+    [api],
+  );
+
+  /** Save the open board now. Each pin carries its note in customData, so
+   *  notes come back with the board. */
+  const saveNow = useCallback(
+    async (thumb = false) => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+      const id = boardId.current;
+      if (!api || !id) return;
       const text = new Map(notesRef.current.map((n) => [n.pinId, n.text]));
       const elements = api.getSceneElements().map((e) =>
         isPin(e)
@@ -143,9 +196,59 @@ export default function BoardApp() {
         api.getFiles(),
         "local",
       );
-      invoke("vibe_board_save", { scene });
+      const images = elements.filter((e) => e.type === "image").length;
+      await invoke("vibe_board_save", { id, scene, images });
+      if (thumb || Date.now() - lastThumb.current > THUMB_EVERY_MS)
+        await saveThumb(id).catch(() => undefined);
+    },
+    [api, saveThumb],
+  );
+
+  // Save shortly after the last change.
+  const scheduleSave = useCallback(() => {
+    if (!api) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      saveNow().catch((e) => setStatus(String(e)));
     }, 800);
-  }, [api]);
+  }, [api, saveNow]);
+
+  /** Save this board, then show another one. */
+  const switchTo = useCallback(
+    async (next: Promise<{ meta: BoardMeta; scene: string | null }>) => {
+      try {
+        await saveNow(true);
+        const loaded = await next;
+        resetPins();
+        setApi(null);
+        setBoard(toOpenBoard(loaded));
+        setShowBoards(false);
+        setStatus("");
+      } catch (e) {
+        setStatus(String(e));
+      }
+    },
+    [saveNow, resetPins],
+  );
+
+  const newBoard = () => switchTo(invoke("vibe_board_new"));
+  const openBoard = (id: string) => {
+    if (id !== boardId.current) switchTo(invoke("vibe_board_open", { id }));
+  };
+  const deleteBoard = async (id: string) => {
+    const wasOpen = id === boardId.current;
+    if (wasOpen && saveTimer.current) clearTimeout(saveTimer.current);
+    const next = await invoke<{ meta: BoardMeta; scene: string | null } | null>(
+      "vibe_board_delete",
+      { id },
+    );
+    if (next) {
+      resetPins();
+      setApi(null);
+      setBoard(toOpenBoard(next));
+    }
+    setShowBoards(false);
+  };
 
   const onChange = useCallback(
     (elements: readonly ExcalidrawElement[], appState: AppState) => {
@@ -358,9 +461,7 @@ export default function BoardApp() {
   const clear = () => {
     if (!api || !window.confirm(t("vibe.board.clearConfirm"))) return;
     api.resetScene();
-    invoke("vibe_board_save", {
-      scene: serializeAsJSON([], {}, {}, "local"),
-    });
+    saveNow().catch((e) => setStatus(String(e)));
   };
 
   // Keys from Settings → Hotkeys, shared with the capture editor. The close
@@ -399,15 +500,16 @@ export default function BoardApp() {
     return () => window.removeEventListener("keydown", onKey, true);
   });
 
-  if (!initial) return null;
+  if (!board) return status ? <p className="vibe-error">{status}</p> : null;
 
   return (
     <div className="vibe-board">
       <div className={`vibe-board-canvas${pinMode ? " pin-armed" : ""}`}>
         <Excalidraw
+          key={board.meta.id}
           excalidrawAPI={setApi}
           initialData={{
-            ...(initial as object),
+            ...(board.initial as object),
             appState: {
               viewBackgroundColor: "#ffffff",
               currentItemFontFamily: FONT_FAMILY.Helvetica,
@@ -457,7 +559,35 @@ export default function BoardApp() {
           ))}
         </div>
       )}
+      {showBoards && (
+        <BoardsPanel
+          currentId={board.meta.id}
+          onOpen={openBoard}
+          onNew={newBoard}
+          onDelete={deleteBoard}
+          onRenamed={(id, name) =>
+            setBoard((b) =>
+              b && b.meta.id === id ? { ...b, meta: { ...b.meta, name } } : b,
+            )
+          }
+          onClose={() => setShowBoards(false)}
+        />
+      )}
       <div className="vibe-board-bar">
+        <button
+          type="button"
+          className={`vibe-btn${showBoards ? " on" : ""}`}
+          title={t("vibe.boards.title")}
+          onClick={() => {
+            if (!showBoards) saveNow(true).catch(() => undefined);
+            setShowBoards((v) => !v);
+          }}
+        >
+          {BOARDS_ICON} {board.meta.name}
+        </button>
+        <button type="button" className="vibe-btn" onClick={newBoard}>
+          {t("vibe.boards.new")}
+        </button>
         <button type="button" className="vibe-btn" onClick={pickFiles}>
           {t("vibe.board.addFiles")}
         </button>

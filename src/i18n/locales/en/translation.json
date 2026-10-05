@@ -869,6 +869,19 @@
         "undo": "Undo",
         "redo": "Redo"
       }
+    },
+    "boards": {
+      "title": "Boards",
+      "new": "New board",
+      "close": "Close",
+      "empty": "No boards yet.",
+      "renameHint": "Click to rename",
+      "images_one": "{{count}} image",
+      "images_other": "{{count}} images",
+      "current": "Open now",
+      "open": "Open",
+      "delete": "Delete",
+      "deleteConfirm": "Delete \"{{name}}\"? This can't be undone."
     }
   }
 }

@@ -230,6 +230,16 @@ export function usePins(
     [api],
   );
 
+  /** Forget everything before another scene is loaded (switching boards), so
+   *  its shapes aren't taken for newly drawn ones and numbered again. */
+  const reset = useCallback(() => {
+    known.current = null;
+    removedText.current.clear();
+    setNotes([]);
+    setSelectedPin(null);
+    setPinMode(false);
+  }, []);
+
   const setNote = useCallback((pinId: string, text: string) => {
     setNotes((ns) => ns.map((n) => (n.pinId === pinId ? { ...n, text } : n)));
   }, []);
@@ -334,6 +344,7 @@ export function usePins(
     selectPin,
     removePin,
     handleChange,
+    reset,
   };
 }
 
