@@ -205,8 +205,8 @@ Uses Handy's existing submit-key setting (`Enter`, `Ctrl+Enter` or `Cmd+Enter`).
   halfway through. The clipboard is restored afterwards.
 - **Variables:** `{clipboard}`, `{date}`, `{time}`, filled in when the macro fires.
 - The body field accepts dictation (`Ctrl+Space`).
-- Ships 4 editable starter macros on `Alt+1`…`Alt+4`: *Plan first*, *Match
-  design system*, *Don't touch tests*, *Small diff*.
+- Ships 4 editable starter macros on `Alt+1`…`Alt+4` (new installs): *Plan
+  first*, *Match design system*, *Research first*, *Summarize*.
 - The tray menu lists macros, and clicking one inserts it. Useful for macros
   without a hotkey.
 
