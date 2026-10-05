@@ -21,14 +21,45 @@ export async function loadFrame(): Promise<Frame> {
 export const captureReady = () => invoke("vibe_capture_ready");
 export const closeCapture = () => invoke("vibe_close");
 
+/** The window Send pastes into. */
+export interface SessionTarget {
+  /** Short app name, e.g. "Chrome". */
+  app: string;
+  title: string;
+}
+
+export interface Session {
+  target: SessionTarget | null;
+  /** Set when a capture is reopened from history. */
+  reopen: { scene: string | null; path: string; text: string } | null;
+}
+
+export const captureSession = () => invoke<Session>("vibe_capture_session");
+
+/** A capture's PNG as a data URL (for reopening captures saved without a scene). */
+export async function readImageDataURL(path: string): Promise<string> {
+  const bytes = await invoke<ArrayBuffer>("vibe_read_image", { path });
+  const blob = new Blob([bytes], { type: "image/png" });
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
 /** Body layout: `[meta length u32 LE][meta JSON][PNG bytes]`. */
 export async function sendCapture(
   png: Uint8Array,
   text: string,
   mode: SendMode,
   submit: boolean,
+  /** Editor scene JSON, saved with the capture so it can be reopened. */
+  scene?: string,
 ): Promise<void> {
-  const meta = new TextEncoder().encode(JSON.stringify({ text, mode, submit }));
+  const meta = new TextEncoder().encode(
+    JSON.stringify({ text, mode, submit, scene }),
+  );
   const body = new Uint8Array(4 + meta.length + png.length);
   new DataView(body.buffer).setUint32(0, meta.length, true);
   body.set(meta, 4);

@@ -153,10 +153,12 @@ with nothing invented, and `Ctrl+Z` restores the originals.
 ### F6. Send
 | Key | Action |
 |---|---|
-| `Enter` | **Send:** paste the image, then the text, into the window you came from |
-| `Ctrl+Enter` | **Send and submit:** Send, then press the app's submit key |
-| `Shift+Enter` | **Copy only:** put the image on the clipboard and close |
+| `Ctrl+Enter` | **Send:** paste the image, then the text, into the window you came from (named on the button) |
+| `Ctrl+Shift+Enter` | **Send and submit:** Send, then press the app's submit key |
+| `Ctrl+Shift+C` | **Copy:** put the image and the text on the clipboard together, and close |
 | `Esc` | Cancel |
+
+Plain `Enter` never sends (it was too easy to send by accident); it moves to the next note.
 
 **Output image:** the crop at full resolution, the annotations, and (setting on
 by default) a caption band underneath with the caption and numbered notes. The
@@ -346,7 +348,8 @@ same board copies as one sheet image that pastes into ChatGPT.
 | `Del`, `Ctrl+Z`, `Ctrl+Y` | Delete, Undo, Redo |
 | `Tab` / `Shift+Tab` | Next / previous field |
 | `Ctrl+K` | AI clean up |
-| `Enter` / `Ctrl+Enter` / `Shift+Enter` / `Esc` | Send / Send and submit / Copy only / Cancel |
+| `Ctrl+Enter` / `Ctrl+Shift+Enter` / `Ctrl+Shift+C` / `Esc` | Send / Send and submit / Copy / Cancel |
+| ``Alt+` `` | Pin tool (one click, then back to the pointer). **# Number shapes** numbers every new shape |
 | `Alt+Enter` | Add to board instead of sending |
 
 | On the board | Action |

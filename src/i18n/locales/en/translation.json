@@ -732,8 +732,14 @@
       "captionPlaceholder": "Say or type what to change… (hold Ctrl+Space to dictate)",
       "notePlaceholder": "Note for pin {{n}}…",
       "pin": "Pin",
-      "pinHint": "Click the screenshot to drop numbered pins",
+      "pinHint": "Click where the pin goes · Esc to cancel",
+      "pinTip": "Drag a number to move it · select it and press Delete, or ×, to remove it",
+      "removePin": "Remove pin {{n}}",
+      "numberShapes": "Number shapes",
+      "numberShapesHint": "When on, every box, circle, arrow or drawing you make gets the next number and a note",
+      "noTarget": "The app this was sent to is closed. Copy it instead.",
       "send": "Send",
+      "sendTo": "Send to {{app}}",
       "sendSubmit": "Send + submit",
       "copy": "Copy",
       "cancel": "Cancel",
@@ -791,7 +797,9 @@
       "delete": "Delete",
       "copiedImage": "Image copied.",
       "copiedText": "Text copied.",
-      "addedToBoard": "Added to the board."
+      "addedToBoard": "Added to the board.",
+      "edit": "Edit",
+      "editHint": "Double-click to open it in the editor again"
     },
     "captureSettings": {
       "title": "Capture",

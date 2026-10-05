@@ -200,7 +200,7 @@ fn send_blocking(app: &AppHandle, meta: BoardSendMeta, pngs: Vec<Vec<u8>>) -> Re
         // Terminals get file paths, one per image, then the text.
         let mut lines = Vec::new();
         for png in &pngs {
-            lines.push(super::history::save(app, png, "", &target.process)?.path);
+            lines.push(super::history::save(app, png, "", Some(&target), None)?.path);
         }
         lines.push(meta.text.clone());
         vec![Item::Text(lines.join("\n"))]

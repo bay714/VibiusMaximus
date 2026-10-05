@@ -17,13 +17,19 @@ In the capture editor:
 
 | Key | Action |
 |---|---|
-| `Enter` | Paste the image, then the caption, into the app you came from |
-| `Ctrl+Enter` | Same, then press Enter to submit |
-| `Shift+Enter` | Copy the image only |
+| `Ctrl+Enter` | Paste the image, then the caption and notes, into the app you came from (the Send button names it) |
+| `Ctrl+Shift+Enter` | Same, then press Enter to submit |
+| `Ctrl+Shift+C` | Copy the image and the text together, to paste yourself |
 | `Alt+Enter` | Add to the board instead |
-| `Alt+P` | Pin mode: click to drop numbered pins, each with a note |
+| ``Alt+` `` | **Pin** (also in the canvas, top right): the next click drops a numbered marker |
 | `Ctrl+K` | ✨ AI cleanup of the caption and notes (undoable) |
 | `Esc` | Cancel |
+
+Plain `Enter` never sends; it moves to the next note. With **# Number shapes** on (top right of
+the canvas), every box, circle, arrow or drawing you make gets the next number and a note. Numbers
+are ordinary objects: drag to move, `Delete` or the note's × to remove, `Ctrl+Z` to undo. The notes
+are pasted as text ("1. …", "2. …") and printed under the image. Double-click a capture in
+Settings → Captures to open it in the editor again.
 
 Terminals (Windows Terminal, PowerShell, cmd) get a saved file path plus the text instead of an
 image, which suits Claude Code and other terminal agents. Every capture is kept in Settings → Captures.

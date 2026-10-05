@@ -33,6 +33,9 @@ struct SendMeta {
     text: String,
     mode: SendMode,
     submit: bool,
+    /// Editor scene JSON, kept with the capture so it can be reopened.
+    #[serde(default)]
+    scene: Option<String>,
 }
 
 /// One thing to paste.
@@ -70,11 +73,13 @@ pub(super) fn split_body(body: &[u8]) -> Result<(&[u8], &[u8]), String> {
 
 fn send_capture(app: &AppHandle, meta: SendMeta, png: Vec<u8>) -> Result<(), String> {
     let target = app.state::<CaptureState>().target();
-    let target_name = target
-        .as_ref()
-        .map(|t| t.process.clone())
-        .unwrap_or_default();
-    let record = history::save(app, &png, &meta.text, &target_name)?;
+    let record = history::save(
+        app,
+        &png,
+        &meta.text,
+        target.as_ref(),
+        meta.scene.as_deref(),
+    )?;
 
     if meta.mode == SendMode::Board {
         capture::close(app);
@@ -85,6 +90,11 @@ fn send_capture(app: &AppHandle, meta: SendMeta, png: Vec<u8>) -> Result<(), Str
     }
 
     let options = prefs::get(app);
+    let text = if options.include_text {
+        meta.text.as_str()
+    } else {
+        ""
+    };
     let copy_only = meta.mode == SendMode::CopyOnly
         || target
             .as_ref()
@@ -101,18 +111,14 @@ fn send_capture(app: &AppHandle, meta: SendMeta, png: Vec<u8>) -> Result<(), Str
 
     if copy_only || !focused {
         if !copy_only {
-            warn!("Couldn't return focus to the previous window; copied the image instead");
+            warn!("Couldn't return focus to the previous window; copied instead");
         }
-        return copy_png(app, &png);
+        info!("Copied capture ({} chars of text)", text.len());
+        return copy_png_and_text(app, &png, text);
     }
     let target = target.unwrap_or_default();
     std::thread::sleep(Duration::from_millis(80));
 
-    let text = if options.include_text {
-        meta.text.as_str()
-    } else {
-        ""
-    };
     let items = if options.is_terminal(&target.process) {
         vec![Item::Text(join_nonempty(&[&record.path, text]))]
     } else if text.trim().is_empty() {
@@ -197,6 +203,56 @@ pub fn copy_png(app: &AppHandle, png: &[u8]) -> Result<(), String> {
         .map_err(|e| e.to_string())
 }
 
+/// The image and the text in one clipboard entry, so one paste can bring
+/// both: chat apps that accept images attach it and insert the text, and
+/// apps that take only one format use the one they understand.
+#[cfg(target_os = "windows")]
+pub fn copy_png_and_text(_app: &AppHandle, png: &[u8], text: &str) -> Result<(), String> {
+    use clipboard_win::{options::NoClear, raw, register_format, Clipboard};
+    const CF_DIB: u32 = 8;
+
+    let dib = to_dib(&decode(png)?);
+    let _open = Clipboard::new_attempts(10).map_err(|e| e.to_string())?;
+    raw::empty().map_err(|e| e.to_string())?;
+    raw::set_without_clear(CF_DIB, &dib).map_err(|e| e.to_string())?;
+    // Chromium-based apps read this one first, at full quality.
+    if let Some(format) = register_format("PNG") {
+        raw::set_without_clear(format.get(), png).map_err(|e| e.to_string())?;
+    }
+    if !text.trim().is_empty() {
+        raw::set_string_with(text, NoClear).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn copy_png_and_text(app: &AppHandle, png: &[u8], _text: &str) -> Result<(), String> {
+    copy_png(app, png)
+}
+
+/// A 32-bit bottom-up device-independent bitmap (`CF_DIB`): a
+/// BITMAPINFOHEADER followed by BGRA rows, last row first.
+#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
+fn to_dib(image: &tauri::image::Image<'_>) -> Vec<u8> {
+    let (width, height) = (image.width() as usize, image.height() as usize);
+    let rgba = image.rgba();
+    let mut out = Vec::with_capacity(40 + width * height * 4);
+    out.extend_from_slice(&40u32.to_le_bytes()); // biSize
+    out.extend_from_slice(&(width as i32).to_le_bytes());
+    out.extend_from_slice(&(height as i32).to_le_bytes()); // positive: bottom-up
+    out.extend_from_slice(&1u16.to_le_bytes()); // biPlanes
+    out.extend_from_slice(&32u16.to_le_bytes()); // biBitCount
+    out.extend_from_slice(&0u32.to_le_bytes()); // biCompression: BI_RGB
+    out.extend_from_slice(&((width * height * 4) as u32).to_le_bytes());
+    out.extend_from_slice(&[0u8; 16]); // resolution and palette: unused
+    for row in (0..height).rev() {
+        for px in rgba[row * width * 4..(row + 1) * width * 4].as_chunks::<4>().0 {
+            out.extend_from_slice(&[px[2], px[1], px[0], px[3]]);
+        }
+    }
+    out
+}
+
 pub fn copy_text(app: &AppHandle, text: &str) -> Result<(), String> {
     app.clipboard()
         .write_text(text.to_string())
@@ -237,6 +293,20 @@ mod tests {
     #[test]
     fn rejects_truncated_body() {
         assert!(split_body(&[10, 0, 0, 0, b'{']).is_err());
+    }
+
+    #[test]
+    fn dib_is_bottom_up_bgra() {
+        // 1x2: top pixel red, bottom pixel blue.
+        let image = tauri::image::Image::new_owned(vec![255, 0, 0, 255, 0, 0, 255, 255], 1, 2);
+        let dib = to_dib(&image);
+        assert_eq!(dib.len(), 40 + 8);
+        assert_eq!(&dib[0..4], &40u32.to_le_bytes());
+        assert_eq!(&dib[8..12], &2i32.to_le_bytes());
+        assert_eq!(&dib[14..16], &32u16.to_le_bytes());
+        // Bottom row (blue) comes first, as BGRA.
+        assert_eq!(&dib[40..44], &[255, 0, 0, 255]);
+        assert_eq!(&dib[44..48], &[0, 0, 255, 255]);
     }
 
     #[test]

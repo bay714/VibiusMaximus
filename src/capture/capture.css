@@ -91,6 +91,57 @@
 .vibe-row + .vibe-row {
   border-top: 1px solid #22262f;
 }
+/* The note whose pin is selected on the screenshot. */
+.vibe-row.active {
+  background: rgba(255, 59, 127, 0.08);
+}
+.vibe-row.active .vibe-pin {
+  box-shadow: 0 0 0 2px #fff;
+}
+.vibe-remove {
+  padding: 4px 9px;
+  color: #9aa1b2;
+}
+.vibe-remove:hover {
+  color: #f87171;
+}
+/* Pin and Number shapes, in the canvas's top-right corner. */
+.vibe-tools {
+  display: flex;
+  gap: 6px;
+}
+.vibe-tool {
+  background: #fff;
+  border: 1px solid #d4d7de;
+  color: #1f2430;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font:
+    500 12px "Segoe UI",
+    system-ui,
+    sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+.vibe-tool:hover {
+  border-color: #ff3b7f;
+}
+.vibe-tool.on {
+  background: #ff3b7f;
+  border-color: #ff3b7f;
+  color: #fff;
+}
+.vibe-tool kbd {
+  font-size: 10px;
+  opacity: 0.75;
+  margin-left: 6px;
+}
+/* Excalidraw sets the canvas cursor inline; while Pin is armed show a
+   crosshair so it's clear the next click places a pin. */
+.vibe-canvas.pin-armed canvas {
+  cursor: crosshair !important;
+}
 .vibe-input {
   flex: 1;
   background: #0f1115;
@@ -139,6 +190,10 @@
 }
 .vibe-btn:hover {
   border-color: #3a4150;
+}
+.vibe-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 .vibe-btn.on,
 .vibe-btn.primary {

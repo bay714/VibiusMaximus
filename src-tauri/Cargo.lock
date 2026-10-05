@@ -2710,6 +2710,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "clap",
+ "clipboard-win",
  "cpal",
  "earshot",
  "enigo",

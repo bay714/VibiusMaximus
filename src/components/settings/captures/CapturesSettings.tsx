@@ -12,6 +12,8 @@ interface CaptureRecord {
   target: string;
   created: number;
   starred: boolean;
+  /** Saved with its pins and drawings, so it reopens fully editable. */
+  editable: boolean;
 }
 
 const STAR = "★";
@@ -35,6 +37,8 @@ export const CapturesSettings: React.FC = () => {
       setStatus(String(e));
     }
   };
+
+  const reopen = (id: string) => act(invoke("vibe_capture_reopen", { id }), "");
 
   const formatDate = (ms: number) =>
     new Date(ms).toLocaleString(i18n.language, {
@@ -63,7 +67,9 @@ export const CapturesSettings: React.FC = () => {
                   src={convertFileSrc(c.path)}
                   alt=""
                   loading="lazy"
-                  className="w-full h-32 object-contain bg-white"
+                  title={t("vibe.captures.editHint")}
+                  onDoubleClick={() => reopen(c.id)}
+                  className="w-full h-32 object-contain bg-white cursor-pointer"
                 />
                 <div className="p-2 space-y-2">
                   <p className="text-xs line-clamp-2 min-h-[2rem]">
@@ -74,6 +80,14 @@ export const CapturesSettings: React.FC = () => {
                     {c.target ? ` · ${c.target}` : ""}
                   </p>
                   <div className="flex flex-wrap gap-1">
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      title={t("vibe.captures.editHint")}
+                      onClick={() => reopen(c.id)}
+                    >
+                      {t("vibe.captures.edit")}
+                    </Button>
                     <Button
                       size="sm"
                       variant="secondary"

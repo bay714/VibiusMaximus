@@ -2,9 +2,11 @@
 //! use: it is created on the hotkey and destroyed on send or cancel, and the
 //! frame is dropped with it.
 
+use super::history::{self, CaptureRecord};
 use super::target::{self, Target};
 use crate::actions::ShortcutAction;
 use log::{error, warn};
+use serde::Serialize;
 use std::sync::Mutex;
 use tauri::{
     AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, WebviewUrl, WebviewWindowBuilder,
@@ -24,6 +26,8 @@ pub struct Frame {
 pub struct CaptureState {
     pub frame: Mutex<Option<Frame>>,
     pub target: Mutex<Option<Target>>,
+    /// A capture from history to edit again, instead of selecting a region.
+    pub reopen: Mutex<Option<CaptureRecord>>,
 }
 
 impl CaptureState {
@@ -45,24 +49,42 @@ impl ShortcutAction for CaptureAction {
 /// Start a capture (hotkey or tray). Grabbing the screen takes tens of
 /// milliseconds, so it runs off the calling thread.
 pub fn begin(app: &AppHandle) {
+    spawn_capture(app, None);
+}
+
+/// Open a capture from history in the editor. The screen is still frozen
+/// behind it, like a new capture. Send goes to the window it was first sent
+/// to, if that window is still open.
+pub fn reopen(app: &AppHandle, record: CaptureRecord) {
+    spawn_capture(app, Some(record));
+}
+
+fn spawn_capture(app: &AppHandle, reopen: Option<CaptureRecord>) {
     let app = app.clone();
     std::thread::spawn(move || {
-        if let Err(e) = start_capture(&app) {
+        if let Err(e) = start_capture(&app, reopen) {
             error!("Capture failed: {}", e);
             close(&app);
         }
     });
 }
 
-fn start_capture(app: &AppHandle) -> Result<(), String> {
+fn start_capture(app: &AppHandle, reopen: Option<CaptureRecord>) -> Result<(), String> {
     if app.get_webview_window(CAPTURE_WINDOW).is_some() {
         return Ok(());
     }
     let state = app.state::<CaptureState>();
 
-    // Remember where the user was before our window takes focus.
+    // Remember where the user was before our window takes focus. A reopened
+    // capture was started from our own Captures page, so use its saved window.
     if let Ok(mut t) = state.target.lock() {
-        *t = target::foreground();
+        *t = match &reopen {
+            Some(r) => target::find(r.hwnd, &r.target),
+            None => target::foreground(),
+        };
+    }
+    if let Ok(mut r) = state.reopen.lock() {
+        *r = reopen;
     }
 
     let (cx, cy) = crate::input::get_cursor_position(app).unwrap_or((0, 0));
@@ -128,6 +150,9 @@ pub fn close(app: &AppHandle) {
     if let Ok(mut f) = state.frame.lock() {
         *f = None;
     }
+    if let Ok(mut r) = state.reopen.lock() {
+        *r = None;
+    }
     if let Some(window) = app.get_webview_window(CAPTURE_WINDOW) {
         let _ = window.destroy();
     }
@@ -156,6 +181,51 @@ pub fn vibe_frame(state: tauri::State<'_, CaptureState>) -> Result<tauri::ipc::R
     out.extend_from_slice(&frame.height.to_le_bytes());
     out.extend_from_slice(&frame.rgba);
     Ok(tauri::ipc::Response::new(out))
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SessionTarget {
+    /// Short app name for the Send button, e.g. `Chrome`.
+    app: String,
+    title: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Reopened {
+    /// Editor scene JSON, when the capture was saved with one.
+    scene: Option<String>,
+    /// The flattened PNG, used as the screenshot when there is no scene.
+    path: String,
+    text: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Session {
+    target: Option<SessionTarget>,
+    reopen: Option<Reopened>,
+}
+
+/// Where Send will paste, and the capture being reopened, if any.
+#[tauri::command]
+pub fn vibe_capture_session(state: tauri::State<'_, CaptureState>) -> Session {
+    let target = state.target().map(|t| SessionTarget {
+        app: target::display_name(&t.process),
+        title: t.title,
+    });
+    let reopen = state
+        .reopen
+        .lock()
+        .ok()
+        .and_then(|r| r.clone())
+        .map(|r| Reopened {
+            scene: history::scene(&r),
+            path: r.path,
+            text: r.text,
+        });
+    Session { target, reopen }
 }
 
 /// Called by the capture window once the frame is drawn, to avoid a blank flash.

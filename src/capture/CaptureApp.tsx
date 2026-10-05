@@ -6,8 +6,15 @@ import React, {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { captureReady, closeCapture, loadFrame } from "./api";
-import type { Crop } from "./Editor";
+import {
+  captureReady,
+  captureSession,
+  closeCapture,
+  loadFrame,
+  readImageDataURL,
+  type Session,
+} from "./api";
+import type { Crop, Restore, SavedScene } from "./Editor";
 
 // Excalidraw is a large chunk: load it only once a region is selected.
 const Editor = React.lazy(() => import("./Editor"));
@@ -36,6 +43,44 @@ export default function CaptureApp() {
   const [start, setStart] = useState<{ x: number; y: number } | null>(null);
   const [rect, setRect] = useState<Rect | null>(null);
   const [crop, setCrop] = useState<Crop | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [restore, setRestore] = useState<Restore | undefined>();
+
+  // A capture reopened from history skips region selection and starts the
+  // editor from its saved scene. Older captures have only the final PNG, so
+  // that becomes the screenshot and the text goes in the caption.
+  useEffect(() => {
+    captureSession()
+      .then(async (s) => {
+        setSession(s);
+        if (!s.reopen) return;
+        if (s.reopen.scene) {
+          const scene = JSON.parse(s.reopen.scene) as SavedScene;
+          setRestore({
+            elements: scene.elements,
+            caption: scene.caption,
+            notes: scene.notes,
+          });
+          setCrop(scene.crop);
+          return;
+        }
+        const dataURL = await readImageDataURL(s.reopen.path);
+        const image = new Image();
+        image.src = dataURL;
+        await image.decode();
+        setRestore({ caption: s.reopen.text, notes: [] });
+        setCrop({
+          dataURL,
+          width: image.naturalWidth,
+          height: image.naturalHeight,
+          scale: window.devicePixelRatio || 1,
+        });
+      })
+      .catch((e) => {
+        console.error("Failed to start the capture session", e);
+        closeCapture();
+      });
+  }, []);
 
   useEffect(() => {
     loadFrame()
@@ -83,7 +128,7 @@ export default function CaptureApp() {
   }, []);
 
   useEffect(() => {
-    if (crop) return;
+    if (crop || session?.reopen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") closeCapture();
       if (e.key === "a" && e.ctrlKey) {
@@ -93,10 +138,10 @@ export default function CaptureApp() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [crop, cropTo]);
+  }, [crop, cropTo, session]);
 
   const onMouseDown = (e: React.MouseEvent) => {
-    if (crop || e.button !== 0) return;
+    if (crop || session?.reopen || e.button !== 0) return;
     setStart({ x: e.clientX, y: e.clientY });
     setRect({ x: e.clientX, y: e.clientY, w: 0, h: 0 });
   };
@@ -132,12 +177,12 @@ export default function CaptureApp() {
           )}
         </div>
       )}
-      {ready && !rect && (
+      {ready && session && !session.reopen && !rect && !crop && (
         <div className="vibe-hint">{t("vibe.capture.selectHint")}</div>
       )}
-      {crop && (
+      {crop && session && (
         <Suspense fallback={null}>
-          <Editor crop={crop} />
+          <Editor crop={crop} target={session.target} restore={restore} />
         </Suspense>
       )}
     </div>

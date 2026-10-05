@@ -23,6 +23,7 @@ pub fn invoke_handler() -> impl Fn(Invoke<tauri::Wry>) -> bool + Send + Sync + '
     tauri::generate_handler![
         capture::vibe_frame,
         capture::vibe_capture_ready,
+        capture::vibe_capture_session,
         capture::vibe_close,
         output::vibe_send,
         cleanup::vibe_cleanup,
@@ -30,6 +31,7 @@ pub fn invoke_handler() -> impl Fn(Invoke<tauri::Wry>) -> bool + Send + Sync + '
         history::vibe_capture_delete,
         history::vibe_capture_star,
         history::vibe_capture_copy,
+        history::vibe_capture_reopen,
         history::vibe_capture_to_board,
         board::vibe_board_load,
         board::vibe_board_save,
