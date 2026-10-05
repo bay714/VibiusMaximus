@@ -52,16 +52,16 @@ const STARTERS: &[(&str, &str, &str, &str)] = &[
         "Use our existing components and Tailwind tokens. Don't add new colors, fonts or spacing values. If a component is missing, tell me first instead of creating one.",
     ),
     (
-        "keep-tests",
-        "Don't touch tests",
+        "research-first",
+        "Research first",
         "alt+3",
-        "Don't modify or delete existing tests. If a test fails because of your change, fix the code, not the test.",
+        "Research this first: check the official docs and current best practice. Bring back a concise summary (3 bullets max), then one detailed, worked example.",
     ),
     (
-        "small-diff",
-        "Small diff",
+        "summarize",
+        "Summarize",
         "alt+4",
-        "Make the smallest change that fixes this. No refactors, renames or formatting changes outside the lines you need to touch.",
+        "Too long. Give me the short version: 3 bullets max, then the one thing I should do next.",
     ),
 ];
 

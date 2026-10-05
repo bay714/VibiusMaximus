@@ -332,7 +332,7 @@ pub fn vibe_board_target(app: AppHandle) -> Option<String> {
         .target
         .lock()
         .ok()
-        .and_then(|t| t.as_ref().map(|t| t.process.clone()))
+        .and_then(|t| t.as_ref().map(|t| target::display_name(&t.process)))
 }
 
 /// Raw bytes of an image file, for adding files picked in a dialog.

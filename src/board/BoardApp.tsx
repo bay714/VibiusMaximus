@@ -623,7 +623,7 @@ export default function BoardApp() {
           onClick={() => send(false)}
         >
           {target
-            ? t("vibe.board.sendTo", { app: target.replace(/\.exe$/i, "") })
+            ? t("vibe.board.sendTo", { app: target })
             : t("vibe.board.send")}
           <kbd>{keys.send}</kbd>
         </button>
