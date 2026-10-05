@@ -19,7 +19,7 @@ In the capture editor:
 |---|---|
 | `Ctrl+Enter` | Paste the image, then the caption and notes, into the app you came from (the Send button names it) |
 | `Ctrl+Shift+Enter` | Same, then press Enter to submit |
-| `Ctrl+Shift+C` | Copy the image and the text together, to paste yourself |
+| `Alt+C` | Copy the image and all the text (caption and numbered notes) together: one `Ctrl+V` in the chat pastes both |
 | `Alt+Enter` | Add to the board instead |
 | ``Alt+` `` | **Pin** (also in the canvas, top right): the next click drops a numbered marker |
 | `Ctrl+K` | ✨ AI cleanup of the caption and notes (undoable) |

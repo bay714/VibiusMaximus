@@ -72,7 +72,7 @@ const KEYS = {
   cleanup: "Ctrl+K",
   pin: "Alt+`",
   cancel: "Esc",
-  copy: "Ctrl+Shift+C",
+  copy: "Alt+C",
   board: "Alt+Enter",
   sendSubmit: "Ctrl+Shift+Enter",
   send: "Ctrl+Enter",
@@ -606,7 +606,7 @@ export default function Editor({
     [busy, exportPng, crop, api, caption, notes],
   );
 
-  // Keys: Ctrl+Enter send, Ctrl+Shift+Enter send + submit, Ctrl+Shift+C copy,
+  // Keys: Ctrl+Enter send, Ctrl+Shift+Enter send + submit, Alt+C copy,
   // Alt+Enter board, Alt+` pin, Esc cancel. Plain Enter only moves to the next
   // field. Excalidraw keeps its own keys while its canvas has focus.
   useEffect(() => {
@@ -626,7 +626,7 @@ export default function Editor({
       if (e.ctrlKey && e.key === "k") {
         handled();
         cleanup();
-      } else if (e.ctrlKey && e.shiftKey && e.code === "KeyC") {
+      } else if (e.altKey && !e.ctrlKey && !e.shiftKey && e.code === "KeyC") {
         handled();
         send("copyOnly", false);
       } else if (e.key === "Enter" && e.ctrlKey) {
