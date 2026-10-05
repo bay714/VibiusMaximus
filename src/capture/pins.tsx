@@ -24,8 +24,7 @@ export interface Note {
 type Skeleton = Parameters<typeof convertToExcalidrawElements>[0];
 
 export const PIN_COLOR = "#c0392b";
-// Key names and symbols, not translatable text.
-export const PIN_KEY = "Alt+`";
+// Symbols, not translatable text.
 const PIN_ICON = "①";
 const NUMBER_ICON = "#";
 const REMOVE = "×";
@@ -47,10 +46,6 @@ export const isPin = (e: { customData?: Record<string, unknown> }) =>
 const isPinTool = (tool: AppState["activeTool"]) =>
   tool.type === "custom" && tool.customType === PIN_TOOL;
 const randomId = () => Math.random().toString(36).slice(2, 12);
-
-/** True for Alt+` on any keyboard layout. */
-export const isPinKey = (e: KeyboardEvent) =>
-  e.altKey && e.code === "Backquote";
 
 /** Where a shape's number sits: its top-left corner, or a line's start. */
 function anchorOf(e: ExcalidrawElement): { x: number; y: number } {
@@ -348,11 +343,15 @@ export function PinTools({
   numberShapes,
   onPin,
   onToggleNumbers,
+  pinKey,
+  numberKey,
 }: {
   pinMode: boolean;
   numberShapes: boolean;
   onPin: () => void;
   onToggleNumbers: () => void;
+  pinKey: string;
+  numberKey: string;
 }) {
   const { t } = useTranslation();
   return (
@@ -364,7 +363,7 @@ export function PinTools({
         onClick={onPin}
       >
         {PIN_ICON} {t("vibe.capture.pin")}
-        <kbd>{PIN_KEY}</kbd>
+        <kbd>{pinKey}</kbd>
       </button>
       <button
         type="button"
@@ -374,6 +373,7 @@ export function PinTools({
         onClick={onToggleNumbers}
       >
         {NUMBER_ICON} {t("vibe.capture.numberShapes")}
+        <kbd>{numberKey}</kbd>
       </button>
     </div>
   );

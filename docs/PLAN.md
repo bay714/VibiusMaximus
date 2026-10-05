@@ -19,11 +19,11 @@ Mockups: [`docs/mockups/README.md`](mockups/README.md) (screenshots) and [`docs/
 **Built** (compiles; unit tests pass; **not yet tested by hand**):
 - Rebrand, CPU-only build, Canary default, update checks off, settings window freed on close, model unload at 2 min
 - F2 Capture, F3 Excalidraw editor with numbered Pins, F4 voice into the editor
-- F5 AI cleanup (`Ctrl+K`), F6 Send (image then text; terminals get a file path), F7 submit (`Ctrl+Enter`)
+- F5 AI cleanup (`Alt+D`), F6 Send (image then text; terminals get a file path), F7 submit (`Ctrl+Enter`)
 - F8 Prompt macros (Settings → Macros, `Alt+1…4` starters, `{clipboard}`/`{date}`/`{time}`)
 - F9 Starter developer vocabulary
 - F10 Capture history (Settings → Captures)
-- F11 Board (`Alt+Shift+B`, `Alt+Enter` from the editor)
+- F11 Board (`Alt+B`, `Alt+Enter` from the editor)
 - Settings → Capture: always submit, caption band, paste text after image, pause between pastes, per-app lists (file path for terminals, copy only)
 - Tray: *New capture*, *Open board*. Windows CI workflow (unsigned installers)
 - Release build: NSIS installer 18.1 MB (Handy 0.9.7: 19.4 MB), MSI 36.3 MB (Handy: 37.6 MB)
@@ -79,7 +79,7 @@ cleanup. Everything Handy already does stays available: live overlay, VAD,
 filler-word removal, translate-to-English, paste methods, history, CLI flags.
 
 ### F2. Capture: freeze and select
-- `Alt+Shift+S` captures **the monitor under the cursor** the instant the key is
+- `Alt+S` captures **the monitor under the cursor** the instant the key is
   pressed, so hover states, open menus and tooltips are kept.
 - A borderless, topmost, full-screen window shows that frozen frame, dimmed.
   The cursor is a crosshair with a live size label (in physical pixels).
@@ -127,7 +127,7 @@ pins, and the numbering stays correct.
 and nothing reaches the clipboard or the app behind.
 
 ### F5. AI cleanup for captions *(uses Handy's post-processing)*
-- **✨ Clean up** button (`Ctrl+K`) in the caption bar rewrites the caption and
+- **✨ Clean up** button (`Alt+D`) in the caption bar rewrites the caption and
   all notes into short, specific coding instructions. The result replaces the
   fields in place, and `Ctrl+Z` brings back the original.
 - Dictating with `Ctrl+Shift+Space` inside the editor cleans up just that
@@ -275,14 +275,14 @@ labels (A, B, C…), which suits a set of alternatives.
 
 **Editing:** everything is ordinary Excalidraw: move, resize, align, and draw
 boxes, arrows and pins straight onto any image. Delete removes an item, with undo. Every text field takes
-dictation (`Ctrl+Space`), and `Ctrl+K` runs AI cleanup on the whole board. The
+dictation (`Ctrl+Space`), and `Alt+D` runs AI cleanup on the whole board. The
 board saves automatically.
 
 **Output:**
 | Action | Key | What happens |
 |---|---|---|
 | **Send** | `Ctrl+Enter` | Paste every image in order, then the compiled text, into the target window (see below). Paste profiles apply, so terminals get file paths. |
-| **Copy** | `Alt+C` (or `Ctrl+Shift+C`) | The whole board as one image plus the text on the clipboard; then `Alt+V` in any app (for 5 minutes, one paste) pastes each image and then the text. |
+| **Copy** | `Alt+C` | The whole board as one image plus the text on the clipboard; then `Alt+V` in any app (for 5 minutes, one paste) pastes each image and then the text. |
 | **Copy text** | `Ctrl+Alt+C` | Compiled text only. |
 
 The target window is the one that was active before the board opened. Clicking
@@ -312,7 +312,7 @@ Prefer B, with the colors from C.
 
 **Boards are kept:** several boards with names, plus *New*, *Duplicate* and
 *Delete*, and a **Boards** tab in History. Open the board with
-**`Alt+Shift+B`**, from the tray, or with the board button in the capture editor.
+**`Alt+B`**, from the tray, or with the board button in the capture editor.
 
 **Done when:** five images dropped from a folder plus one capture (Alt+Enter),
 with notes, send into Claude web as 6 images and text whose labels match. The
@@ -336,8 +336,8 @@ same board copies as one sheet image that pastes into ChatGPT.
 |---|---|
 | `Ctrl+Space` | Dictate (hold) |
 | `Ctrl+Shift+Space` | Dictate + AI cleanup |
-| `Alt+Shift+S` | Capture |
-| `Alt+Shift+B` | Open the board |
+| `Alt+S` | Capture |
+| `Alt+B` | Open the board |
 | `Alt+1`…`Alt+4` | Starter macros (user can add more) |
 | `Esc` | Cancel recording (Handy) |
 
@@ -347,7 +347,7 @@ same board copies as one sheet image that pastes into ChatGPT.
 | `V` `B` `A` `P` (`Alt+` while typing) | Select / Box / Arrow / Pin |
 | `Del`, `Ctrl+Z`, `Ctrl+Y` | Delete, Undo, Redo |
 | `Tab` / `Shift+Tab` | Next / previous field |
-| `Ctrl+K` | AI clean up |
+| `Alt+D` | AI clean up |
 | `Ctrl+Enter` / `Ctrl+Shift+Enter` / `Alt+C` / `Esc` | Send / Send and submit / Copy / Cancel |
 | ``Alt+` `` | Pin tool (one click, then back to the pointer). **# Number shapes** numbers every new shape |
 | `Alt+Enter` | Add to board instead of sending |
@@ -355,7 +355,7 @@ same board copies as one sheet image that pastes into ChatGPT.
 | On the board | Action |
 |---|---|
 | `Ctrl+V`, drag and drop | Add images |
-| `Ctrl+K` | AI cleanup of the whole board |
+| `Alt+D` | AI cleanup of the whole board |
 | `Ctrl+Enter` / `Alt+C` / `Alt+V` (in the target app) | Send / Copy / paste the copied images and text |
 | ``Alt+` `` / **# Number shapes** | Pin tool and numbered shapes, as in the capture editor; notes are saved with the board |
 | Double-click an image | Annotate in the capture editor |
@@ -617,7 +617,7 @@ changes it) → add the insert-before prefix → Handy's `clipboard::paste` path
 
 ## 6. Settings and UI
 
-The **Board** is its own window (`Alt+Shift+B`, tray, or the capture editor),
+The **Board** is its own window (`Alt+B`, tray, or the capture editor),
 not a settings page. History gets a **Boards** tab listing saved boards.
 
 Sidebar: **General · Capture *(new)* · Macros *(new)* · History · Models ·
@@ -726,6 +726,14 @@ theme, and an existing Handy install side by side.
 
 ---
 
+## 9a. Hotkeys
+Every key is changeable in **Settings → Hotkeys**: the global ones (dictation,
+capture `Alt+S`, board `Alt+B`, macros) through Handy's recorder, the
+editor/board keys (`src/capture/keys.ts`: pin, number shapes `Alt+N`, copy
+`Alt+C`, send, send + submit, add to board, AI clean-up `Alt+D`, close) and the
+paste-later key (`Alt+V`) through our own recorder, stored in the capture
+options. Installs on the old `Alt+Shift+S`/`Alt+Shift+B` move over once.
+
 ## 10a. Brand ("Legion")
 - Palette in `src/styles/theme.css` (Handy's token file, values only): warm
   sand `#f7f2ea` + Pompeian red `#9e2b25` in light mode, near-black `#17120f`
@@ -768,7 +776,7 @@ theme, and an existing Handy install side by side.
 | Mixed-DPI crop offsets | Crop in physical pixels from `xcap`. Unit tests on scale factors. Manual 2-monitor check. |
 | Large vocabulary causes false word swaps (Handy's custom words are a fuzzy post-correction) | Curated, phonetically distinct starter list. Project import is opt-in with a checklist. Test against the default threshold. |
 | AI cleanup invents requirements or reorders notes | Strict prompt, structured output with a shape check, per-field fallback, always undoable. |
-| Hotkey conflicts (`Alt+Shift+S`, `Alt+1…4`) with the user's apps | Handy's recorder flags conflicts. Every hotkey can be changed. |
+| Hotkey conflicts (`Alt+S`, `Alt+1…4`) with the user's apps | Handy's recorder flags conflicts. Every hotkey can be changed. |
 | Handy's keyboard hook and the capture window both reacting to `Esc` | Turn off Handy's cancel binding while the capture window is open. |
 | Upstream merges conflict | Small changes to Handy's files (§11). Regular merges. |
 | Pasting many images in a row is slow, or some get dropped while uploading | Images are resized before pasting, the paste gap applies per image, and a warning above the paste limit offers "Copy as one image". |
@@ -800,7 +808,7 @@ can be built in parallel.
 
 **Voice and AI** (needs Editor)
 - [ ] Dictation routing in `actions.rs` + `useDictation.ts`, live text, mic button, overlay suppression. *(F4 check)*
-- [ ] `cleanup.rs` + the "Vibe coding instruction" prompt + `Ctrl+K`. *(F5 check)*
+- [ ] `cleanup.rs` + the "Vibe coding instruction" prompt + `Alt+D`. *(F5 check)*
 
 **Output** (needs Editor; can run alongside Voice and AI)
 - [ ] `clip.rs`: snapshot/restore, `CF_DIBV5` + `PNG` image write.

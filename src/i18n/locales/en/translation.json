@@ -19,7 +19,8 @@
     "about": "About",
     "macros": "Macros",
     "captures": "Captures",
-    "capture": "Capture"
+    "capture": "Capture",
+    "hotkeys": "Hotkeys"
   },
   "onboarding": {
     "subtitle": "To get started, choose a transcription model",
@@ -735,7 +736,7 @@
       "pinHint": "Click where the pin goes · Esc to cancel",
       "pinTip": "Drag a number to move it · select it and press Delete, or ×, to remove it",
       "removePin": "Remove pin {{n}}",
-      "copyHint": "Alt+C copies · then Alt+V in any app pastes the image and the text",
+      "copyHint": "{{copy}} copies · then {{paste}} in any app pastes the image and the text",
       "numberShapes": "Number shapes",
       "numberShapesHint": "When on, every box, circle, arrow or drawing you make gets the next number and a note",
       "noTarget": "The app this was sent to is closed. Copy it instead.",
@@ -778,18 +779,18 @@
       "hint": "Drop or paste images, add text boxes and pins, then send. Images go top to bottom, left to right.",
       "copyText": "Copy text",
       "copy": "Copy",
-      "copyHint": "Copies the board as one image plus the text. Then Alt+V in any app pastes each image, then the text.",
+      "copyHint": "Copies the board as one image plus the text. Then {{paste}} in any app pastes each image, then the text.",
       "send": "Send",
       "sendTo": "Send to {{app}}",
       "noTarget": "Open the board from the app you want to send to.",
       "sent": "Sent.",
-      "copiedHold": "Copied. Press Alt+V in any app to paste the images and the text.",
+      "copiedHold": "Copied. Press {{paste}} in any app to paste the images and the text.",
       "copiedText": "Prompt text copied."
     },
     "captures": {
       "title": "Captures",
       "description": "Every capture you send or copy is kept here (the newest 200, plus anything starred).",
-      "empty": "No captures yet. Press Alt+Shift+S to make one.",
+      "empty": "No captures yet. Press Alt+S to make one.",
       "noText": "(no caption)",
       "copyImage": "Copy image",
       "copyText": "Copy text",
@@ -819,6 +820,55 @@
       "terminalAppsDescription": "Terminals can't take pasted images, so these apps get the saved PNG's path plus the text.",
       "copyOnlyApps": "Only copy, don't paste",
       "copyOnlyAppsDescription": "Send just copies the image for these apps; you paste it yourself."
+    },
+    "hotkeys": {
+      "global": "Everywhere",
+      "globalDescription": "These work in any app. Click a key, then press the new one.",
+      "pasteKey": "Paste copied capture",
+      "pasteKeyDescription": "After Copy, this key pastes the image(s) and then the text in any app. It's only active for 5 minutes after copying, and for one paste.",
+      "pasteKeyInvalid": "Use a modifier (Ctrl, Alt, Shift or Win) plus a letter, number or F-key.",
+      "macros": "Macros",
+      "macrosDescription": "Change the text of a macro in the Macros page.",
+      "canvas": "Capture editor and board",
+      "canvasDescription": "These work inside the capture editor and the board. Click a key, then press the new one.",
+      "drawing": "Drawing tools",
+      "drawingDescription": "Excalidraw's own keys, in the editor and the board. These can't be changed.",
+      "press": "Press keys…",
+      "reset": "Reset",
+      "conflict": "Already used by {{action}}.",
+      "actions": {
+        "pin": "Pin",
+        "pinDescription": "The next click drops a numbered pin.",
+        "numberShapes": "Number shapes",
+        "numberShapesDescription": "Turn automatic numbering of new shapes on or off.",
+        "copy": "Copy",
+        "copyDescription": "Copy the image and the text. Then the paste key pastes both in any app.",
+        "send": "Send",
+        "sendDescription": "Paste into the app you came from.",
+        "sendSubmit": "Send and submit",
+        "sendSubmitDescription": "Send, then press the app's submit key.",
+        "toBoard": "Add to board",
+        "toBoardDescription": "Put the capture on the board instead of sending it (capture editor only).",
+        "cleanup": "AI clean up",
+        "cleanupDescription": "Tidy the caption and notes with AI (capture editor only).",
+        "close": "Close",
+        "closeDescription": "Put the Pin tool down, or close the capture editor."
+      },
+      "tools": {
+        "select": "Select",
+        "rectangle": "Rectangle",
+        "circle": "Circle",
+        "diamond": "Diamond",
+        "arrow": "Arrow",
+        "line": "Line",
+        "draw": "Freehand draw",
+        "text": "Text",
+        "eraser": "Eraser",
+        "hand": "Pan",
+        "delete": "Delete",
+        "undo": "Undo",
+        "redo": "Redo"
+      }
     }
   }
 }

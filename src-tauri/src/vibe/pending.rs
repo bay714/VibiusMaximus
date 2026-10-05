@@ -15,7 +15,6 @@ use std::time::Duration;
 use tauri::{AppHandle, Manager};
 
 pub const BINDING_ID: &str = "vibe:paste-capture";
-const HOTKEY: &str = "alt+v";
 const HOLD_FOR: Duration = Duration::from_secs(5 * 60);
 
 struct Pending {
@@ -35,13 +34,15 @@ pub struct PendingState {
     inner: Mutex<(Option<Pending>, u64)>,
 }
 
-fn binding() -> ShortcutBinding {
+/// The paste key from Settings → Hotkeys (Alt+V unless changed).
+fn binding(app: &AppHandle) -> ShortcutBinding {
+    let hotkey = prefs::get(app).paste_hotkey();
     ShortcutBinding {
         id: BINDING_ID.to_string(),
         name: "Paste copied capture".to_string(),
         description: "Paste the copied image, then its text".to_string(),
-        default_binding: HOTKEY.to_string(),
-        current_binding: HOTKEY.to_string(),
+        default_binding: hotkey.clone(),
+        current_binding: hotkey,
     }
 }
 
@@ -71,8 +72,8 @@ fn hold(app: &AppHandle, pngs: Vec<Vec<u8>>, text: String, paths: Vec<String>, l
         inner.1
     };
     // Re-register so a hotkey left over from an earlier copy isn't doubled.
-    let _ = crate::shortcut::unregister_shortcut(app, binding());
-    if let Err(e) = crate::shortcut::register_shortcut(app, binding()) {
+    let _ = crate::shortcut::unregister_shortcut(app, binding(app));
+    if let Err(e) = crate::shortcut::register_shortcut(app, binding(app)) {
         warn!("Couldn't hold Alt+V for the copied capture: {}", e);
         return;
     }
@@ -99,7 +100,7 @@ fn disarm(app: &AppHandle) -> Option<Pending> {
         .lock()
         .ok()
         .and_then(|mut inner| inner.0.take());
-    let _ = crate::shortcut::unregister_shortcut(app, binding());
+    let _ = crate::shortcut::unregister_shortcut(app, binding(app));
     pending
 }
 

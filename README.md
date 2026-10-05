@@ -9,8 +9,8 @@ and paste the image and instructions into any AI chat or terminal. Fire saved pr
 |---|---|
 | `Ctrl+Space` (hold) | Dictate into any app (Handy's offline speech-to-text, Canary 180M by default) |
 | `Ctrl+Shift+Space` | Dictate with AI cleanup (set a provider in Settings → Post-processing) |
-| `Alt+Shift+S` | **Capture**: freeze the screen, drag a region, annotate it in Excalidraw, drop numbered pins, speak a caption |
-| `Alt+Shift+B` | **Board**: build a prompt from several images, text boxes and numbered pins (same Pin tool as captures). `Ctrl+Enter` sends, `Alt+C` copies |
+| `Alt+S` | **Capture**: freeze the screen, drag a region, annotate it in Excalidraw, drop numbered pins, speak a caption |
+| `Alt+B` | **Board**: build a prompt from several images, text boxes and numbered pins (same Pin tool as captures). `Ctrl+Enter` sends, `Alt+C` copies |
 | `Alt+1` … `Alt+4` | **Prompt macros**: insert a saved prompt at the cursor (edit in Settings → Macros) |
 
 In the capture editor:
@@ -22,10 +22,12 @@ In the capture editor:
 | `Alt+C` | Copy the image and all the text (caption and numbered notes) together: one `Ctrl+V` in the chat pastes both |
 | `Alt+Enter` | Add to the board instead |
 | ``Alt+` `` | **Pin** (also in the canvas, top right): the next click drops a numbered marker |
-| `Ctrl+K` | ✨ AI cleanup of the caption and notes (undoable) |
+| `Alt+D` | ✨ AI cleanup of the caption and notes (undoable) |
+| `Alt+N` | Turn **# Number shapes** on or off |
 | `Esc` | Cancel |
 
-Plain `Enter` never sends; it moves to the next note. With **# Number shapes** on (top right of
+Every key above can be changed in **Settings → Hotkeys** (the drawing tools keep Excalidraw's own
+keys). Plain `Enter` never sends; it moves to the next note. With **# Number shapes** on (top right of
 the canvas), every box, circle, arrow or drawing you make gets the next number and a note. Numbers
 are ordinary objects: drag to move, `Delete` or the note's × to remove, `Ctrl+Z` to undo. The notes
 are pasted as text ("1. …", "2. …") and printed under the image. Double-click a capture in

@@ -2,6 +2,7 @@
 
 use super::store;
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use tauri::AppHandle;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
@@ -19,6 +20,11 @@ pub struct CaptureOptions {
     pub terminal_apps: Vec<String>,
     /// Apps where Send only copies to the clipboard.
     pub copy_only_apps: Vec<String>,
+    /// Keys inside the capture editor and the board that the user changed,
+    /// by action (e.g. `"copy": "Alt+C"`). Defaults live in the frontend.
+    pub keys: BTreeMap<String, String>,
+    /// The key held for a few minutes after Alt+C, e.g. `Alt+V`.
+    pub paste_key: String,
 }
 
 impl Default for CaptureOptions {
@@ -42,11 +48,26 @@ impl Default for CaptureOptions {
             .map(|s| s.to_string())
             .collect(),
             copy_only_apps: Vec::new(),
+            keys: BTreeMap::new(),
+            paste_key: "Alt+V".to_string(),
         }
     }
 }
 
 impl CaptureOptions {
+    /// `paste_key` in the global hotkey format (`Alt+V` becomes `alt+v`).
+    pub fn paste_hotkey(&self) -> String {
+        let key = self.paste_key.trim();
+        let key = if key.is_empty() { "Alt+V" } else { key };
+        key.split('+')
+            .map(|part| match part {
+                "Win" => "super".to_string(),
+                other => other.to_lowercase(),
+            })
+            .collect::<Vec<_>>()
+            .join("+")
+    }
+
     pub fn is_terminal(&self, process: &str) -> bool {
         self.terminal_apps
             .iter()
@@ -84,6 +105,16 @@ mod tests {
         assert!(o.is_terminal("windowsterminal.exe"));
         assert!(!o.is_terminal("chrome.exe"));
         assert!(!o.is_copy_only("chrome.exe"));
+    }
+
+    #[test]
+    fn paste_key_in_hotkey_format() {
+        let mut o = CaptureOptions::default();
+        assert_eq!(o.paste_hotkey(), "alt+v");
+        o.paste_key = "Ctrl+Shift+F9".into();
+        assert_eq!(o.paste_hotkey(), "ctrl+shift+f9");
+        o.paste_key = "".into();
+        assert_eq!(o.paste_hotkey(), "alt+v");
     }
 
     #[test]

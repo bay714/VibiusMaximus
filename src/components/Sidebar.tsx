@@ -8,6 +8,7 @@ import {
   FlaskConical,
   Hourglass,
   Images,
+  Keyboard,
   Landmark,
   Scroll,
   ShieldHalf,
@@ -26,6 +27,7 @@ import {
   MacrosSettings,
   CapturesSettings,
   CaptureSettings,
+  HotkeysSettings,
 } from "./settings";
 
 export type SidebarSection = keyof typeof SECTIONS_CONFIG;
@@ -62,6 +64,12 @@ export const SECTIONS_CONFIG = {
     labelKey: "sidebar.macros",
     icon: Scroll,
     component: MacrosSettings,
+    enabled: () => true,
+  },
+  hotkeys: {
+    labelKey: "sidebar.hotkeys",
+    icon: Keyboard,
+    component: HotkeysSettings,
     enabled: () => true,
   },
   captures: {

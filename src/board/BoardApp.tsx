@@ -25,10 +25,10 @@ import {
   PinNoteRow,
   PinTools,
   isPin,
-  isPinKey,
   usePins,
   type Note,
 } from "../capture/pins";
+import { matches, useKeys } from "../capture/keys";
 
 // Fonts are bundled under /public/excalidraw so Excalidraw never fetches them.
 (window as unknown as { EXCALIDRAW_ASSET_PATH: string }).EXCALIDRAW_ASSET_PATH =
@@ -40,7 +40,6 @@ type InitialData = { elements?: unknown; files?: unknown; appState?: unknown };
 const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp", "gif", "bmp"];
 /** Imported images are laid out at most this wide on the board. */
 const MAX_PLACED_WIDTH = 520;
-const KEYS = { send: "Ctrl+Enter", copy: "Alt+C" } as const;
 
 const toBox = (e: ExcalidrawElement): Box => ({
   id: e.id,
@@ -91,6 +90,8 @@ export default function BoardApp() {
   const [status, setStatus] = useState<string>("");
   const [busy, setBusy] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The same keys as the capture editor, from Settings → Hotkeys.
+  const keys = useKeys();
   const noteFields = useRef(new Map<string, HTMLInputElement>());
   const {
     notes,
@@ -128,16 +129,14 @@ export default function BoardApp() {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       const text = new Map(notesRef.current.map((n) => [n.pinId, n.text]));
-      const elements = api
-        .getSceneElements()
-        .map((e) =>
-          isPin(e)
-            ? {
-                ...e,
-                customData: { ...e.customData, note: text.get(e.id) ?? "" },
-              }
-            : e,
-        );
+      const elements = api.getSceneElements().map((e) =>
+        isPin(e)
+          ? {
+              ...e,
+              customData: { ...e.customData, note: text.get(e.id) ?? "" },
+            }
+          : e,
+      );
       const scene = serializeAsJSON(
         elements,
         { viewBackgroundColor: "#ffffff" },
@@ -332,12 +331,21 @@ export default function BoardApp() {
   /** The whole board as one image plus the text on the clipboard, and Alt+V
    *  held to paste each image and then the text into any app. */
   const copy = () =>
-    run(async () => {
-      if (!api) return;
-      const sheet = await exportElements(api.getSceneElements());
-      const text = promptText(api.getSceneElements(), notes);
-      await sendBody([sheet, ...(await imagePngs())], text, false, true, true);
-    }, t("vibe.board.copiedHold"));
+    run(
+      async () => {
+        if (!api) return;
+        const sheet = await exportElements(api.getSceneElements());
+        const text = promptText(api.getSceneElements(), notes);
+        await sendBody(
+          [sheet, ...(await imagePngs())],
+          text,
+          false,
+          true,
+          true,
+        );
+      },
+      t("vibe.board.copiedHold", { paste: keys.paste }),
+    );
 
   const copyText = () =>
     run(async () => {
@@ -355,31 +363,34 @@ export default function BoardApp() {
     });
   };
 
-  // Keys: Ctrl+Enter send, Alt+C copy (Ctrl+Shift+C still works), Alt+` pin,
-  // Esc puts the Pin tool down.
+  // Keys from Settings → Hotkeys, shared with the capture editor. The close
+  // key only puts the Pin tool down: the board stays open.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const handled = () => {
         e.preventDefault();
         e.stopPropagation();
       };
-      if (isPinKey(e)) {
+      if (matches(e, keys.pin)) {
         handled();
         armPin();
       } else if (
         (e.target as Element | null)?.closest?.(".excalidraw-wysiwyg")
       ) {
         return;
-      } else if (e.key === "Enter" && e.ctrlKey) {
+      } else if (matches(e, keys.numberShapes)) {
         handled();
-        send(false);
-      } else if (
-        e.code === "KeyC" &&
-        ((e.altKey && !e.ctrlKey && !e.shiftKey) || (e.ctrlKey && e.shiftKey))
-      ) {
+        toggleNumberShapes();
+      } else if (matches(e, keys.sendSubmit)) {
+        handled();
+        if (target) send(true);
+      } else if (matches(e, keys.send)) {
+        handled();
+        if (target) send(false);
+      } else if (matches(e, keys.copy)) {
         handled();
         copy();
-      } else if (e.key === "Escape" && pinMode) {
+      } else if (matches(e, keys.close) && pinMode) {
         handled();
         armPin(false);
       }
@@ -421,6 +432,8 @@ export default function BoardApp() {
               numberShapes={numberShapes}
               onPin={() => armPin()}
               onToggleNumbers={toggleNumberShapes}
+              pinKey={keys.pin}
+              numberKey={keys.numberShapes}
             />
           )}
         />
@@ -466,11 +479,11 @@ export default function BoardApp() {
           type="button"
           className="vibe-btn"
           disabled={busy}
-          title={t("vibe.board.copyHint")}
+          title={t("vibe.board.copyHint", { paste: keys.paste })}
           onClick={copy}
         >
           {t("vibe.board.copy")}
-          <kbd>{KEYS.copy}</kbd>
+          <kbd>{keys.copy}</kbd>
         </button>
         <button
           type="button"
@@ -482,7 +495,7 @@ export default function BoardApp() {
           {target
             ? t("vibe.board.sendTo", { app: target.replace(/\.exe$/i, "") })
             : t("vibe.board.send")}
-          <kbd>{KEYS.send}</kbd>
+          <kbd>{keys.send}</kbd>
         </button>
       </div>
     </div>

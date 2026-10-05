@@ -10,6 +10,7 @@ export { ModelsSettings } from "./models/ModelsSettings";
 export { MacrosSettings } from "./macros/MacrosSettings";
 export { CapturesSettings } from "./captures/CapturesSettings";
 export { CaptureSettings } from "./capture/CaptureSettings";
+export { HotkeysSettings } from "./hotkeys/HotkeysSettings";
 
 // Individual setting components
 export { MicrophoneSelector } from "./MicrophoneSelector";

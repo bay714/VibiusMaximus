@@ -52,6 +52,7 @@ pub fn invoke_handler() -> impl Fn(Invoke<tauri::Wry>) -> bool + Send + Sync + '
 /// Runs after Handy registers its shortcuts: first-run seeding, then the
 /// macro hotkeys Handy doesn't know about.
 pub fn on_shortcuts_ready(app: &tauri::AppHandle) {
+    keys::migrate_global(app);
     macros::seed(app);
     vocab::seed(app);
     macros::register_all(app);

@@ -25,15 +25,8 @@ import {
   type SendMode,
   type SessionTarget,
 } from "./api";
-import {
-  PIN_COLOR,
-  PIN_KEY,
-  PinNoteRow,
-  PinTools,
-  isPinKey,
-  usePins,
-  type Note,
-} from "./pins";
+import { PIN_COLOR, PinNoteRow, PinTools, usePins, type Note } from "./pins";
+import { matches, useKeys } from "./keys";
 
 // Fonts are bundled under /public/excalidraw so Excalidraw never fetches them
 // from a CDN.
@@ -67,17 +60,7 @@ export interface Restore {
 
 type Skeleton = Parameters<typeof convertToExcalidrawElements>[0];
 
-// Key names and symbols, not translatable text.
-// Plain Enter never sends: it's too easy to hit by accident.
-const KEYS = {
-  cleanup: "Ctrl+K",
-  pin: PIN_KEY,
-  cancel: "Esc",
-  copy: "Alt+C",
-  board: "Alt+Enter",
-  sendSubmit: "Ctrl+Shift+Enter",
-  send: "Ctrl+Enter",
-} as const;
+// Symbols, not translatable text.
 const SPARKLE = "✨";
 const FILE_ID = "vibe-capture" as FileId;
 const isTextField = (el: Element | null) =>
@@ -94,6 +77,8 @@ export default function Editor({
   restore?: Restore;
 }) {
   const { t } = useTranslation();
+  // Configurable in Settings → Hotkeys. Plain Enter never sends.
+  const keys = useKeys();
   const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null);
   const [caption, setCaption] = useState(restore?.caption ?? "");
   const [busy, setBusy] = useState(false);
@@ -358,9 +343,8 @@ export default function Editor({
     [busy, exportPng, crop, api, caption, notes],
   );
 
-  // Keys: Ctrl+Enter send, Ctrl+Shift+Enter send + submit, Alt+C copy,
-  // Alt+Enter board, Alt+` pin, Esc cancel. Plain Enter only moves to the next
-  // field. Excalidraw keeps its own keys while its canvas has focus.
+  // Keys come from Settings → Hotkeys. Plain Enter only moves to the next
+  // field. Excalidraw keeps its own keys (tools, Delete, undo) otherwise.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as Element | null;
@@ -368,22 +352,28 @@ export default function Editor({
         e.preventDefault();
         e.stopPropagation();
       };
-      if (isPinKey(e)) {
+      if (matches(e, keys.pin)) {
         handled();
         armPin();
         return;
       }
       if (el?.closest?.(".excalidraw-wysiwyg")) return;
-      if (e.ctrlKey && e.key === "k") {
+      if (matches(e, keys.numberShapes)) {
+        handled();
+        toggleNumberShapes();
+      } else if (matches(e, keys.cleanup)) {
         handled();
         cleanup();
-      } else if (e.altKey && !e.ctrlKey && !e.shiftKey && e.code === "KeyC") {
+      } else if (matches(e, keys.copy)) {
         handled();
         send("copyOnly", false);
-      } else if (e.key === "Enter" && e.ctrlKey) {
+      } else if (matches(e, keys.sendSubmit)) {
         handled();
-        if (target) send("send", e.shiftKey);
-      } else if (e.key === "Enter" && e.altKey) {
+        if (target) send("send", true);
+      } else if (matches(e, keys.send)) {
+        handled();
+        if (target) send("send", false);
+      } else if (matches(e, keys.toBoard)) {
         handled();
         send("board", false);
       } else if (e.key === "Enter" && isTextField(el)) {
@@ -392,7 +382,7 @@ export default function Editor({
         const at = order.findIndex((k) => fields.current.get(k) === el);
         const next = order[at + 1];
         if (next) fields.current.get(next)?.focus({ preventScroll: true });
-      } else if (e.key === "Escape") {
+      } else if (matches(e, keys.close)) {
         const selected =
           api && Object.keys(api.getAppState().selectedElementIds).length > 0;
         if (pinMode) armPin(false);
@@ -401,7 +391,17 @@ export default function Editor({
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [api, send, cleanup, armPin, pinMode, notes, target]);
+  }, [
+    api,
+    keys,
+    send,
+    cleanup,
+    armPin,
+    toggleNumberShapes,
+    pinMode,
+    notes,
+    target,
+  ]);
 
   const bindField = (key: string) => (el: HTMLInputElement | null) => {
     if (el) fields.current.set(key, el);
@@ -442,6 +442,8 @@ export default function Editor({
               numberShapes={numberShapes}
               onPin={() => armPin()}
               onToggleNumbers={toggleNumberShapes}
+              pinKey={keys.pin}
+              numberKey={keys.numberShapes}
             />
           )}
         />
@@ -471,7 +473,7 @@ export default function Editor({
               {cleaning
                 ? t("vibe.capture.cleaning")
                 : t("vibe.capture.cleanup")}
-              <kbd>{KEYS.cleanup}</kbd>
+              <kbd>{keys.cleanup}</kbd>
             </button>
           )}
         </div>
@@ -509,7 +511,10 @@ export default function Editor({
                   ? t("vibe.capture.noTarget")
                   : selectedPin
                     ? t("vibe.capture.pinTip")
-                    : t("vibe.capture.copyHint")}
+                    : t("vibe.capture.copyHint", {
+                        copy: keys.copy,
+                        paste: keys.paste,
+                      })}
           </span>
         )}
         <span style={{ flex: 1 }} />
@@ -519,7 +524,7 @@ export default function Editor({
           onClick={() => closeCapture()}
         >
           {t("vibe.capture.cancel")}
-          <kbd>{KEYS.cancel}</kbd>
+          <kbd>{keys.close}</kbd>
         </button>
         <button
           type="button"
@@ -528,7 +533,7 @@ export default function Editor({
           onClick={() => send("board", false)}
         >
           {t("vibe.capture.toBoard")}
-          <kbd>{KEYS.board}</kbd>
+          <kbd>{keys.toBoard}</kbd>
         </button>
         <button
           type="button"
@@ -537,7 +542,7 @@ export default function Editor({
           onClick={() => send("copyOnly", false)}
         >
           {t("vibe.capture.copy")}
-          <kbd>{KEYS.copy}</kbd>
+          <kbd>{keys.copy}</kbd>
         </button>
         <button
           type="button"
@@ -546,7 +551,7 @@ export default function Editor({
           onClick={() => send("send", true)}
         >
           {t("vibe.capture.sendSubmit")}
-          <kbd>{KEYS.sendSubmit}</kbd>
+          <kbd>{keys.sendSubmit}</kbd>
         </button>
         <button
           type="button"
@@ -558,7 +563,7 @@ export default function Editor({
           {target
             ? t("vibe.capture.sendTo", { app: target.app })
             : t("vibe.capture.send")}
-          <kbd>{KEYS.send}</kbd>
+          <kbd>{keys.send}</kbd>
         </button>
       </div>
     </div>

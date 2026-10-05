@@ -904,8 +904,8 @@ pub fn get_default_settings() -> AppSettings {
             name: "Capture Screen".to_string(),
             description: "Freezes the screen so you can select, annotate and send a region."
                 .to_string(),
-            default_binding: "alt+shift+s".to_string(),
-            current_binding: "alt+shift+s".to_string(),
+            default_binding: "alt+s".to_string(),
+            current_binding: "alt+s".to_string(),
         },
     );
     bindings.insert(
@@ -915,8 +915,8 @@ pub fn get_default_settings() -> AppSettings {
             name: "Open Board".to_string(),
             description: "Opens the board for building a prompt from many images and notes."
                 .to_string(),
-            default_binding: "alt+shift+b".to_string(),
-            current_binding: "alt+shift+b".to_string(),
+            default_binding: "alt+b".to_string(),
+            current_binding: "alt+b".to_string(),
         },
     );
     bindings.insert(
