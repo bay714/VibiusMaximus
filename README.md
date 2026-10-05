@@ -34,6 +34,11 @@ Settings → Captures to open it in the editor again.
 Terminals (Windows Terminal, PowerShell, cmd) get a saved file path plus the text instead of an
 image, which suits Claude Code and other terminal agents. Every capture is kept in Settings → Captures.
 
+**Imperial look:** Tyrian purple and gold on marble (gold on basalt in dark mode), Cinzel
+inscription type, a laurel-wreath emblem. Previews in [docs/mockups](docs/mockups/imperial-light.png).
+The app and tray icons are generated from one source: `bun scripts/brand/generate.ts`, then
+`bun run tauri icon scripts/brand/out/app-icon.png`.
+
 **Lightweight by design:** the capture and board windows exist only while open and Excalidraw loads
 only inside them; the settings window is freed when closed; the speech model unloads after 2 minutes;
 no GPU backend, no update checks, no background polling. See [docs/PLAN.md §2a](docs/PLAN.md).

@@ -1,0 +1,39 @@
+/* VibiusMaximus "Imperial" look, on top of Handy's layout. Colors live in
+   theme.css; this file adds the Roman display font and a few decorations. */
+
+/* Cinzel (SIL Open Font License, see src/assets/fonts/OFL.txt), bundled so
+   the app never fetches fonts from the web. Latin only: 26 KB. */
+@font-face {
+  font-family: "Cinzel";
+  src: url("../assets/fonts/Cinzel-latin.woff2") format("woff2");
+  font-weight: 400 900;
+  font-display: swap;
+}
+
+.font-display {
+  font-family: "Cinzel", "Trajan Pro", "Times New Roman", serif;
+}
+
+/* Sidebar: a faint wash of gold, like old parchment. */
+.imperial-sidebar {
+  background: color-mix(in srgb, var(--color-background), var(--color-gold) 9%);
+}
+
+/* Gold Greek-key (meander) border. */
+.imperial-meander {
+  height: 8px;
+  width: 100%;
+  opacity: 0.85;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8' viewBox='0 0 16 8'%3E%3Cpath d='M0 7.25H16M2 7.25V.75H12V5.25H5.5V3H9' fill='none' stroke='%23c9a24b' stroke-width='1.1'/%3E%3C/svg%3E")
+    repeat-x left center;
+}
+
+/* Selected sidebar item: accent tint with a gold bar on the leading edge. */
+.imperial-nav-active {
+  background: color-mix(in srgb, var(--color-logo-primary) 14%, transparent);
+  color: var(--color-logo-primary);
+  box-shadow: inset 3px 0 0 var(--color-gold);
+}
+:dir(rtl) .imperial-nav-active {
+  box-shadow: inset -3px 0 0 var(--color-gold);
+}

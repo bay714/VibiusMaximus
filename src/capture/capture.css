@@ -19,14 +19,14 @@
 }
 .vibe-selection {
   position: absolute;
-  outline: 2px solid #8b5cf6;
+  outline: 2px solid #c9a24b;
   box-shadow: 0 0 0 9999px rgba(11, 13, 18, 0.65);
 }
 .vibe-size {
   position: absolute;
   top: -24px;
   left: 0;
-  background: #8b5cf6;
+  background: #7a2e6b;
   color: #fff;
   font:
     600 11px/1 "Segoe UI",
@@ -93,7 +93,7 @@
 }
 /* The note whose pin is selected on the screenshot. */
 .vibe-row.active {
-  background: rgba(255, 59, 127, 0.08);
+  background: rgba(192, 57, 43, 0.1);
 }
 .vibe-row.active .vibe-pin {
   box-shadow: 0 0 0 2px #fff;
@@ -125,11 +125,11 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 .vibe-tool:hover {
-  border-color: #ff3b7f;
+  border-color: #c9a24b;
 }
 .vibe-tool.on {
-  background: #ff3b7f;
-  border-color: #ff3b7f;
+  background: #7a2e6b;
+  border-color: #7a2e6b;
   color: #fff;
 }
 .vibe-tool kbd {
@@ -153,14 +153,14 @@
   outline: none;
 }
 .vibe-input:focus {
-  border-color: #8b5cf6;
+  border-color: #c9a24b;
 }
 .vibe-pin {
   flex: none;
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #ff3b7f;
+  background: #c0392b;
   color: #fff;
   font:
     700 11px/22px "Segoe UI",
@@ -197,8 +197,8 @@
 }
 .vibe-btn.on,
 .vibe-btn.primary {
-  background: #8b5cf6;
-  border-color: #8b5cf6;
+  background: #8e3a7e;
+  border-color: #8e3a7e;
   color: #fff;
 }
 .vibe-btn kbd {

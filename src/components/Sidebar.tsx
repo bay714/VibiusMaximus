@@ -10,9 +10,9 @@ import {
   Keyboard,
   Images,
   Camera,
+  Landmark,
 } from "lucide-react";
-import HandyTextLogo from "./icons/HandyTextLogo";
-import HandyHand from "./icons/HandyHand";
+import VibiusLogo from "./icons/VibiusLogo";
 import { useSettings } from "../hooks/useSettings";
 import {
   GeneralSettings,
@@ -47,7 +47,7 @@ interface SectionConfig {
 export const SECTIONS_CONFIG = {
   general: {
     labelKey: "sidebar.general",
-    icon: HandyHand,
+    icon: Landmark,
     component: GeneralSettings,
     enabled: () => true,
   },
@@ -124,9 +124,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     .map(([id, config]) => ({ id: id as SidebarSection, ...config }));
 
   return (
-    <div className="flex flex-col w-40 h-full border-e border-mid-gray/20 items-center px-2">
-      <HandyTextLogo width={120} className="m-4" />
-      <div className="flex flex-col w-full items-center gap-1 pt-2 border-t border-mid-gray/20">
+    <div className="imperial-sidebar flex flex-col w-40 h-full border-e border-mid-gray/20 items-center px-2">
+      <VibiusLogo width={104} className="mt-4 mb-3" />
+      <div className="imperial-meander mb-2" />
+      <div className="flex flex-col w-full items-center gap-1 pt-1">
         {availableSections.map((section) => {
           const Icon = section.icon;
           const isActive = activeSection === section.id;
@@ -136,7 +137,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               key={section.id}
               className={`flex gap-2 items-center p-2 w-full rounded-lg cursor-pointer transition-colors ${
                 isActive
-                  ? "bg-logo-primary/80"
+                  ? "imperial-nav-active"
                   : "hover:bg-mid-gray/20 hover:opacity-100 opacity-85"
               }`}
               onClick={() => onSectionChange(section.id)}

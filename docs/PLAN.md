@@ -725,6 +725,17 @@ theme, and an existing Handy install side by side.
 
 ---
 
+## 10a. Brand ("Imperial")
+- Palette in `src/styles/theme.css` (Handy's token file, values only): marble
+  `#f8f4ec` + Tyrian purple `#7a2e6b` in light mode, basalt `#1f1b18` + gold
+  `#d4af5a` in dark mode, decorative gold `#c9a24b`, Pompeian red for errors
+  and capture pins.
+- `src/styles/imperial.css`: bundled Cinzel (OFL, 26 KB), Greek-key border,
+  sidebar wash, active-item style. `VibiusLogo` (laurel + VM + "VIBIVS MAXIMVS")
+  replaces Handy's logo and hand icon.
+- Laurel geometry lives in `src/components/icons/laurel.ts` and feeds the logo,
+  the app icon and the tray icons (`scripts/brand/generate.ts`).
+
 ## 11. Staying in sync with Handy
 - New code lives in `src-tauri/src/vibe/` and `src/capture/`. Changes to
   Handy's files are limited to the "touched" list in §3.

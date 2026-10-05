@@ -65,7 +65,7 @@ export interface Restore {
 
 type Skeleton = Parameters<typeof convertToExcalidrawElements>[0];
 
-const PIN_COLOR = "#ff3b7f";
+const PIN_COLOR = "#c0392b";
 // Key names and symbols, not translatable text.
 // Plain Enter never sends: it's too easy to hit by accident.
 const KEYS = {
