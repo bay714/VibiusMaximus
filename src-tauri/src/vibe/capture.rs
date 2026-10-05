@@ -122,7 +122,7 @@ fn start_capture(app: &AppHandle, reopen: Option<CaptureRecord>) -> Result<(), S
         CAPTURE_WINDOW,
         WebviewUrl::App("src/capture/index.html".into()),
     )
-    .title("VibiusMaximus capture")
+    .title("Vibius Maximus capture")
     .decorations(false)
     .always_on_top(true)
     .skip_taskbar(true)

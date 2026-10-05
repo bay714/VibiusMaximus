@@ -3,7 +3,7 @@
 
 use super::capture::{self, CaptureState};
 use super::target::{self, Target};
-use super::{board, history, prefs};
+use super::{board, history, pending, prefs};
 use crate::clipboard::send_return_key;
 use crate::input::{send_paste_ctrl_v, EnigoState};
 use crate::settings::get_settings;
@@ -114,13 +114,29 @@ fn send_capture(app: &AppHandle, meta: SendMeta, png: Vec<u8>) -> Result<(), Str
             warn!("Couldn't return focus to the previous window; copied instead");
         }
         info!("Copied capture ({} chars of text)", text.len());
-        return copy_png_and_text(app, &png, text);
+        copy_png_and_text(app, &png, text)?;
+        // One Ctrl+V often brings only the image, so Alt+V pastes both.
+        pending::arm(app, png, meta.text, record.path);
+        return Ok(());
     }
     let target = target.unwrap_or_default();
     std::thread::sleep(Duration::from_millis(80));
 
-    let items = if options.is_terminal(&target.process) {
-        vec![Item::Text(join_nonempty(&[&record.path, text]))]
+    let items = items_for(&options, &target.process, &record.path, png, text);
+    paste_items(app, &target, items, meta.submit || options.always_submit)
+}
+
+/// What to paste into an app: the image then the text, or for terminals (which
+/// can't take images) the saved file's path plus the text.
+pub(super) fn items_for(
+    options: &prefs::CaptureOptions,
+    process: &str,
+    path: &str,
+    png: Vec<u8>,
+    text: &str,
+) -> Vec<Item> {
+    if options.is_terminal(process) {
+        vec![Item::Text(join_nonempty(&[path, text]))]
     } else if text.trim().is_empty() {
         vec![Item::Png(png)]
     } else {
@@ -128,8 +144,7 @@ fn send_capture(app: &AppHandle, meta: SendMeta, png: Vec<u8>) -> Result<(), Str
             Item::Png(png),
             Item::Text(join_nonempty(&["[screenshot above]", text])),
         ]
-    };
-    paste_items(app, &target, items, meta.submit || options.always_submit)
+    }
 }
 
 /// Paste each item in order into the focused window, then restore the
@@ -246,7 +261,10 @@ fn to_dib(image: &tauri::image::Image<'_>) -> Vec<u8> {
     out.extend_from_slice(&((width * height * 4) as u32).to_le_bytes());
     out.extend_from_slice(&[0u8; 16]); // resolution and palette: unused
     for row in (0..height).rev() {
-        for px in rgba[row * width * 4..(row + 1) * width * 4].as_chunks::<4>().0 {
+        for px in rgba[row * width * 4..(row + 1) * width * 4]
+            .as_chunks::<4>()
+            .0
+        {
             out.extend_from_slice(&[px[2], px[1], px[0], px[3]]);
         }
     }

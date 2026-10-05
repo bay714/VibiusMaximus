@@ -79,7 +79,7 @@ pub fn open(app: &AppHandle) {
             BOARD_WINDOW,
             WebviewUrl::App("src/board/index.html".into()),
         )
-        .title("VibiusMaximus Board")
+        .title("Vibius Maximus Board")
         .inner_size(1180.0, 800.0)
         .min_inner_size(720.0, 480.0)
         // Let Excalidraw receive files dragged in from Explorer.

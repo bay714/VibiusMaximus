@@ -104,7 +104,7 @@
     },
     "permissions": {
       "title": "Permissions Required",
-      "description": "VibiusMaximus needs a couple of permissions to work properly.",
+      "description": "Vibius Maximus needs a couple of permissions to work properly.",
       "microphone": {
         "title": "Microphone Access",
         "description": "Required to hear your voice for transcription."
@@ -236,7 +236,7 @@
       },
       "rescan": {
         "label": "Rescan",
-        "tooltip": "Rescan for models added to the models folder or Hugging Face cache outside VibiusMaximus"
+        "tooltip": "Rescan for models added to the models folder or Hugging Face cache outside Vibius Maximus"
       },
       "noModelsMatch": "No models match this filter."
     },
@@ -304,11 +304,11 @@
       },
       "autostart": {
         "label": "Launch on Startup",
-        "description": "Automatically start VibiusMaximus when you log in to your computer."
+        "description": "Automatically start Vibius Maximus when you log in to your computer."
       },
       "showTrayIcon": {
         "label": "Show Tray Icon",
-        "description": "Display the VibiusMaximus icon in the system tray."
+        "description": "Display the Vibius Maximus icon in the system tray."
       },
       "overlay": {
         "style": {
@@ -504,7 +504,7 @@
       },
       "updateChecks": {
         "label": "Check for Updates",
-        "description": "Automatically check for new versions of VibiusMaximus",
+        "description": "Automatically check for new versions of Vibius Maximus",
         "lockedDescription": "Disabled by system configuration (HANDY_DISABLE_UPDATER)"
       },
       "whatsNewPreview": {
@@ -596,7 +596,7 @@
       },
       "keyboardDiagnostic": {
         "title": "Keyboard Diagnostic",
-        "description": "Checks whether keyboard events reach VibiusMaximus. Only event counts are recorded — never which keys you press.",
+        "description": "Checks whether keyboard events reach Vibius Maximus. Only event counts are recorded — never which keys you press.",
         "run": "Run 10s diagnostic",
         "running": "Listening… press your shortcut a few times (e.g. Option+Space)",
         "secureInputLabel": "Secure Input",
@@ -610,7 +610,7 @@
         "mouse": "Mouse",
         "verdictBlocked": "Secure Input is blocking key events — keyed shortcuts cannot work until it is resolved.",
         "verdictSuspicious": "Modifier events arrived but no key events — something is suppressing keys even though Secure Input reports disabled. Please report this on GitHub.",
-        "verdictOk": "Key events are reaching VibiusMaximus normally.",
+        "verdictOk": "Key events are reaching Vibius Maximus normally.",
         "verdictNoEvents": "No events captured — did you press any keys during the test?",
         "failed": "Diagnostic failed: {{error}}"
       }
@@ -619,15 +619,15 @@
       "title": "About",
       "version": {
         "title": "Version",
-        "description": "Current version of VibiusMaximus"
+        "description": "Current version of Vibius Maximus"
       },
       "whatsNewUpdates": {
         "label": "Show What's New",
-        "description": "Show release notes after VibiusMaximus updates"
+        "description": "Show release notes after Vibius Maximus updates"
       },
       "appDataDirectory": {
         "title": "App Data Directory",
-        "description": "Location where VibiusMaximus stores its data"
+        "description": "Location where Vibius Maximus stores its data"
       },
       "sourceCode": {
         "title": "Source Code",
@@ -636,7 +636,7 @@
       },
       "supportDevelopment": {
         "title": "Support Development",
-        "description": "Support Handy, the open-source app VibiusMaximus is built on",
+        "description": "Support Handy, the open-source app Vibius Maximus is built on",
         "button": "Donate"
       },
       "acknowledgments": {
@@ -644,7 +644,7 @@
         "ggml": {
           "title": "ggml",
           "description": "High-performance tensor library for on-device machine learning inference",
-          "details": "VibiusMaximus's local speech-to-text is built on transcribe.cpp and ggml. Thanks to the amazing work by Georgi Gerganov and contributors."
+          "details": "Vibius Maximus's local speech-to-text is built on transcribe.cpp and ggml. Thanks to the amazing work by Georgi Gerganov and contributors."
         }
       }
     }
@@ -665,7 +665,7 @@
     "portableUpdateBrowseButton": "Open GitHub Releases"
   },
   "whatsNew": {
-    "title": "New in VibiusMaximus v{{version}}"
+    "title": "New in Vibius Maximus v{{version}}"
   },
   "common": {
     "loading": "Loading...",
@@ -677,7 +677,7 @@
     "noOptionsFound": "No options found"
   },
   "accessibility": {
-    "permissionsDescription": "VibiusMaximus needs accessibility permissions to type transcribed text.",
+    "permissionsDescription": "Vibius Maximus needs accessibility permissions to type transcribed text.",
     "openSettings": "Open System Settings"
   },
   "errors": {
@@ -700,11 +700,11 @@
   },
   "appLanguage": {
     "title": "Application Language",
-    "description": "Change the language of the VibiusMaximus interface"
+    "description": "Change the language of the Vibius Maximus interface"
   },
   "theme": {
     "title": "Application Theme",
-    "description": "Choose whether VibiusMaximus follows your system theme or stays light or dark",
+    "description": "Choose whether Vibius Maximus follows your system theme or stays light or dark",
     "options": {
       "system": "System",
       "light": "Light",
@@ -735,6 +735,7 @@
       "pinHint": "Click where the pin goes · Esc to cancel",
       "pinTip": "Drag a number to move it · select it and press Delete, or ×, to remove it",
       "removePin": "Remove pin {{n}}",
+      "copyHint": "Alt+C copies · then Alt+V in any app pastes the image and the text",
       "numberShapes": "Number shapes",
       "numberShapesHint": "When on, every box, circle, arrow or drawing you make gets the next number and a note",
       "noTarget": "The app this was sent to is closed. Copy it instead.",

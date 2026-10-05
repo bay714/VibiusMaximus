@@ -50,6 +50,14 @@ pub fn handle_shortcut_event(
         return;
     }
 
+    // VibiusMaximus: Alt+V, held briefly after copying a capture.
+    if binding_id == crate::vibe::pending::BINDING_ID {
+        if is_pressed {
+            crate::vibe::pending::fire(app);
+        }
+        return;
+    }
+
     // VibiusMaximus prompt macros: `macro:<id>` fires on press.
     if let Some(macro_id) = binding_id.strip_prefix(crate::vibe::macros::BINDING_PREFIX) {
         if is_pressed {

@@ -783,9 +783,9 @@ export default function Editor({
                 ? t("vibe.capture.sending")
                 : !target
                   ? t("vibe.capture.noTarget")
-                  : notes.length > 0
+                  : selectedPin
                     ? t("vibe.capture.pinTip")
-                    : ""}
+                    : t("vibe.capture.copyHint")}
           </span>
         )}
         <span style={{ flex: 1 }} />

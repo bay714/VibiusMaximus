@@ -8,6 +8,7 @@ mod history;
 mod keys;
 pub mod macros;
 pub mod output;
+pub mod pending;
 mod prefs;
 mod store;
 pub mod target;

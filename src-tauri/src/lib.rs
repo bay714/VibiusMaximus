@@ -102,7 +102,7 @@ fn build_main_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow> {
     // for portable mode (redirects WebView2 cache to portable Data dir)
     let mut win_builder =
         tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("/".into()))
-            .title("VibiusMaximus")
+            .title("Vibius Maximus")
             .inner_size(680.0, 570.0)
             .min_inner_size(680.0, 570.0)
             .resizable(true)
@@ -960,6 +960,7 @@ pub fn run(cli_args: CliArgs) {
         .manage(cli_args.clone())
         .manage(vibe::capture::CaptureState::default())
         .manage(vibe::board::BoardState::default())
+        .manage(vibe::pending::PendingState::default())
         .setup(move |app| {
             #[cfg(target_os = "windows")]
             log::info!(
