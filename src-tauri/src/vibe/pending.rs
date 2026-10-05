@@ -1,11 +1,12 @@
-//! Paste a copied capture later. Alt+C puts the image and the text on the
-//! clipboard together, but many chat apps take only the image from a single
-//! paste. So after a copy, Alt+V is held for a few minutes: pressed in any app
-//! it pastes the image, then the text, the same two-step paste Send uses.
-//! After one paste, or when the time runs out, Alt+V goes back to normal.
+//! Paste a copied capture or board later. Alt+C puts an image and the text
+//! on the clipboard together, but many chat apps take only the image from a
+//! single paste. So after a copy, Alt+V is held for a few minutes: pressed in
+//! any app it pastes each image, then the text, the same step-by-step paste
+//! Send uses. After one paste, or when the time runs out, Alt+V goes back to
+//! normal.
 
-use super::output::{self, Item};
-use super::{keys, prefs, target};
+use super::output::{self, join_nonempty, Item};
+use super::{history, keys, prefs, target};
 use crate::input::EnigoState;
 use crate::settings::ShortcutBinding;
 use log::{error, info, warn};
@@ -18,10 +19,13 @@ const HOTKEY: &str = "alt+v";
 const HOLD_FOR: Duration = Duration::from_secs(5 * 60);
 
 struct Pending {
-    png: Vec<u8>,
+    pngs: Vec<Vec<u8>>,
     text: String,
-    /// The saved PNG, which terminals get instead of the image.
-    path: String,
+    /// Saved files for terminals, which get paths instead of images. Empty
+    /// means save the images when they're pasted into a terminal.
+    paths: Vec<String>,
+    /// Put "[screenshot above]" before the text (a single capture).
+    label: bool,
 }
 
 #[derive(Default)]
@@ -41,15 +45,29 @@ fn binding() -> ShortcutBinding {
     }
 }
 
-/// Hold `png` and `text` for Alt+V.
+/// Hold one capture for Alt+V.
 pub fn arm(app: &AppHandle, png: Vec<u8>, text: String, path: String) {
+    hold(app, vec![png], text, vec![path], true);
+}
+
+/// Hold a board's images (in paste order) and its text for Alt+V.
+pub fn arm_many(app: &AppHandle, pngs: Vec<Vec<u8>>, text: String) {
+    hold(app, pngs, text, Vec::new(), false);
+}
+
+fn hold(app: &AppHandle, pngs: Vec<Vec<u8>>, text: String, paths: Vec<String>, label: bool) {
     let generation = {
         let state = app.state::<PendingState>();
         let Ok(mut inner) = state.inner.lock() else {
             return;
         };
         inner.1 += 1;
-        inner.0 = Some(Pending { png, text, path });
+        inner.0 = Some(Pending {
+            pngs,
+            text,
+            paths,
+            label,
+        });
         inner.1
     };
     // Re-register so a hotkey left over from an earlier copy isn't doubled.
@@ -113,8 +131,26 @@ fn paste(app: &AppHandle, pending: Pending) -> Result<(), String> {
     } else {
         ""
     };
-    let items: Vec<Item> =
-        output::items_for(&options, &target.process, &pending.path, pending.png, text);
+    let items = if options.is_terminal(&target.process) {
+        let mut lines = pending.paths;
+        if lines.is_empty() {
+            for png in &pending.pngs {
+                lines.push(history::save(app, png, "", Some(&target), None)?.path);
+            }
+        }
+        lines.push(text.to_string());
+        let lines: Vec<&str> = lines.iter().map(String::as_str).collect();
+        vec![Item::Text(join_nonempty(&lines))]
+    } else {
+        let label = if pending.label && !pending.pngs.is_empty() {
+            "[screenshot above]"
+        } else {
+            ""
+        };
+        let mut items: Vec<Item> = pending.pngs.into_iter().map(Item::Png).collect();
+        items.push(Item::Text(join_nonempty(&[label, text])));
+        items
+    };
     info!("Pasting the copied capture into {}", target.process);
     output::paste_items(app, &target, items, false)
 }

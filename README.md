@@ -10,7 +10,7 @@ and paste the image and instructions into any AI chat or terminal. Fire saved pr
 | `Ctrl+Space` (hold) | Dictate into any app (Handy's offline speech-to-text, Canary 180M by default) |
 | `Ctrl+Shift+Space` | Dictate with AI cleanup (set a provider in Settings → Post-processing) |
 | `Alt+Shift+S` | **Capture**: freeze the screen, drag a region, annotate it in Excalidraw, drop numbered pins, speak a caption |
-| `Alt+Shift+B` | **Board**: build a prompt from several images and text boxes |
+| `Alt+Shift+B` | **Board**: build a prompt from several images, text boxes and numbered pins (same Pin tool as captures). `Ctrl+Enter` sends, `Alt+C` copies |
 | `Alt+1` … `Alt+4` | **Prompt macros**: insert a saved prompt at the cursor (edit in Settings → Macros) |
 
 In the capture editor:
@@ -30,6 +30,10 @@ the canvas), every box, circle, arrow or drawing you make gets the next number a
 are ordinary objects: drag to move, `Delete` or the note's × to remove, `Ctrl+Z` to undo. The notes
 are pasted as text ("1. …", "2. …") and printed under the image. Double-click a capture in
 Settings → Captures to open it in the editor again.
+
+**Alt+C, then Alt+V:** many chat apps take only the image from one paste. After `Alt+C` (in a capture
+or on the board), press `Alt+V` in any app within 5 minutes: it pastes each image, then the text.
+Alt+V goes back to normal after that one paste.
 
 Terminals (Windows Terminal, PowerShell, cmd) get a saved file path plus the text instead of an
 image, which suits Claude Code and other terminal agents. Every capture is kept in Settings → Captures.

@@ -27,3 +27,13 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Pin notes under the canvas, styled like the capture editor's. */
+.vibe-board-notes {
+  background: #1b1512;
+  color: #f1e6d6;
+  font-size: 13px;
+}
+/* Excalidraw sets the canvas cursor inline; show a crosshair while Pin is armed. */
+.vibe-board-canvas.pin-armed canvas {
+  cursor: crosshair !important;
+}

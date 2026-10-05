@@ -775,14 +775,15 @@
       "addFiles": "Add images…",
       "clear": "Clear board",
       "clearConfirm": "Clear everything on the board?",
-      "hint": "Drop or paste images, add text boxes, then send. Images are sent top to bottom, left to right.",
+      "hint": "Drop or paste images, add text boxes and pins, then send. Images go top to bottom, left to right.",
       "copyText": "Copy text",
-      "copyImage": "Copy as one image",
+      "copy": "Copy",
+      "copyHint": "Copies the board as one image plus the text. Then Alt+V in any app pastes each image, then the text.",
       "send": "Send",
       "sendTo": "Send to {{app}}",
       "noTarget": "Open the board from the app you want to send to.",
       "sent": "Sent.",
-      "copiedImage": "Board copied as one image.",
+      "copiedHold": "Copied. Press Alt+V in any app to paste the images and the text.",
       "copiedText": "Prompt text copied."
     },
     "captures": {

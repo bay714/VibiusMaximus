@@ -282,7 +282,7 @@ board saves automatically.
 | Action | Key | What happens |
 |---|---|---|
 | **Send** | `Ctrl+Enter` | Paste every image in order, then the compiled text, into the target window (see below). Paste profiles apply, so terminals get file paths. |
-| **Copy as one image** | `Ctrl+Shift+C` | Render the board as one labelled sheet image (what you see is what you get) and put it on the clipboard. For apps that allow one image, or for sharing. |
+| **Copy** | `Alt+C` (or `Ctrl+Shift+C`) | The whole board as one image plus the text on the clipboard; then `Alt+V` in any app (for 5 minutes, one paste) pastes each image and then the text. |
 | **Copy text** | `Ctrl+Alt+C` | Compiled text only. |
 
 The target window is the one that was active before the board opened. Clicking
@@ -356,7 +356,8 @@ same board copies as one sheet image that pastes into ChatGPT.
 |---|---|
 | `Ctrl+V`, drag and drop | Add images |
 | `Ctrl+K` | AI cleanup of the whole board |
-| `Ctrl+Enter` / `Ctrl+Shift+C` / `Ctrl+Alt+C` | Send / Copy as one image / Copy text |
+| `Ctrl+Enter` / `Alt+C` / `Alt+V` (in the target app) | Send / Copy / paste the copied images and text |
+| ``Alt+` `` / **# Number shapes** | Pin tool and numbered shapes, as in the capture editor; notes are saved with the board |
 | Double-click an image | Annotate in the capture editor |
 
 All global hotkeys can be changed in Settings → Shortcuts.

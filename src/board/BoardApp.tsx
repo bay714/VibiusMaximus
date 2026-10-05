@@ -11,6 +11,7 @@ import {
   serializeAsJSON,
 } from "@excalidraw/excalidraw";
 import type {
+  AppState,
   BinaryFileData,
   ExcalidrawImperativeAPI,
 } from "@excalidraw/excalidraw/types";
@@ -20,6 +21,14 @@ import type {
 } from "@excalidraw/excalidraw/element/types";
 import "@excalidraw/excalidraw/index.css";
 import { compile, intersects, type Box } from "./compile";
+import {
+  PinNoteRow,
+  PinTools,
+  isPin,
+  isPinKey,
+  usePins,
+  type Note,
+} from "../capture/pins";
 
 // Fonts are bundled under /public/excalidraw so Excalidraw never fetches them.
 (window as unknown as { EXCALIDRAW_ASSET_PATH: string }).EXCALIDRAW_ASSET_PATH =
@@ -31,7 +40,7 @@ type InitialData = { elements?: unknown; files?: unknown; appState?: unknown };
 const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp", "gif", "bmp"];
 /** Imported images are laid out at most this wide on the board. */
 const MAX_PLACED_WIDTH = 520;
-const KEYS = { send: "Ctrl+Enter", copyImage: "Ctrl+Shift+C" } as const;
+const KEYS = { send: "Ctrl+Enter", copy: "Alt+C" } as const;
 
 const toBox = (e: ExcalidrawElement): Box => ({
   id: e.id,
@@ -51,6 +60,24 @@ const blobToDataURL = (blob: Blob) =>
     reader.readAsDataURL(blob);
   });
 
+/** Board elements that make up the prompt: everything except the number
+ *  labels inside pins, which would otherwise read as stray "1", "2". */
+const promptElements = (elements: readonly ExcalidrawElement[]) => {
+  const pins = new Set(elements.filter(isPin).map((e) => e.id));
+  return elements.filter(
+    (e) => !(e.type === "text" && e.containerId && pins.has(e.containerId)),
+  );
+};
+
+/** The board's prompt, then each pin's note as "n. note". */
+const promptText = (elements: readonly ExcalidrawElement[], notes: Note[]) => {
+  const { text } = compile(promptElements(elements).map(toBox));
+  const lines = notes
+    .map((n, i) => (n.text.trim() ? `${i + 1}. ${n.text.trim()}` : ""))
+    .filter(Boolean);
+  return [text, ...lines].filter(Boolean).join("\n");
+};
+
 const mimeFor = (path: string) => {
   const ext = path.split(".").pop()?.toLowerCase() ?? "png";
   return ext === "jpg" ? "image/jpeg" : `image/${ext}`;
@@ -64,6 +91,24 @@ export default function BoardApp() {
   const [status, setStatus] = useState<string>("");
   const [busy, setBusy] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const noteFields = useRef(new Map<string, HTMLInputElement>());
+  const {
+    notes,
+    setNote,
+    pinMode,
+    armPin,
+    numberShapes,
+    toggleNumberShapes,
+    selectedPin,
+    selectPin,
+    removePin,
+    handleChange,
+  } = usePins(api, {
+    onPlaced: (pinId) =>
+      setTimeout(() => noteFields.current.get(pinId)?.focus(), 0),
+  });
+  const notesRef = useRef(notes);
+  notesRef.current = notes;
 
   useEffect(() => {
     invoke<string | null>("vibe_board_load").then((json) => {
@@ -76,12 +121,25 @@ export default function BoardApp() {
     invoke<string | null>("vibe_board_target").then(setTarget);
   }, []);
 
-  const onChange = useCallback(() => {
+  // Save shortly after the last change. Each pin carries its note in
+  // customData, so notes come back with the board.
+  const scheduleSave = useCallback(() => {
     if (!api) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
+      const text = new Map(notesRef.current.map((n) => [n.pinId, n.text]));
+      const elements = api
+        .getSceneElements()
+        .map((e) =>
+          isPin(e)
+            ? {
+                ...e,
+                customData: { ...e.customData, note: text.get(e.id) ?? "" },
+              }
+            : e,
+        );
       const scene = serializeAsJSON(
-        api.getSceneElements(),
+        elements,
         { viewBackgroundColor: "#ffffff" },
         api.getFiles(),
         "local",
@@ -89,6 +147,17 @@ export default function BoardApp() {
       invoke("vibe_board_save", { scene });
     }, 800);
   }, [api]);
+
+  const onChange = useCallback(
+    (elements: readonly ExcalidrawElement[], appState: AppState) => {
+      handleChange(elements, appState);
+      scheduleSave();
+    },
+    [handleChange, scheduleSave],
+  );
+
+  // Typing a note saves too.
+  useEffect(scheduleSave, [notes, scheduleSave]);
 
   /** Place images below everything already on the board, left to right. */
   const addImages = useCallback(
@@ -196,6 +265,7 @@ export default function BoardApp() {
     text: string,
     submit: boolean,
     copyOnly: boolean,
+    hold = false,
   ) => {
     const meta = new TextEncoder().encode(
       JSON.stringify({
@@ -203,6 +273,7 @@ export default function BoardApp() {
         text,
         submit,
         copyOnly,
+        hold,
       }),
     );
     const total = pngs.reduce((n, p) => n + p.length, 0);
@@ -231,44 +302,48 @@ export default function BoardApp() {
     }
   };
 
-  /** Each image with whatever is drawn over it, plus the compiled prompt. */
+  /** Each image with whatever is drawn over it (pins included), in reading
+   *  order. */
+  const imagePngs = async () => {
+    if (!api) return [];
+    const elements = api.getSceneElements();
+    const boxes = elements.map(toBox);
+    const { imageIds } = compile(promptElements(elements).map(toBox));
+    const pngs: Uint8Array[] = [];
+    for (const id of imageIds) {
+      const image = boxes.find((b) => b.id === id);
+      if (!image) continue;
+      const group = elements.filter((e, i) => {
+        const box = boxes[i];
+        return e.id === id || (box.kind !== "image" && intersects(box, image));
+      });
+      pngs.push(await exportElements(group));
+    }
+    return pngs;
+  };
+
   const send = (submit: boolean) =>
     run(async () => {
       if (!api) return;
-      const elements = api.getSceneElements();
-      const boxes = elements.map(toBox);
-      const { imageIds, text } = compile(boxes);
-      const pngs: Uint8Array[] = [];
-      for (const id of imageIds) {
-        const image = boxes.find((b) => b.id === id);
-        if (!image) continue;
-        const group = elements.filter((e, i) => {
-          const box = boxes[i];
-          return (
-            e.id === id || (box.kind !== "image" && intersects(box, image))
-          );
-        });
-        pngs.push(await exportElements(group));
-      }
-      await sendBody(pngs, text, submit, false);
+      const text = promptText(api.getSceneElements(), notes);
+      await sendBody(await imagePngs(), text, submit, false);
     }, t("vibe.board.sent"));
 
-  const copyImage = () =>
+  /** The whole board as one image plus the text on the clipboard, and Alt+V
+   *  held to paste each image and then the text into any app. */
+  const copy = () =>
     run(async () => {
       if (!api) return;
-      await sendBody(
-        [await exportElements(api.getSceneElements())],
-        "",
-        false,
-        true,
-      );
-    }, t("vibe.board.copiedImage"));
+      const sheet = await exportElements(api.getSceneElements());
+      const text = promptText(api.getSceneElements(), notes);
+      await sendBody([sheet, ...(await imagePngs())], text, false, true, true);
+    }, t("vibe.board.copiedHold"));
 
   const copyText = () =>
     run(async () => {
       if (!api) return;
       await navigator.clipboard.writeText(
-        compile(api.getSceneElements().map(toBox)).text,
+        promptText(api.getSceneElements(), notes),
       );
     }, t("vibe.board.copiedText"));
 
@@ -280,14 +355,33 @@ export default function BoardApp() {
     });
   };
 
+  // Keys: Ctrl+Enter send, Alt+C copy (Ctrl+Shift+C still works), Alt+` pin,
+  // Esc puts the Pin tool down.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && e.ctrlKey) {
+      const handled = () => {
         e.preventDefault();
+        e.stopPropagation();
+      };
+      if (isPinKey(e)) {
+        handled();
+        armPin();
+      } else if (
+        (e.target as Element | null)?.closest?.(".excalidraw-wysiwyg")
+      ) {
+        return;
+      } else if (e.key === "Enter" && e.ctrlKey) {
+        handled();
         send(false);
-      } else if (e.key.toLowerCase() === "c" && e.ctrlKey && e.shiftKey) {
-        e.preventDefault();
-        copyImage();
+      } else if (
+        e.code === "KeyC" &&
+        ((e.altKey && !e.ctrlKey && !e.shiftKey) || (e.ctrlKey && e.shiftKey))
+      ) {
+        handled();
+        copy();
+      } else if (e.key === "Escape" && pinMode) {
+        handled();
+        armPin(false);
       }
     };
     window.addEventListener("keydown", onKey, true);
@@ -298,7 +392,7 @@ export default function BoardApp() {
 
   return (
     <div className="vibe-board">
-      <div className="vibe-board-canvas">
+      <div className={`vibe-board-canvas${pinMode ? " pin-armed" : ""}`}>
         <Excalidraw
           excalidrawAPI={setApi}
           initialData={{
@@ -321,8 +415,35 @@ export default function BoardApp() {
               toggleTheme: false,
             },
           }}
+          renderTopRightUI={() => (
+            <PinTools
+              pinMode={pinMode}
+              numberShapes={numberShapes}
+              onPin={() => armPin()}
+              onToggleNumbers={toggleNumberShapes}
+            />
+          )}
         />
       </div>
+      {notes.length > 0 && (
+        <div className="vibe-panel vibe-board-notes">
+          {notes.map((note, i) => (
+            <PinNoteRow
+              key={note.pinId}
+              note={note}
+              index={i}
+              active={selectedPin === note.pinId}
+              inputRef={(el) => {
+                if (el) noteFields.current.set(note.pinId, el);
+                else noteFields.current.delete(note.pinId);
+              }}
+              onFocus={() => selectPin(note.pinId)}
+              onText={(text) => setNote(note.pinId, text)}
+              onRemove={() => removePin(note.pinId)}
+            />
+          ))}
+        </div>
+      )}
       <div className="vibe-board-bar">
         <button type="button" className="vibe-btn" onClick={pickFiles}>
           {t("vibe.board.addFiles")}
@@ -345,10 +466,11 @@ export default function BoardApp() {
           type="button"
           className="vibe-btn"
           disabled={busy}
-          onClick={copyImage}
+          title={t("vibe.board.copyHint")}
+          onClick={copy}
         >
-          {t("vibe.board.copyImage")}
-          <kbd>{KEYS.copyImage}</kbd>
+          {t("vibe.board.copy")}
+          <kbd>{KEYS.copy}</kbd>
         </button>
         <button
           type="button"

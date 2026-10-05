@@ -149,6 +149,10 @@ struct BoardSendMeta {
     submit: bool,
     /// Copy one combined image instead of pasting.
     copy_only: bool,
+    /// With `copy_only`: the first image is the whole board for the
+    /// clipboard (with the text), and the rest are held for Alt+V.
+    #[serde(default)]
+    hold: bool,
 }
 
 /// Body: `[meta length u32 LE][meta JSON][PNG 1][PNG 2]…`.
@@ -180,8 +184,14 @@ fn split_images(mut rest: &[u8], sizes: &[usize]) -> Result<Vec<Vec<u8>>, String
 
 fn send_blocking(app: &AppHandle, meta: BoardSendMeta, pngs: Vec<Vec<u8>>) -> Result<(), String> {
     if meta.copy_only {
-        let png = pngs.first().ok_or("Nothing to copy")?;
-        return output::copy_png(app, png);
+        let mut pngs = pngs.into_iter();
+        let sheet = pngs.next().ok_or("Nothing to copy")?;
+        if !meta.hold {
+            return output::copy_png(app, &sheet);
+        }
+        output::copy_png_and_text(app, &sheet, &meta.text)?;
+        super::pending::arm_many(app, pngs.collect(), meta.text);
+        return Ok(());
     }
     let target = app
         .state::<BoardState>()
