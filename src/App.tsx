@@ -25,6 +25,7 @@ import {
 } from "./components/settings";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Sidebar, SidebarSection, SECTIONS_CONFIG } from "./components/Sidebar";
+import { SectionHeader } from "./components/SectionHeader";
 import { WhatsNewGate } from "./components/whats-new";
 import { useSettings } from "./hooks/useSettings";
 import { useSettingsStore } from "./stores/settingsStore";
@@ -370,6 +371,7 @@ function App() {
               <div className="flex flex-col items-center p-4 gap-4">
                 <AccessibilityPermissions />
                 <SecureInputWarning />
+                <SectionHeader section={currentSection} />
                 {renderSettingsContent(currentSection, setOnboardingPreview)}
               </div>
             </div>

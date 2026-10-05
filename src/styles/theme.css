@@ -1,36 +1,39 @@
-/* VibiusMaximus "Imperial" colors: marble and Tyrian purple by day, basalt
-   and gold by night. (The layout is Handy's; the palette is ours.) */
+/* VibiusMaximus "Legion" colors: Pompeian red and bronze on warm sand by
+   day, bronze and red on near-black by night. (The layout is Handy's; the
+   palette is ours.) */
 
 :root {
   /* Palette source of truth. Each themed color is defined once as a
      light/dark pair; the active tokens below and the `data-theme` overrides
      in App.css reference these, so a hex value lives in exactly one place. */
-  --light-color-text: #2a1f1a;
-  --light-color-background: #f8f4ec;
-  --light-color-logo-primary: #7a2e6b;
-  --light-color-logo-stroke: #3b2a1f;
-  --light-color-background-ui: #7a2e6b;
+  --light-color-text: #221814;
+  --light-color-background: #f7f2ea;
+  --light-color-logo-primary: #9e2b25;
+  --light-color-logo-stroke: #3a241b;
+  --light-color-background-ui: #9e2b25;
 
-  --dark-color-text: #f3ecdd;
-  --dark-color-background: #1f1b18;
-  --dark-color-logo-primary: #d4af5a;
-  --dark-color-logo-stroke: #f3e3b5;
-  --dark-color-background-ui: #8e3a7e;
+  --dark-color-text: #f1e6d6;
+  --dark-color-background: #17120f;
+  --dark-color-logo-primary: #d4a157;
+  --dark-color-logo-stroke: #f1dcb8;
+  --dark-color-background-ui: #b3342c;
 
-  /* Decorative gold (rules, the logo's laurel), the same in both themes. */
-  --color-gold: #c9a24b;
+  /* Brand colors that don't change with the theme: the shield's red and its
+     bronze rim (also used for hairlines). */
+  --color-legion-red: #9e2b25;
+  --color-bronze: #c08a43;
 
   /* Semantic status colors. First used by SecureInputWarning; intended to
      replace the ad-hoc yellow-500/red-500 usages (e.g. ui/Alert.tsx) over
      time so status styling is themeable from one place. */
   --light-color-warning: #b7791f;
-  --light-color-error: #a3262e;
+  --light-color-error: #b42318;
   --dark-color-warning: #e3b341;
-  --dark-color-error: #e5736b;
+  --dark-color-error: #f07060;
 
   /* Tokens that do not change between light and dark */
   --color-text-stroke: #f6f6f6;
-  --color-mid-gray: #8a8178;
+  --color-mid-gray: #8c7b6a;
 
   /* Active palette — defaults to light, follows the OS via the media query
      below, or is forced by `data-theme` (see the overrides below). */

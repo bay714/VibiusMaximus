@@ -725,16 +725,21 @@ theme, and an existing Handy install side by side.
 
 ---
 
-## 10a. Brand ("Imperial")
-- Palette in `src/styles/theme.css` (Handy's token file, values only): marble
-  `#f8f4ec` + Tyrian purple `#7a2e6b` in light mode, basalt `#1f1b18` + gold
-  `#d4af5a` in dark mode, decorative gold `#c9a24b`, Pompeian red for errors
-  and capture pins.
-- `src/styles/imperial.css`: bundled Cinzel (OFL, 26 KB), Greek-key border,
-  sidebar wash, active-item style. `VibiusLogo` (laurel + VM + "VIBIVS MAXIMVS")
-  replaces Handy's logo and hand icon.
-- Laurel geometry lives in `src/components/icons/laurel.ts` and feeds the logo,
+## 10a. Brand ("Legion")
+- Palette in `src/styles/theme.css` (Handy's token file, values only): warm
+  sand `#f7f2ea` + Pompeian red `#9e2b25` in light mode, near-black `#17120f`
+  + bronze `#d4a157` in dark mode; shield red `#9e2b25` and bronze `#c08a43`
+  in both.
+- `src/styles/legion.css`: bundled Marcellus (OFL, 15 KB), sidebar wash,
+  bronze hairline, active-item style, page-header tile. `VibiusLogo` (shield +
+  "VIBIVS MAXIMVS") replaces Handy's logo; `SectionHeader` gives every page
+  its icon and name.
+- Section icons (lucide, already bundled): General temple, Capture crosshair,
+  Macros scroll, History hourglass, Models waveform, Advanced swords,
+  Post-process quill, About shield.
+- Shield shapes live in `src/components/icons/shield.ts` and feed the logo,
   the app icon and the tray icons (`scripts/brand/generate.ts`).
+- Explorations that weren't chosen: `docs/mockups/theme-*.png`.
 
 ## 11. Staying in sync with Handy
 - New code lives in `src-tauri/src/vibe/` and `src/capture/`. Changes to

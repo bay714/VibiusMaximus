@@ -1,0 +1,55 @@
+/* VibiusMaximus "Legion" look on top of Handy's layout: Pompeian red and
+   bronze, a flat shield emblem, Marcellus headings. Colors live in theme.css;
+   this file adds the display font and the few custom styles. */
+
+/* Marcellus (SIL Open Font License, see src/assets/fonts/OFL.txt), bundled
+   so the app never fetches fonts from the web. Latin only: 15 KB. */
+@font-face {
+  font-family: "Marcellus";
+  src: url("../assets/fonts/Marcellus-latin.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+
+.font-display {
+  font-family: "Marcellus", "Trajan Pro", "Times New Roman", serif;
+}
+
+/* Sidebar: warm sand by day, near-black by night. */
+.legion-sidebar {
+  background: color-mix(
+    in srgb,
+    var(--color-background),
+    var(--color-bronze) 8%
+  );
+}
+
+/* Hairline rule in bronze. */
+.legion-rule {
+  height: 1px;
+  width: 100%;
+  background: color-mix(in srgb, var(--color-bronze) 45%, transparent);
+}
+
+/* Selected sidebar item: accent tint with a bar on the leading edge. */
+.legion-nav-active {
+  background: color-mix(in srgb, var(--color-logo-primary) 13%, transparent);
+  color: var(--color-logo-primary);
+  box-shadow: inset 3px 0 0 var(--color-logo-primary);
+}
+:dir(rtl) .legion-nav-active {
+  box-shadow: inset -3px 0 0 var(--color-logo-primary);
+}
+
+/* Page header: the section's icon on a red tile, then its name. */
+.legion-tile {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  color: #fff;
+  background: var(--color-legion-red);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--color-bronze) 55%, transparent);
+}

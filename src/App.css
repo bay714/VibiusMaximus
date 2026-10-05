@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "./styles/theme.css";
-@import "./styles/imperial.css";
+@import "./styles/legion.css";
 
 /* Register the shared color tokens (src/styles/theme.css) as Tailwind
    utilities */

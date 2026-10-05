@@ -1,71 +1,66 @@
-import { laurel, leafPath } from "./laurel";
+import { BOSS, MONOGRAM, SHIELD, SHIELD_LEFT, SPINE } from "./shield";
 
-// Brand marks, not translatable text. Roman inscriptions use V for U.
-const MONOGRAM = "VM";
+// Brand mark, not translatable text. Roman inscriptions use V for U.
 const WORDMARK = ["VIBIVS", "MAXIMVS"];
 
-/** The laurel-and-monogram emblem, optionally with the wordmark under it. */
+/** The shield emblem on its own. */
+export const ShieldMark = ({ size = 40 }: { size?: number }) => (
+  <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden>
+    <path
+      d={SHIELD}
+      fill="var(--color-legion-red)"
+      stroke="var(--color-bronze)"
+      strokeWidth={4}
+      strokeLinejoin="round"
+    />
+    <path d={SHIELD_LEFT} fill="#fff" opacity={0.08} />
+    <path
+      d={SPINE}
+      stroke="var(--color-bronze)"
+      strokeWidth={4}
+      strokeLinecap="round"
+    />
+    <circle {...BOSS} fill="var(--color-bronze)" />
+    <text
+      x="50"
+      y="55.5"
+      textAnchor="middle"
+      className="font-display"
+      fontSize={15}
+      fill="#2a1710"
+    >
+      {MONOGRAM}
+    </text>
+  </svg>
+);
+
+/** Shield and wordmark: side by side for the sidebar, stacked for onboarding. */
 const VibiusLogo = ({
-  width = 120,
-  wordmark = true,
+  layout = "inline",
+  size = 36,
   className = "",
 }: {
-  width?: number;
-  wordmark?: boolean;
+  layout?: "inline" | "stacked";
+  size?: number;
   className?: string;
-}) => {
-  const { leaves, stems, knot } = laurel();
-  const emblem = wordmark ? width * 0.62 : width;
-  return (
+}) => (
+  <div
+    className={`flex select-none items-center ${
+      layout === "stacked" ? "flex-col gap-2" : "gap-2.5"
+    } ${className}`}
+  >
+    <ShieldMark size={size} />
     <div
-      className={`flex flex-col items-center select-none ${className}`}
-      style={{ width }}
+      className={`font-display leading-[1.15] tracking-[0.16em] ${
+        layout === "stacked" ? "text-center" : ""
+      }`}
+      style={{ fontSize: layout === "stacked" ? size * 0.2 : size * 0.33 }}
     >
-      <svg viewBox="0 0 100 100" width={emblem} height={emblem} aria-hidden>
-        <g fill="var(--color-gold)">
-          {leaves.map((l, i) => (
-            <path
-              key={i}
-              d={leafPath(l.length, l.width)}
-              transform={`translate(${l.x} ${l.y}) rotate(${l.angle})`}
-            />
-          ))}
-        </g>
-        {[...stems, knot].map((d, i) => (
-          <path
-            key={i}
-            d={d}
-            fill="none"
-            stroke="var(--color-gold)"
-            strokeWidth={2.2}
-            strokeLinecap="round"
-          />
-        ))}
-        <text
-          x="50"
-          y="59"
-          textAnchor="middle"
-          className="font-display"
-          fontWeight={700}
-          fontSize={25}
-          letterSpacing={-1}
-          fill="var(--color-logo-primary)"
-        >
-          {MONOGRAM}
-        </text>
-      </svg>
-      {wordmark && (
-        <div
-          className="font-display font-semibold text-center leading-tight mt-1"
-          style={{ fontSize: width * 0.13, letterSpacing: "0.14em" }}
-        >
-          {WORDMARK.map((line) => (
-            <div key={line}>{line}</div>
-          ))}
-        </div>
-      )}
+      {WORDMARK.map((line) => (
+        <div key={line}>{line}</div>
+      ))}
     </div>
-  );
-};
+  </div>
+);
 
 export default VibiusLogo;

@@ -15,7 +15,7 @@ export const SettingsGroup: React.FC<SettingsGroupProps> = ({
     <div className="space-y-2">
       {title && (
         <div className="px-4">
-          <h2 className="font-display text-[13px] font-semibold text-logo-primary tracking-wider">
+          <h2 className="font-display text-xs uppercase tracking-[0.14em] text-logo-primary">
             {title}
           </h2>
           {description && (

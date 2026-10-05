@@ -34,8 +34,9 @@ Settings → Captures to open it in the editor again.
 Terminals (Windows Terminal, PowerShell, cmd) get a saved file path plus the text instead of an
 image, which suits Claude Code and other terminal agents. Every capture is kept in Settings → Captures.
 
-**Imperial look:** Tyrian purple and gold on marble (gold on basalt in dark mode), Cinzel
-inscription type, a laurel-wreath emblem. Previews in [docs/mockups](docs/mockups/imperial-light.png).
+**Legion look:** a flat legionary-shield emblem, Pompeian red and bronze on warm sand (bronze and
+red on near-black in dark mode), Marcellus headings and Roman-flavoured line icons. Previews:
+[light](docs/mockups/legion-light.png), [dark](docs/mockups/legion-dark.png).
 The app and tray icons are generated from one source: `bun scripts/brand/generate.ts`, then
 `bun run tauri icon scripts/brand/out/app-icon.png`.
 

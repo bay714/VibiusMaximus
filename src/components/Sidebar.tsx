@@ -1,16 +1,17 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+// Legion icon set: Roman-flavoured, in lucide's modern line style.
 import {
-  Cog,
+  AudioWaveform,
+  Crosshair,
+  Feather,
   FlaskConical,
-  History,
-  Info,
-  Sparkles,
-  Cpu,
-  Keyboard,
+  Hourglass,
   Images,
-  Camera,
   Landmark,
+  Scroll,
+  ShieldHalf,
+  Swords,
 } from "lucide-react";
 import VibiusLogo from "./icons/VibiusLogo";
 import { useSettings } from "../hooks/useSettings";
@@ -53,13 +54,13 @@ export const SECTIONS_CONFIG = {
   },
   capture: {
     labelKey: "sidebar.capture",
-    icon: Camera,
+    icon: Crosshair,
     component: CaptureSettings,
     enabled: () => true,
   },
   macros: {
     labelKey: "sidebar.macros",
-    icon: Keyboard,
+    icon: Scroll,
     component: MacrosSettings,
     enabled: () => true,
   },
@@ -71,25 +72,25 @@ export const SECTIONS_CONFIG = {
   },
   history: {
     labelKey: "sidebar.history",
-    icon: History,
+    icon: Hourglass,
     component: HistorySettings,
     enabled: () => true,
   },
   models: {
     labelKey: "sidebar.models",
-    icon: Cpu,
+    icon: AudioWaveform,
     component: ModelsSettings,
     enabled: () => true,
   },
   advanced: {
     labelKey: "sidebar.advanced",
-    icon: Cog,
+    icon: Swords,
     component: AdvancedSettings,
     enabled: () => true,
   },
   postprocessing: {
     labelKey: "sidebar.postProcessing",
-    icon: Sparkles,
+    icon: Feather,
     component: PostProcessingSettings,
     enabled: (settings) => settings?.post_process_enabled ?? false,
   },
@@ -101,7 +102,7 @@ export const SECTIONS_CONFIG = {
   },
   about: {
     labelKey: "sidebar.about",
-    icon: Info,
+    icon: ShieldHalf,
     component: AboutSettings,
     enabled: () => true,
   },
@@ -124,10 +125,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     .map(([id, config]) => ({ id: id as SidebarSection, ...config }));
 
   return (
-    <div className="imperial-sidebar flex flex-col w-40 h-full border-e border-mid-gray/20 items-center px-2">
-      <VibiusLogo width={104} className="mt-4 mb-3" />
-      <div className="imperial-meander mb-2" />
-      <div className="flex flex-col w-full items-center gap-1 pt-1">
+    <div className="legion-sidebar flex flex-col w-44 h-full border-e border-mid-gray/20 items-center px-2">
+      <VibiusLogo size={42} className="self-start ms-2 mt-4 mb-4" />
+      <div className="legion-rule mb-2" />
+      <div className="flex flex-col w-full items-center gap-0.5 pt-1">
         {availableSections.map((section) => {
           const Icon = section.icon;
           const isActive = activeSection === section.id;
@@ -135,14 +136,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
           return (
             <div
               key={section.id}
-              className={`flex gap-2 items-center p-2 w-full rounded-lg cursor-pointer transition-colors ${
+              className={`flex gap-2.5 items-center px-2.5 py-2 w-full rounded-lg cursor-pointer transition-colors ${
                 isActive
-                  ? "imperial-nav-active"
-                  : "hover:bg-mid-gray/20 hover:opacity-100 opacity-85"
+                  ? "legion-nav-active"
+                  : "hover:bg-mid-gray/15 hover:opacity-100 opacity-80"
               }`}
               onClick={() => onSectionChange(section.id)}
             >
-              <Icon width={24} height={24} className="shrink-0" />
+              <Icon
+                width={19}
+                height={19}
+                strokeWidth={1.75}
+                className="shrink-0"
+              />
               <p
                 className="text-sm font-medium truncate"
                 title={t(section.labelKey)}
