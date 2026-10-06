@@ -21,8 +21,8 @@ import {
 } from "./ui";
 
 // Everything here follows v1.0.3 (checked against the app by its build thread, 2026-10-05).
-// Assumes 1.0.3 also fixes the board's lower-case "chrome" and ships "Research first" (Alt+3)
-// and "Summarize" (Alt+4) as built-in macros.
+// Macros follow v1.0.4 (Plan, Scope, Research, Summarize, Execute on Alt+1-5). The video in
+// src/legion/ is the current cut; this storyboard keeps the earlier two-macro layout.
 
 const TAGLINE = "VENI · VIDI · VIBED";
 
@@ -220,16 +220,17 @@ const SentShot: React.FC<{ w: number; style?: React.CSSProperties }> = ({ w, sty
   </div>
 );
 
-/** The built-in macros (assuming 1.0.3 swaps in Research first / Summarize). */
+/** The v1.0.4 starter macros. On screen only each first line is shown (the texts are long). */
 const MACROS = [
-  ["Alt+1", "Plan first"],
-  ["Alt+2", "Match design system"],
-  ["Alt+3", "Research first"],
+  ["Alt+1", "Plan"],
+  ["Alt+2", "Scope"],
+  ["Alt+3", "Research"],
   ["Alt+4", "Summarize"],
+  ["Alt+5", "Execute"],
 ];
 const MACRO_RESEARCH =
-  "Research this first: check the official docs and current best practice. Bring back a concise summary (3 bullets max), then one detailed, worked example.";
-const MACRO_SUMMARY = "Too long. Give me the short version: 3 bullets max, then the one thing I should do next.";
+  "Research this before answering. Prefer primary sources (official docs, changelogs, specs, source code) …";
+const MACRO_SUMMARY = "Summarize the above for someone who wasn't following along. …";
 
 /** Settings → Macros (the settings window is just "Vibius Maximus"). */
 const MacroCard: React.FC<{ lit: number }> = ({ lit }) => (
@@ -649,7 +650,7 @@ app.use("/api", rateLimit({
       </div>
     </Win>
     <MacroCard lit={2} />
-    <Caption text="Research first? {Alt+3}: a *concise* answer, then a *worked example*." />
+    <Caption text="A question? {Alt+3} *researches*: answer first, sources, a worked example." />
   </Backdrop>
 );
 
@@ -869,7 +870,7 @@ export const PANELS: Panel[] = [
     time: "1:09–1:17",
     title: "VI · Standing orders",
     vo: "Got a wall of text back? Type your follow-up, then Alt 4 asks for the short version.",
-    note: "Assumes 1.0.3 ships Summarize as the built-in Alt+4. No trailing space before Alt+4; the macro adds one.",
+    note: "Summarize (Alt+4, v1.0.4). No trailing space before Alt+4; the macro adds one.",
     C: P6aWall,
   },
   {
@@ -877,7 +878,7 @@ export const PANELS: Panel[] = [
     time: "1:17–1:26",
     title: "VI · Standing orders (2)",
     vo: "Need research? Alt 3 orders a concise answer, then a detailed, worked example. One key, your favourite prompts.",
-    note: "Assumes 1.0.3 ships Research first as the built-in Alt+3.",
+    note: "Research (Alt+3, v1.0.4).",
     C: P6bResearch,
   },
   {
@@ -892,7 +893,7 @@ export const PANELS: Panel[] = [
     id: "08-outro",
     time: "1:32–1:40",
     title: "Finale",
-    vo: "Light enough to march anywhere. VibiusMaximus. Veni, vidi, vibed.",
+    vo: "Light enough to march anywhere. Vibius Maximus. Veni, vidi, vibed.",
     note: "Facts as measured: offline speech, sleeps when idle, 18 MB installer (not signed; updates are).",
     C: P8Outro,
   },

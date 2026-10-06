@@ -64,7 +64,7 @@ export const ShieldMark: React.FC<{ size?: number; style?: React.CSSProperties }
     <path d={SHIELD_LEFT} fill="#fff" opacity={0.08} />
     <path d={SPINE} stroke={L.bronze} strokeWidth={4} strokeLinecap="round" />
     <circle {...BOSS} fill={L.bronze} />
-    <text x="50" y="55.5" textAnchor="middle" fontFamily={DISPLAY} fontSize={15} fill="#2a1710">
+    <text x="50" y="55.5" textAnchor="middle" fontFamily={DISPLAY} fontSize={15} fill="#2a1710" textRendering="geometricPrecision">
       {MONOGRAM}
     </text>
   </svg>
@@ -179,7 +179,7 @@ export const Caption: React.FC<{ text: string }> = ({ text }) => (
 type Box = { x: number; y: number; w: number; h: number };
 
 /**
- * A desktop window. `kind` picks the chrome: other apps are neutral grey, VibiusMaximus's
+ * A desktop window. `kind` picks the chrome: other apps are neutral grey, Vibius Maximus's
  * own windows are warm Legion brown.
  */
 export const Win: React.FC<

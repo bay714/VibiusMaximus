@@ -1,0 +1,183 @@
+{
+  "voice": "en-GB-RyanNeural",
+  "rate": "-6%",
+  "pitch": "-4Hz",
+  "duration": 201.0,
+  "lines": [
+    {
+      "id": "01-open",
+      "start": 1.2,
+      "text": "Commander. Your legion awaits orders. Here's how you give them."
+    },
+    {
+      "id": "01a-what",
+      "start": 6.9,
+      "text": "Vibius Maximus is a small Windows companion for vibe coding, where you build software by telling AI what you want."
+    },
+    {
+      "id": "01b-how",
+      "start": 13.8,
+      "text": "Speak instead of typing. Show your screen instead of describing it. Fire your best prompts with a single key."
+    },
+    {
+      "id": "01c-why",
+      "start": 21.0,
+      "text": "Clearer orders, so your legion builds exactly what you mean."
+    },
+    {
+      "id": "01c2-allies",
+      "start": 25.3,
+      "text": "Built on open source: Handy, Excalidraw and xcap."
+    },
+    {
+      "id": "01d-setup",
+      "start": 30.4,
+      "text": "First, arm your legion. On first launch, choose Canary 180M Flash, the recommended model."
+    },
+    {
+      "id": "01e-offline",
+      "start": 37.6,
+      "text": "One small download, and your voice never leaves your PC."
+    },
+    {
+      "id": "02a-click",
+      "start": 42.4,
+      "text": "First, click where the words should go."
+    },
+    {
+      "id": "02-dictate",
+      "start": 45.2,
+      "text": "Then hold Control Space and give the order. Let go, and the text lands at your cursor, offline, in any app."
+    },
+    {
+      "id": "02b-modes",
+      "start": 53.0,
+      "text": "Rather not hold? Tap to start, tap to stop, or choose Auto, Hold or Toggle in Settings."
+    },
+    {
+      "id": "03-freeze",
+      "start": 60.3,
+      "text": "Click where it should go, like your terminal. Alt S freezes the screen. Drag over what to change."
+    },
+    {
+      "id": "04a-shapes",
+      "start": 66.9,
+      "text": "Number shapes is on by default. Every box, circle or arrow you draw gets the next number, and its own note."
+    },
+    {
+      "id": "04b-pin",
+      "start": 74.5,
+      "text": "Just want to mark a spot? Press Alt and the backtick key, then click. A pin drops a number, with nothing drawn."
+    },
+    {
+      "id": "04c-text",
+      "start": 82.0,
+      "text": "Text you write on the shot is just a label. It never gets a number."
+    },
+    {
+      "id": "05-notes",
+      "start": 86.5,
+      "text": "Say a note for each, and hold Control Space for the main order."
+    },
+    {
+      "id": "06-cleanup",
+      "start": 91.5,
+      "text": "Rambled? Alt D tidies the wording."
+    },
+    {
+      "id": "07-send",
+      "start": 95.8,
+      "text": "Control Enter sends it to the window you clicked before Alt S. The button names it, so check it before you send."
+    },
+    {
+      "id": "08-terminal",
+      "start": 103.1,
+      "text": "Terminals get a file path for Claude Code. Clicked a chat box? The image and notes land there."
+    },
+    {
+      "id": "09-copy",
+      "start": 109.8,
+      "text": "Not sending yet? Alt C copies it all."
+    },
+    {
+      "id": "10-paste",
+      "start": 113.3,
+      "text": "Alt V, in any app, delivers the image and the text."
+    },
+    {
+      "id": "11-reopen",
+      "start": 117.5,
+      "text": "Double-click any capture to open it again."
+    },
+    {
+      "id": "12-board",
+      "start": 121.3,
+      "text": "Click your destination, then Alt B opens the board."
+    },
+    {
+      "id": "13a-board-capture",
+      "start": 125.0,
+      "text": "Now capture each screen with Alt S, and Alt Enter adds it to the board instead of sending it."
+    },
+    {
+      "id": "13-board-build",
+      "start": 133.0,
+      "text": "Write between them, then circle and pin what matters."
+    },
+    {
+      "id": "14-board-send",
+      "start": 139.0,
+      "text": "Control Enter sends every image in order, labelled to match your prompt."
+    },
+    {
+      "id": "15-boards",
+      "start": 144.4,
+      "text": "And every campaign is kept."
+    },
+    {
+      "id": "16-orders",
+      "start": 147.8,
+      "text": "Standing orders are your own prompt templates, each on a hotkey. Five starters form a workflow:"
+    },
+    {
+      "id": "16b-workflow",
+      "start": 154.0,
+      "text": "plan the task, scope the spec, research what you don't know, summarize the answers, then execute with builder agents."
+    },
+    {
+      "id": "17-custom",
+      "start": 161.8,
+      "text": "They're yours to rewrite. Open one and change the wording, or add your own, like a code review on Alt 6."
+    },
+    {
+      "id": "17b-use",
+      "start": 169.5,
+      "text": "Then fire it in any app. Type the ask, press Alt 2, and a full spec comes back."
+    },
+    {
+      "id": "18-execute",
+      "start": 176.0,
+      "text": "Alt 5 hands that spec to builder agents, and a reviewer checks the evidence."
+    },
+    {
+      "id": "18b-more",
+      "start": 181.5,
+      "text": "Five to start, and as many as you need."
+    },
+    {
+      "id": "19-hotkeys",
+      "start": 186.9,
+      "text": "Every key at its post, and every one yours to change."
+    },
+    {
+      "id": "20-light",
+      "start": 192.5,
+      "text": "Light enough to march anywhere."
+    },
+    {
+      "id": "21-tagline",
+      "start": 195.2,
+      "text": "Vibius Maximus. Veni, vidi, vibed."
+    }
+  ]
+}

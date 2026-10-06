@@ -8,9 +8,12 @@
     "studio": "remotion studio src/index.ts",
     "stills": "remotion still src/index.ts HowTo out/stills/scene1-hook.png --frame=125 && remotion still src/index.ts HowTo out/stills/scene3-capture.png --frame=835 && remotion still src/index.ts HowTo out/stills/scene5-board.png --frame=1380",
     "render": "remotion render src/index.ts HowTo out/raw.mp4 && node scripts/master.mjs out/raw.mp4 out/vibiusmaximus-how-to.mp4",
+    "render:legion": "remotion render src/index.ts Legion out/raw-legion.mp4 --image-format=png --crf=16 --x264-preset=slow && node scripts/master.mjs out/raw-legion.mp4 out/vibiusmaximus-legion.mp4 -16 -2",
+    "storyboard": "remotion render src/storyboard/index.ts Frames out/storyboard --sequence --image-format=png && remotion still src/storyboard/index.ts Sheet out/storyboard/sheet.png",
     "typecheck": "tsc --noEmit",
     "audio": ".venv/Scripts/python audio/build.py all",
-    "audio:vo": ".venv/Scripts/python audio/build.py vo"
+    "audio:vo": ".venv/Scripts/python audio/build.py vo",
+    "audio:legion": ".venv/Scripts/python audio/legion.py all"
   },
   "dependencies": {
     "@remotion/cli": "4.0.532",

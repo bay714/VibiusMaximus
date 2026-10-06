@@ -1,0 +1,180 @@
+{
+  "voice": "en-GB-RyanNeural",
+  "vo": [
+    {
+      "id": "01-open",
+      "start": 1.2,
+      "duration": 4.598
+    },
+    {
+      "id": "01a-what",
+      "start": 6.9,
+      "duration": 6.74
+    },
+    {
+      "id": "01b-how",
+      "start": 13.8,
+      "duration": 7.053
+    },
+    {
+      "id": "01c-why",
+      "start": 21.0,
+      "duration": 3.84
+    },
+    {
+      "id": "01c2-allies",
+      "start": 25.3,
+      "duration": 4.101
+    },
+    {
+      "id": "01d-setup",
+      "start": 30.4,
+      "duration": 7.027
+    },
+    {
+      "id": "01e-offline",
+      "start": 37.6,
+      "duration": 4.023
+    },
+    {
+      "id": "02a-click",
+      "start": 42.4,
+      "duration": 2.56
+    },
+    {
+      "id": "02-dictate",
+      "start": 45.2,
+      "duration": 7.367
+    },
+    {
+      "id": "02b-modes",
+      "start": 53.0,
+      "duration": 7.001
+    },
+    {
+      "id": "03-freeze",
+      "start": 60.3,
+      "duration": 6.426
+    },
+    {
+      "id": "04a-shapes",
+      "start": 66.9,
+      "duration": 7.314
+    },
+    {
+      "id": "04b-pin",
+      "start": 74.5,
+      "duration": 7.34
+    },
+    {
+      "id": "04c-text",
+      "start": 82.0,
+      "duration": 4.284
+    },
+    {
+      "id": "05-notes",
+      "start": 86.5,
+      "duration": 3.892
+    },
+    {
+      "id": "06-cleanup",
+      "start": 91.5,
+      "duration": 2.926
+    },
+    {
+      "id": "07-send",
+      "start": 95.8,
+      "duration": 6.792
+    },
+    {
+      "id": "08-terminal",
+      "start": 103.1,
+      "duration": 6.531
+    },
+    {
+      "id": "09-copy",
+      "start": 109.8,
+      "duration": 3.161
+    },
+    {
+      "id": "10-paste",
+      "start": 113.3,
+      "duration": 3.683
+    },
+    {
+      "id": "11-reopen",
+      "start": 117.5,
+      "duration": 2.456
+    },
+    {
+      "id": "12-board",
+      "start": 121.3,
+      "duration": 3.527
+    },
+    {
+      "id": "13a-board-capture",
+      "start": 125.0,
+      "duration": 5.538
+    },
+    {
+      "id": "13-board-build",
+      "start": 133.0,
+      "duration": 3.448
+    },
+    {
+      "id": "14-board-send",
+      "start": 139.0,
+      "duration": 4.18
+    },
+    {
+      "id": "15-boards",
+      "start": 144.4,
+      "duration": 2.038
+    },
+    {
+      "id": "16-orders",
+      "start": 147.8,
+      "duration": 6.034
+    },
+    {
+      "id": "16b-workflow",
+      "start": 154.0,
+      "duration": 7.497
+    },
+    {
+      "id": "17-custom",
+      "start": 161.8,
+      "duration": 6.975
+    },
+    {
+      "id": "17b-use",
+      "start": 169.5,
+      "duration": 6.113
+    },
+    {
+      "id": "18-execute",
+      "start": 176.0,
+      "duration": 4.807
+    },
+    {
+      "id": "18b-more",
+      "start": 181.5,
+      "duration": 2.769
+    },
+    {
+      "id": "19-hotkeys",
+      "start": 186.9,
+      "duration": 3.605
+    },
+    {
+      "id": "20-light",
+      "start": 192.5,
+      "duration": 1.881
+    },
+    {
+      "id": "21-tagline",
+      "start": 195.2,
+      "duration": 4.049
+    }
+  ]
+}

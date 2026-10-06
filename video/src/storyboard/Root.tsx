@@ -24,7 +24,7 @@ const Sheet: React.FC = () => (
     <div style={{ height: HEAD, display: "flex", alignItems: "center", gap: 22 }}>
       <ShieldMark size={70} />
       <div>
-        <div style={{ fontFamily: DISPLAY, fontSize: 40, letterSpacing: "0.06em" }}>VibiusMaximus how-to — storyboard v3</div>
+        <div style={{ fontFamily: DISPLAY, fontSize: 40, letterSpacing: "0.06em" }}>Vibius Maximus how-to — storyboard v3</div>
         <div style={{ color: L.muted, fontSize: 19, marginTop: 6 }}>
           Legion · dark · Roman-general framing · ~100 s · checked against v1.0.3 · tagline “Veni, vidi, vibed” · 2026-10-05
         </div>
