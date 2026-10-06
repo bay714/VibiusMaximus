@@ -38,29 +38,70 @@ pub struct Macro {
     pub submit: bool,
 }
 
+// Starter macros, written from published best practice: Anthropic's Claude
+// Code guide (explore, then plan; let the model ask questions; give it a way
+// to verify; review for real gaps, not style), Anthropic's guidance on
+// reducing hallucinations (let it say "I don't know", cite sources), OpenAI's
+// GPT-5 prompting guide (restate the goal, plan, self-check), and widely used
+// patterns (bottom line up front, pre-mortem, devil's advocate).
 const STARTERS: &[(&str, &str, &str, &str)] = &[
     (
         "plan-first",
         "Plan first",
         "alt+1",
-        "Before writing any code, list the files you'll change and why, then wait for my OK.",
+        "Don't write any code yet. First read the relevant files and restate my goal in one sentence. If something important is unclear, ask me up to 3 questions and stop there. Otherwise give me a plan:\n1. The files you'll change or add, and why\n2. The steps, in order\n3. Risks, edge cases and anything that could break\n4. How we'll check it works (tests, commands, or what to look at by hand)\nIf there's more than one sensible approach, compare them in a line each and recommend one. Then wait for my OK.",
     ),
     (
-        "design-system",
-        "Match design system",
+        "pressure-test",
+        "Pressure test",
         "alt+2",
-        "Use our existing components and Tailwind tokens. Don't add new colors, fonts or spacing values. If a component is missing, tell me first instead of creating one.",
+        "Before I go with this, pressure-test your last answer like a skeptical senior reviewer:\n- Which assumptions does it rely on, and which are shaky?\n- Pre-mortem: it failed in real use. What are the 3 most likely reasons?\n- Which edge cases, security or performance problems does it miss?\n- What would you do differently now?\nOnly flag issues that affect correctness or my goal, not style. Say how confident you are (high, medium or low), then give me the corrected version.",
     ),
     (
         "research-first",
-        "Research first",
+        "Research",
         "alt+3",
-        "Research this first: check the official docs and current best practice. Bring back a concise summary (3 bullets max), then one detailed, worked example.",
+        "Research this before answering. Prefer primary sources (official docs, changelogs, specs, source code) over blog posts, and note versions and dates, since this may have changed recently. Then give me:\n- The answer in 2-3 sentences, first\n- The key findings, each with its source\n- What's established fact and what's your inference. If you're not sure, say so instead of guessing\n- Where sources or experts disagree\n- One worked example applied to my case\n- What I should double-check before relying on this",
     ),
     (
         "summarize",
         "Summarize",
         "alt+4",
+        "Summarize the above for someone who wasn't following along.\nStart with a one-line bottom line: the most important takeaway or decision.\nThen for each topic:\n- What it is: one line of background, no jargon\n- Where it stands: done, decided or still open\n- The next step, with your recommendation if there's a choice to make\nEnd with any decisions you need from me. Keep names, numbers and commitments exact, drop everything else, and stay under 200 words.",
+    ),
+];
+
+/// Earlier starter macros, by id, with the text they shipped with. Copies
+/// nobody edited are upgraded to the starter now in the same slot.
+const OLD_STARTERS: &[(&str, &str, &str)] = &[
+    (
+        "plan-first",
+        "plan-first",
+        "Before writing any code, list the files you'll change and why, then wait for my OK.",
+    ),
+    (
+        "design-system",
+        "pressure-test",
+        "Use our existing components and Tailwind tokens. Don't add new colors, fonts or spacing values. If a component is missing, tell me first instead of creating one.",
+    ),
+    (
+        "keep-tests",
+        "research-first",
+        "Don't modify or delete existing tests. If a test fails because of your change, fix the code, not the test.",
+    ),
+    (
+        "small-diff",
+        "summarize",
+        "Make the smallest change that fixes this. No refactors, renames or formatting changes outside the lines you need to touch.",
+    ),
+    (
+        "research-first",
+        "research-first",
+        "Research this first: check the official docs and current best practice. Bring back a concise summary (3 bullets max), then one detailed, worked example.",
+    ),
+    (
+        "summarize",
+        "summarize",
         "Too long. Give me the short version: 3 bullets max, then the one thing I should do next.",
     ),
 ];
@@ -114,6 +155,42 @@ pub fn seed(app: &AppHandle) {
     settings::write_settings(app, settings);
     save(app, &macros);
     store::set(app, "macrosSeeded", &true);
+}
+
+/// Replace starter macros nobody edited with the current starters, once.
+/// Each keeps its id and hotkey; only the name and text change. Edited
+/// macros, and ones the user made, are left alone.
+pub fn upgrade_starters(app: &AppHandle) {
+    if store::get::<bool>(app, "startersV2").unwrap_or(false) {
+        return;
+    }
+    let mut macros = load(app);
+    let mut settings = settings::get_settings(app);
+    let mut changed = 0;
+    for m in macros.iter_mut() {
+        let Some((_, slot, _)) = OLD_STARTERS
+            .iter()
+            .find(|(id, _, body)| *id == m.id && m.body.trim() == *body)
+        else {
+            continue;
+        };
+        let Some((_, name, _, body)) = STARTERS.iter().find(|s| s.0 == *slot) else {
+            continue;
+        };
+        m.name = name.to_string();
+        m.body = body.to_string();
+        if let Some(binding) = settings.bindings.get_mut(&binding_id(&m.id)) {
+            binding.name = m.name.clone();
+            binding.description = m.body.chars().take(80).collect();
+        }
+        changed += 1;
+    }
+    if changed > 0 {
+        settings::write_settings(app, settings);
+        save(app, &macros);
+        info!("Upgraded {} starter macro(s)", changed);
+    }
+    store::set(app, "startersV2", &true);
 }
 
 /// Register every macro hotkey. Handy only registers its built-in bindings at
@@ -282,6 +359,13 @@ mod tests {
     fn leaves_unknown_braces_alone() {
         let now = chrono::Local::now();
         assert_eq!(expand("use {props}", "", now), "use {props}");
+    }
+
+    #[test]
+    fn every_old_starter_maps_to_a_current_one() {
+        for (_, slot, _) in OLD_STARTERS {
+            assert!(STARTERS.iter().any(|s| s.0 == *slot), "{slot}");
+        }
     }
 
     #[test]

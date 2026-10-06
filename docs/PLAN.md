@@ -205,8 +205,11 @@ Uses Handy's existing submit-key setting (`Enter`, `Ctrl+Enter` or `Cmd+Enter`).
   halfway through. The clipboard is restored afterwards.
 - **Variables:** `{clipboard}`, `{date}`, `{time}`, filled in when the macro fires.
 - The body field accepts dictation (`Ctrl+Space`).
-- Ships 4 editable starter macros on `Alt+1`…`Alt+4` (new installs): *Plan
-  first*, *Match design system*, *Research first*, *Summarize*.
+- Ships 4 editable starter macros on `Alt+1`…`Alt+4`: *Plan first*, *Pressure
+  test*, *Research*, *Summarize* (texts in `vibe/macros.rs`, written from
+  Anthropic's and OpenAI's prompting guides plus common patterns: plan before
+  code, pre-mortem review, cite sources and admit uncertainty, bottom line
+  first). Starters the user never edited are upgraded in place once.
 - The tray menu lists macros, and clicking one inserts it. Useful for macros
   without a hotkey.
 
