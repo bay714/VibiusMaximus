@@ -128,6 +128,74 @@ pub fn load(app: &AppHandle) -> Vec<Macro> {
     store::get(app, "macros").unwrap_or_default()
 }
 
+/// The saved macros, or an error if they're there but can't be read. Anything
+/// that writes macros back uses this, so a read problem can't wipe them.
+fn load_checked(app: &AppHandle) -> Result<Vec<Macro>, String> {
+    Ok(store::get_checked(app, "macros")?.unwrap_or_default())
+}
+
+/// Hotkeys compared the way the keyboard sees them: `alt_left+1` and `Alt+1`
+/// both use Alt and 1.
+fn same_hotkey(a: &str, b: &str) -> bool {
+    let norm = |k: &str| {
+        k.to_ascii_lowercase()
+            .split('+')
+            .map(|part| {
+                part.trim()
+                    .trim_end_matches("_left")
+                    .trim_end_matches("_right")
+                    .replace("control", "ctrl")
+            })
+            .collect::<Vec<_>>()
+    };
+    norm(a) == norm(b)
+}
+
+/// What upgrading the starters changes, decided without touching the app.
+#[derive(Debug, Default)]
+struct UpgradePlan {
+    /// Ids of unedited starters that took the current starter's name and text.
+    renamed: Vec<String>,
+    /// New starters to add, with their hotkey.
+    added: Vec<(Macro, &'static str)>,
+}
+
+/// Upgrade unedited starters in place (same id, same hotkey) and pick the new
+/// starters whose id and hotkey are both free. `bound` is every hotkey in use.
+fn plan_upgrade(macros: &mut [Macro], bound: &[String]) -> UpgradePlan {
+    let mut plan = UpgradePlan::default();
+    for m in macros.iter_mut() {
+        let Some((_, slot, _)) = OLD_STARTERS
+            .iter()
+            .find(|(id, _, body)| *id == m.id && m.body.trim() == *body)
+        else {
+            continue;
+        };
+        let Some((_, name, _, body)) = STARTERS.iter().find(|s| s.0 == *slot) else {
+            continue;
+        };
+        m.name = name.to_string();
+        m.body = body.to_string();
+        plan.renamed.push(m.id.clone());
+    }
+    for (id, name, hotkey, body) in STARTERS {
+        let taken =
+            macros.iter().any(|m| m.id == *id) || bound.iter().any(|b| same_hotkey(b, hotkey));
+        if taken {
+            continue;
+        }
+        let m = Macro {
+            id: id.to_string(),
+            name: name.to_string(),
+            body: body.to_string(),
+            insert_before: InsertBefore::Space,
+            submit: false,
+        };
+        plan.added.push((m, hotkey));
+    }
+    plan
+}
+
 fn save(app: &AppHandle, macros: &[Macro]) {
     store::set(app, "macros", macros);
 }
@@ -147,7 +215,13 @@ pub fn seed(app: &AppHandle) {
     if store::get::<bool>(app, "macrosSeeded").unwrap_or(false) {
         return;
     }
-    let mut macros = load(app);
+    let mut macros = match load_checked(app) {
+        Ok(macros) => macros,
+        Err(e) => {
+            error!("Couldn't read macros ({e}); leaving them untouched");
+            return;
+        }
+    };
     let mut settings = settings::get_settings(app);
     for (id, name, hotkey, body) in STARTERS {
         if macros.iter().any(|m| m.id == *id) {
@@ -179,49 +253,37 @@ pub fn upgrade_starters(app: &AppHandle) {
     if store::get::<bool>(app, "startersV3").unwrap_or(false) {
         return;
     }
-    let mut macros = load(app);
+    let mut macros = match load_checked(app) {
+        Ok(macros) => macros,
+        Err(e) => {
+            // Try again next start rather than save over macros we can't read.
+            error!("Couldn't read macros ({e}); leaving them untouched");
+            return;
+        }
+    };
     let mut settings = settings::get_settings(app);
-    let mut changed = 0;
-    for m in macros.iter_mut() {
-        let Some((_, slot, _)) = OLD_STARTERS
-            .iter()
-            .find(|(id, _, body)| *id == m.id && m.body.trim() == *body)
-        else {
-            continue;
-        };
-        let Some((_, name, _, body)) = STARTERS.iter().find(|s| s.0 == *slot) else {
-            continue;
-        };
-        m.name = name.to_string();
-        m.body = body.to_string();
-        if let Some(binding) = settings.bindings.get_mut(&binding_id(&m.id)) {
+    let bound: Vec<String> = settings
+        .bindings
+        .values()
+        .map(|b| b.current_binding.clone())
+        .collect();
+    let plan = plan_upgrade(&mut macros, &bound);
+    // Hotkeys themselves never change; only the names shown next to them.
+    for id in &plan.renamed {
+        if let (Some(m), Some(binding)) = (
+            macros.iter().find(|m| &m.id == id),
+            settings.bindings.get_mut(&binding_id(id)),
+        ) {
             binding.name = m.name.clone();
             binding.description = m.body.chars().take(80).collect();
         }
-        changed += 1;
     }
-    // Starters added since this install was seeded (e.g. Execute on Alt+5).
-    for (id, name, hotkey, body) in STARTERS {
-        let taken = macros.iter().any(|m| m.id == *id)
-            || settings
-                .bindings
-                .values()
-                .any(|b| b.current_binding.eq_ignore_ascii_case(hotkey));
-        if taken {
-            continue;
-        }
-        let m = Macro {
-            id: id.to_string(),
-            name: name.to_string(),
-            body: body.to_string(),
-            insert_before: InsertBefore::Space,
-            submit: false,
-        };
+    let changed = plan.renamed.len() + plan.added.len();
+    for (m, hotkey) in plan.added {
         settings
             .bindings
-            .insert(binding_id(id), binding_for(&m, hotkey));
+            .insert(binding_id(&m.id), binding_for(&m, hotkey));
         macros.push(m);
-        changed += 1;
     }
     if changed > 0 {
         settings::write_settings(app, settings);
@@ -320,6 +382,8 @@ pub fn vibe_macros_list(app: AppHandle) -> Vec<Macro> {
 /// settings page then sets one through Handy's `change_binding`.
 #[tauri::command]
 pub fn vibe_macro_save(app: AppHandle, item: Macro) -> Result<Vec<Macro>, String> {
+    // Refuse rather than save over macros that couldn't be read.
+    load_checked(&app)?;
     if item.id.trim().is_empty() || item.id.contains(char::is_whitespace) {
         return Err("Invalid macro id".into());
     }
@@ -348,6 +412,7 @@ pub fn vibe_macro_save(app: AppHandle, item: Macro) -> Result<Vec<Macro>, String
 
 #[tauri::command]
 pub fn vibe_macro_delete(app: AppHandle, id: String) -> Result<Vec<Macro>, String> {
+    load_checked(&app)?;
     let mut macros = load(&app);
     macros.retain(|m| m.id != id);
     save(&app, &macros);
@@ -419,6 +484,117 @@ mod tests {
                 ("Execute", "alt+5"),
             ]
         );
+    }
+
+    fn user_macro(id: &str, name: &str, body: &str) -> Macro {
+        Macro {
+            id: id.into(),
+            name: name.into(),
+            body: body.into(),
+            insert_before: InsertBefore::Space,
+            submit: false,
+        }
+    }
+
+    fn old_body(id: &str) -> &'static str {
+        OLD_STARTERS.iter().find(|o| o.0 == id).unwrap().2
+    }
+
+    /// The setup of a real install updated from 1.0.0: Alt+1 edited and
+    /// rebound to left-Alt + 1, the other three starters untouched.
+    fn real_install() -> (Vec<Macro>, Vec<String>) {
+        let macros = vec![
+            user_macro(
+                "plan-first",
+                "Summarize concisely",
+                "Give me a concise but detailed summary.",
+            ),
+            user_macro(
+                "design-system",
+                "Match design system",
+                old_body("design-system"),
+            ),
+            user_macro("keep-tests", "Don't touch tests", old_body("keep-tests")),
+            user_macro("small-diff", "Small diff", old_body("small-diff")),
+        ];
+        let bound = [
+            "alt_left+1",
+            "alt+2",
+            "alt+3",
+            "alt+4",
+            "alt+s",
+            "alt+b",
+            "ctrl+space",
+        ]
+        .map(String::from)
+        .to_vec();
+        (macros, bound)
+    }
+
+    #[test]
+    fn upgrade_keeps_edited_macros_and_hotkeys() {
+        let (mut macros, bound) = real_install();
+        let plan = plan_upgrade(&mut macros, &bound);
+        // The edited macro is untouched.
+        assert_eq!(macros[0].name, "Summarize concisely");
+        assert_eq!(macros[0].body, "Give me a concise but detailed summary.");
+        // Unedited starters take the starter now on their key; ids are kept,
+        // so their hotkey bindings (`macro:<id>`) are unchanged.
+        let names: Vec<_> = macros.iter().map(|m| m.name.as_str()).collect();
+        assert_eq!(names, ["Summarize concisely", "Summarize", "Plan", "Scope"]);
+        assert_eq!(plan.renamed, ["design-system", "keep-tests", "small-diff"]);
+        // Only Execute is added: Alt+1 is taken by the user's left-Alt + 1.
+        let added: Vec<_> = plan
+            .added
+            .iter()
+            .map(|(m, k)| (m.name.as_str(), *k))
+            .collect();
+        assert_eq!(added, [("Execute", "alt+5")]);
+    }
+
+    #[test]
+    fn upgrade_never_takes_a_key_the_user_uses() {
+        let (mut macros, mut bound) = real_install();
+        bound.push("Alt+5".into());
+        let plan = plan_upgrade(&mut macros, &bound);
+        assert!(plan.added.is_empty());
+    }
+
+    #[test]
+    fn upgrade_twice_changes_nothing_more() {
+        let (mut macros, bound) = real_install();
+        plan_upgrade(&mut macros, &bound);
+        let before: Vec<_> = macros
+            .iter()
+            .map(|m| (m.name.clone(), m.body.clone()))
+            .collect();
+        let again = plan_upgrade(&mut macros, &bound);
+        let after: Vec<_> = macros
+            .iter()
+            .map(|m| (m.name.clone(), m.body.clone()))
+            .collect();
+        assert!(again.renamed.is_empty());
+        assert_eq!(before, after);
+    }
+
+    #[test]
+    fn hotkeys_compare_by_key_not_spelling() {
+        assert!(same_hotkey("alt_left+1", "alt+1"));
+        assert!(same_hotkey("Alt+5", "alt+5"));
+        assert!(same_hotkey("control+k", "ctrl+k"));
+        assert!(!same_hotkey("alt+1", "alt+2"));
+        assert!(!same_hotkey("alt+shift+1", "alt+1"));
+    }
+
+    #[test]
+    fn macros_saved_by_older_versions_still_load() {
+        // 1.0.0 format, and one with fields this version doesn't know yet.
+        let old = r#"[{"id":"a","name":"A","body":"x","insertBefore":"space","submit":false},
+                      {"id":"b","name":"B","body":"y"},
+                      {"id":"c","name":"C","body":"z","someFutureField":1}]"#;
+        let macros: Vec<Macro> = serde_json::from_str(old).unwrap();
+        assert_eq!(macros.len(), 3);
+        assert_eq!(macros[1].insert_before, InsertBefore::Space);
     }
 
     #[test]

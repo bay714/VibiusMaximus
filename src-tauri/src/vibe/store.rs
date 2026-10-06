@@ -14,6 +14,21 @@ pub fn get<T: DeserializeOwned>(app: &AppHandle, key: &str) -> Option<T> {
         .and_then(|value| serde_json::from_value(value).ok())
 }
 
+/// Like [`get`], but tells "not saved yet" (`Ok(None)`) apart from "saved
+/// but unreadable" (`Err`), so callers never save defaults over data they
+/// failed to read.
+pub fn get_checked<T: DeserializeOwned>(app: &AppHandle, key: &str) -> Result<Option<T>, String> {
+    let store = app
+        .store(crate::portable::store_path(STORE_PATH))
+        .map_err(|e| e.to_string())?;
+    match store.get(key) {
+        None => Ok(None),
+        Some(value) => serde_json::from_value(value)
+            .map(Some)
+            .map_err(|e| format!("{key} in {STORE_PATH}: {e}")),
+    }
+}
+
 pub fn set<T: Serialize + ?Sized>(app: &AppHandle, key: &str, value: &T) {
     let Ok(store) = app.store(crate::portable::store_path(STORE_PATH)) else {
         log::error!("Failed to open {}", STORE_PATH);
