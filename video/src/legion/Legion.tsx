@@ -1,6 +1,5 @@
 import React from "react";
 import { AbsoluteFill, Audio, Sequence, Series, staticFile } from "remotion";
-import { ramp } from "../anim";
 import { FPS } from "../theme";
 import manifest from "./audio/manifest.json";
 import { S0Open } from "./scenes/S0Open";
@@ -14,7 +13,7 @@ import { S5Board } from "./scenes/S5Board";
 import { S6Macros } from "./scenes/S6Macros";
 import { S7Hotkeys } from "./scenes/S7Hotkeys";
 import { S8Finale } from "./scenes/S8Finale";
-import { SCENES, TOTAL } from "./timeline";
+import { SCENES } from "./timeline";
 
 /** Voiceover lines in frames (start times and measured lengths from audio/legion.py). */
 const LINES = manifest.vo.map((v) => ({
@@ -23,30 +22,13 @@ const LINES = manifest.vo.map((v) => ({
   to: Math.round((v.start + v.duration) * FPS),
 }));
 
+// The duck under the voiceover (about 9 dB) is baked into music.mp3 by audio/legion.py, sample
+// by sample. A volume callback here changed in steps, and each step ticked on the drums.
 const MUSIC = 0.28;
-const MUSIC_UNDER_VO = 0.1; // about 9 dB down under the voice
-const linear = (t: number) => t;
-
-const musicVolume = (f: number) => {
-  let duck = 0;
-  for (const v of LINES) {
-    duck = Math.max(
-      duck,
-      Math.min(
-        ramp(f, v.from - 8, v.from, 0, 1, linear),
-        1 - ramp(f, v.to, v.to + 15, 0, 1, linear),
-      ),
-    );
-  }
-  return (
-    (MUSIC + (MUSIC_UNDER_VO - MUSIC) * duck) *
-    (1 - ramp(f, TOTAL - 20, TOTAL, 0, 1, linear))
-  );
-};
 
 const Soundtrack: React.FC = () => (
   <>
-    <Audio src={staticFile("audio/legion/music.mp3")} volume={musicVolume} />
+    <Audio src={staticFile("audio/legion/music.mp3")} volume={MUSIC} />
     {LINES.map((v) => (
       <Sequence
         key={v.id}

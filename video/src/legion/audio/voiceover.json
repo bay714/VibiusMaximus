@@ -137,12 +137,12 @@
     {
       "id": "16-orders",
       "start": 147.8,
-      "text": "Standing orders are your own prompt templates, each on a hotkey. Five starters form a workflow:"
+      "text": "Standing orders are your own prompt templates, each on a hotkey, and five starters ship as a workflow."
     },
     {
       "id": "16b-workflow",
-      "start": 154.0,
-      "text": "plan the task, scope the spec, research what you don't know, summarize the answers, then execute with builder agents."
+      "start": 154.5,
+      "text": "Alt 1 to 5 runs the whole campaign: research, summarize, plan, scope, execute."
     },
     {
       "id": "17-custom",
@@ -152,7 +152,7 @@
     {
       "id": "17b-use",
       "start": 169.5,
-      "text": "Then fire it in any app. Type the ask, press Alt 2, and a full spec comes back."
+      "text": "Then fire it in any app. Type the ask, press Alt 4, and a full spec comes back."
     },
     {
       "id": "18-execute",

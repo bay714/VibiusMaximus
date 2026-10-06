@@ -35,13 +35,14 @@ export const CAPTURE_TEXT = [
 export const CAPTURE_FILE = "capture-20261005-101530123.png";
 export const CAPTURE_PATH = `C:\\Users\\you\\AppData\\Roaming\\com.bay714.vibiusmaximus\\captures\\${CAPTURE_FILE}`;
 
-// The five starter macros in v1.0.4 (src-tauri/src/vibe/macros.rs). On screen only the first
-// line of each is shown being inserted; the full texts are long.
+// The five starter macros in v1.0.4 (src-tauri/src/vibe/macros.rs), in workflow order: find
+// out, boil it down, decide how, define "done" for the builders, build it. On screen only the
+// first line of each is shown being inserted; the full texts are long.
 export const MACROS = [
-  ["Alt+1", "Plan"],
-  ["Alt+2", "Scope"],
-  ["Alt+3", "Research"],
-  ["Alt+4", "Summarize"],
+  ["Alt+1", "Research"],
+  ["Alt+2", "Summarize"],
+  ["Alt+3", "Plan"],
+  ["Alt+4", "Scope"],
   ["Alt+5", "Execute"],
 ];
 export const MACRO_FIRST = {
@@ -599,10 +600,10 @@ export const Composer: React.FC<{
 
 /** What each starter macro does: the build thread's table for v1.0.4, word for word. */
 export const MACRO_DOES = [
-  "For a task you're doing now: restates the goal and what \"done\" means, asks up to 3 questions if anything's unclear, then gives files, steps, how each step is checked, and risks. Writes no code until you say OK.",
-  "A full spec a builder can follow without guessing, with non-goals, testable acceptance criteria, constraints, small tasks each with its own check, review gates, risks and assumptions.",
   "Primary sources first, the answer up front, a source for each finding, fact kept separate from guesswork, a worked example, and what to double-check.",
   "A one-line bottom line, then each topic with background, status and next step, then the decisions needed from you, in under 200 words.",
+  "For a task you're doing now: restates the goal and what \"done\" means, asks up to 3 questions if anything's unclear, then gives files, steps, how each step is checked, and risks. Writes no code until you say OK.",
+  "A full spec a builder can follow without guessing, with non-goals, testable acceptance criteria, constraints, small tasks each with its own check, review gates, risks and assumptions.",
   "The AI becomes the orchestrator: a self-contained brief per builder, no two builders on the same files, parallel where possible, a fresh reviewer that accepts evidence rather than claims, no widening of scope, and a final report with evidence.",
 ];
 
@@ -700,7 +701,11 @@ export const MacroCard: React.FC<{
           >
             <Keys combo={extra[0]} size={24} />
             <span>{extra[1]}</span>
-            <span style={{ fontSize: 14, color: L.bronze2, marginLeft: "auto" }}>yours</span>
+            <span
+              style={{ fontSize: 14, color: L.bronze2, marginLeft: "auto" }}
+            >
+              yours
+            </span>
           </div>
         )}
         <div
@@ -833,6 +838,7 @@ export const HOTKEYS: [string, [string, string][]][] = [
       ["Paste copied capture", "Alt+V"],
     ],
   ],
+  ["MACROS", MACROS.map(([combo, name]) => [name, combo] as [string, string])],
   [
     "CAPTURE EDITOR AND BOARD",
     [
@@ -859,56 +865,68 @@ export const HotkeysPage: React.FC<{ rows: number }> = ({ rows }) => {
         <Tile name="hotkeys" size={48} />
         <span style={{ fontFamily: DISPLAY, fontSize: 36 }}>Hotkeys</span>
       </div>
-      {HOTKEYS.map(([title, list]) => (
-        <React.Fragment key={title}>
-          <div
-            style={{
-              fontFamily: DISPLAY,
-              color: L.bronze2,
-              letterSpacing: "0.2em",
-              fontSize: 14,
-              margin: "14px 0 7px",
-            }}
-          >
-            {title}
-          </div>
-          <div
-            style={{
-              border: `1px solid ${L.line}`,
-              borderRadius: 12,
-              background: L.card,
-            }}
-          >
-            {list.map(([label, combo], i) => {
-              const shown = k++ < rows;
-              return (
+      <div style={{ display: "flex", gap: 28, alignItems: "flex-start" }}>
+        {[HOTKEYS.slice(0, 2), HOTKEYS.slice(2)].map((col, c) => (
+          <div key={c} style={{ flex: 1 }}>
+            {col.map(([title, list]) => (
+              <React.Fragment key={title}>
                 <div
-                  key={label}
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    padding: "6px 20px",
-                    borderTop: i ? `1px solid ${L.line}` : undefined,
-                    fontSize: 16,
-                    opacity: shown ? 1 : 0.15,
+                    fontFamily: DISPLAY,
+                    color: L.bronze2,
+                    letterSpacing: "0.2em",
+                    fontSize: 14,
+                    margin: "14px 0 7px",
                   }}
                 >
-                  <span style={{ flex: 1, fontWeight: 600 }}>
-                    {label}{" "}
-                    <span
-                      style={{ color: L.muted, fontWeight: 400, fontSize: 14 }}
-                    >
-                      ⓘ
-                    </span>
-                  </span>
-                  <Chip combo={combo} />
-                  <span style={{ marginLeft: 12, color: L.muted }}>↻</span>
+                  {title}
                 </div>
-              );
-            })}
+                <div
+                  style={{
+                    border: `1px solid ${L.line}`,
+                    borderRadius: 12,
+                    background: L.card,
+                  }}
+                >
+                  {list.map(([label, combo], i) => {
+                    const shown = k++ < rows;
+                    return (
+                      <div
+                        key={label}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          padding: "6px 20px",
+                          borderTop: i ? `1px solid ${L.line}` : undefined,
+                          fontSize: 16,
+                          opacity: shown ? 1 : 0.15,
+                        }}
+                      >
+                        <span style={{ flex: 1, fontWeight: 600 }}>
+                          {label}{" "}
+                          <span
+                            style={{
+                              color: L.muted,
+                              fontWeight: 400,
+                              fontSize: 14,
+                            }}
+                          >
+                            ⓘ
+                          </span>
+                        </span>
+                        <Chip combo={combo} />
+                        <span style={{ marginLeft: 12, color: L.muted }}>
+                          ↻
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </React.Fragment>
+            ))}
           </div>
-        </React.Fragment>
-      ))}
+        ))}
+      </div>
     </div>
   );
 };

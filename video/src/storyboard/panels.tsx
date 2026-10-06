@@ -21,7 +21,7 @@ import {
 } from "./ui";
 
 // Everything here follows v1.0.3 (checked against the app by its build thread, 2026-10-05).
-// Macros follow v1.0.4 (Plan, Scope, Research, Summarize, Execute on Alt+1-5). The video in
+// Macros follow v1.0.4 (Research, Summarize, Plan, Scope, Execute on Alt+1-5). The video in
 // src/legion/ is the current cut; this storyboard keeps the earlier two-macro layout.
 
 const TAGLINE = "VENI · VIDI · VIBED";
@@ -222,10 +222,10 @@ const SentShot: React.FC<{ w: number; style?: React.CSSProperties }> = ({ w, sty
 
 /** The v1.0.4 starter macros. On screen only each first line is shown (the texts are long). */
 const MACROS = [
-  ["Alt+1", "Plan"],
-  ["Alt+2", "Scope"],
-  ["Alt+3", "Research"],
-  ["Alt+4", "Summarize"],
+  ["Alt+1", "Research"],
+  ["Alt+2", "Summarize"],
+  ["Alt+3", "Plan"],
+  ["Alt+4", "Scope"],
   ["Alt+5", "Execute"],
 ];
 const MACRO_RESEARCH =
@@ -605,7 +605,7 @@ const WALL = Array.from({ length: 15 }, (_, i) =>
 const P6aWall: React.FC = () => (
   <Backdrop>
     <OrderChip n={6} title="Standing orders" />
-    <KeyCast combos={["Alt+4"]} />
+    <KeyCast combos={["Alt+2"]} />
     <Win x={110} y={190} w={1090} h={730} title="Chat — Google Chrome">
       <div style={{ padding: "18px 40px 0", fontSize: 15, lineHeight: 1.5, color: "#9a9aa0", WebkitMaskImage: "linear-gradient(#000 55%, transparent 92%)" }}>
         {WALL.map((l, i) => (
@@ -617,15 +617,15 @@ const P6aWall: React.FC = () => (
         <Composer h={150} text="Which option should we ship?" insert={` ${MACRO_SUMMARY}`} />
       </div>
     </Win>
-    <MacroCard lit={3} />
-    <Caption text="A wall of text back? Type your follow-up, then {Alt+4}." />
+    <MacroCard lit={1} />
+    <Caption text="A wall of text back? Type your follow-up, then {Alt+2}." />
   </Backdrop>
 );
 
 const P6bResearch: React.FC = () => (
   <Backdrop>
     <OrderChip n={6} title="Standing orders" />
-    <KeyCast combos={["Alt+3"]} />
+    <KeyCast combos={["Alt+1"]} />
     <Win x={110} y={190} w={1090} h={730} title="Chat — Google Chrome">
       <Bubble me w={900} size={19}>
         How should we add rate limiting to our API?{" "}
@@ -649,8 +649,8 @@ app.use("/api", rateLimit({
         </div>
       </div>
     </Win>
-    <MacroCard lit={2} />
-    <Caption text="A question? {Alt+3} *researches*: answer first, sources, a worked example." />
+    <MacroCard lit={0} />
+    <Caption text="A question? {Alt+1} *researches*: answer first, sources, a worked example." />
   </Backdrop>
 );
 
@@ -869,16 +869,16 @@ export const PANELS: Panel[] = [
     id: "06a-macros-wall",
     time: "1:09–1:17",
     title: "VI · Standing orders",
-    vo: "Got a wall of text back? Type your follow-up, then Alt 4 asks for the short version.",
-    note: "Summarize (Alt+4, v1.0.4). No trailing space before Alt+4; the macro adds one.",
+    vo: "Got a wall of text back? Type your follow-up, then Alt 2 asks for the short version.",
+    note: "Summarize (Alt+2, v1.0.4). No trailing space before Alt+2; the macro adds one.",
     C: P6aWall,
   },
   {
     id: "06b-macros-research",
     time: "1:17–1:26",
     title: "VI · Standing orders (2)",
-    vo: "Need research? Alt 3 orders a concise answer, then a detailed, worked example. One key, your favourite prompts.",
-    note: "Research (Alt+3, v1.0.4).",
+    vo: "Need research? Alt 1 orders a concise answer, then a detailed, worked example. One key, your favourite prompts.",
+    note: "Research (Alt+1, v1.0.4).",
     C: P6bResearch,
   },
   {

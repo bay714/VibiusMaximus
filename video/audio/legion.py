@@ -112,6 +112,43 @@ def noise(n: int) -> np.ndarray:
     return rng.standard_normal(n)
 
 
+def fade_tail(x: np.ndarray, ms=60.0) -> np.ndarray:
+    """Raised-cosine fade over the last `ms` (at most a quarter of the sound). Sounds cut off
+    while still ringing ended in a step, and those steps clicked like static on every stroke."""
+    nf = min(int(ms / 1000 * SR), len(x) // 4)
+    if nf < 2:
+        return x
+    x = x.copy()
+    e = np.cos(np.linspace(0, np.pi / 2, nf)) ** 2
+    x[-nf:] *= e if x.ndim == 1 else e[:, None]
+    return x
+
+
+def place(buf: np.ndarray, x: np.ndarray, at: float, gain: float = 1.0, pan: float = 0.0):
+    """add(), with the tail faded so nothing stops mid-ring."""
+    add(buf, fade_tail(x), at, gain, pan)
+
+
+MUSIC_UNDER_VO = 0.1 / 0.28  # the bed drops about 9 dB under the voice (0.28 -> 0.1 in Legion.tsx before)
+VO_FPS = 30
+
+
+def duck_curve(n: int) -> np.ndarray:
+    """Gain for the music under the voiceover, from manifest.json: down over 8 frames before
+    each line, back up over 15 frames after it. Baked in here, sample by sample: Remotion
+    applied it as a volume that changed in steps, and each step ticked on loud drum hits."""
+    vo = json.loads((SRC / "manifest.json").read_text("utf8"))["vo"]
+    t = np.arange(n) / SR * VO_FPS  # in frames
+    duck = np.zeros(n)
+    for v in vo:
+        a = round(v["start"] * VO_FPS)
+        b = round((v["start"] + v["duration"]) * VO_FPS)
+        down = np.clip((t - (a - 8)) / 8, 0, 1)
+        up = 1 - np.clip((t - b) / 15, 0, 1)
+        duck = np.maximum(duck, np.minimum(down, up))
+    return 1 + (MUSIC_UNDER_VO - 1) * duck
+
+
 def mono_room(x: np.ndarray, rt=2.0, damp=4000, pre=0.02, taps=()) -> np.ndarray:
     """Wet mono signal from a unit-energy synthetic IR: early reflections plus a diffuse tail."""
     t = secs(rt * 1.1)
@@ -256,7 +293,10 @@ def war_drum(f=50.0, size=1.0) -> np.ndarray:
     stick = lp(noise(len(t)), 2200) * np.exp(-t / 0.004) * 0.25
     shell = lp(noise(len(t)), 140) * np.exp(-t / (0.45 * size)) * 0.5
     x = (body + hum + modes + skin + stick + shell) * np.minimum(1, t / 0.0015)
-    return np.tanh(1.4 * x) / np.tanh(1.4)
+    # just round the peak: driving the attack into tanh (input up to ~2.5) clipped every hit,
+    # and the clipped skin and stick noise read as static
+    x /= np.max(np.abs(x))
+    return np.tanh(0.9 * x) / np.tanh(0.9)
 
 
 def field_snare(vel=1.0) -> np.ndarray:
@@ -280,7 +320,7 @@ def snare_roll(dur: float, g0: float, g1: float) -> np.ndarray:
         f = 120 - 20 * k / max(1, n - 1)
         tom = np.sin(2 * np.pi * np.cumsum(f * (1 + 0.3 * np.exp(-t / 0.02))) / SR) * np.exp(-t / 0.12)
         i = int(k * step * SR)
-        seg = tom * g
+        seg = fade_tail(tom * g, 80)
         out[i : i + len(seg)] += seg[: len(out) - i]
     return out
 
@@ -382,10 +422,10 @@ def build_music():
     drums, strs, low, ost, pizz, horns, voices, fx = (np.zeros((n, 2)) for _ in range(8))
 
     def drum(at, f, size, g, pan=0.0):
-        add(drums, war_drum(f * DRUM_TUNE, size), at, g * (0.92 + 0.16 * rng.random()), pan)
+        place(drums, war_drum(f * DRUM_TUNE, size), at, g * (0.92 + 0.16 * rng.random()), pan)
 
     def snare(at, g, pan=0.15):
-        add(drums, field_snare(min(1, g * 4)), at, g, pan)
+        place(drums, field_snare(min(1, g * 4)), at, g, pan)
 
     for name, start, end, style in SECTIONS:
         nb, B = grid(start, end)
@@ -394,36 +434,36 @@ def build_music():
             # one great hit and a cornu call, then the drums gather towards 6.5 s
             drum(0.0, 38, 1.8, 1.0)
             drum(0.0, 52, 1.0, 0.45)
-            add(horns, horn_call([(57, 0.3), (62, 0.22), (69, 1.0)]), 0.08, 0.55, pan=-0.1)
-            add(strs, strings([38, 45, 50, 57], end + 0.8, attack=4.5, release=0.8, c0=300, c1=1400), 0.0, 1.1)
-            add(low, sub(38, end + 0.5), 0.0, 0.18)
+            place(horns, horn_call([(57, 0.3), (62, 0.22), (69, 1.0)]), 0.08, 0.55, pan=-0.1)
+            place(strs, strings([38, 45, 50, 57], end + 0.8, attack=4.5, release=0.8, c0=300, c1=1400), 0.0, 1.1)
+            place(low, sub(38, end + 0.5), 0.0, 0.18)
             Bo = 60 / BPM
             for k, g in [(8, 0.3), (6, 0.32), (4, 0.38), (3, 0.36), (2, 0.45), (1.5, 0.4), (1, 0.5), (0.5, 0.48)]:
                 drum(end - k * Bo, 50 if k % 1 else 46, 0.9, g, pan=0.2 * ((k * 2) % 3 - 1))
-            add(drums, snare_roll(2 * Bo, 0.03, 0.22), end - 2 * Bo, 1.0, pan=0.15)
-            add(fx, swell(2 * Bo), end - 2 * Bo, 0.18)
+            place(drums, snare_roll(2 * Bo, 0.03, 0.22), end - 2 * Bo, 1.0, pan=0.15)
+            place(fx, swell(2 * Bo), end - 2 * Bo, 0.18)
             continue
 
         if style == "finale":
             # the last word: Bb - C - D major, great hit and cornu, choir, decay to silence
             drum(start, 36, 2.2, 1.0)
             drum(start, 50, 1.2, 0.6)
-            add(fx, build.impact(), start, 0.45)
-            add(horns, horn_call([(50, 0.3), (57, 0.22), (62, 1.5)]), start + 0.02, 0.55)
+            place(fx, build.impact(), start, 0.45)
+            place(horns, horn_call([(50, 0.3), (57, 0.22), (62, 1.5)]), start + 0.02, 0.55)
             t_c, t_d = start + 1.6, start + 3.2  # D major lands on the tagline line
             for ch, a, b in [("Bb", start, t_c), ("C", t_c, t_d), ("D", t_d, end)]:
                 last = ch == "D"
                 dur = (b - a) + (0 if last else 0.5)
                 notes = CHORDS[ch] + [CHORDS[ch][-2] + 12, CHORDS[ch][-1] + 12]
-                add(strs, strings(notes, dur, attack=0.05 if a == start else 0.3, release=4.5 if last else 0.5,
+                place(strs, strings(notes, dur, attack=0.05 if a == start else 0.3, release=4.5 if last else 0.5,
                                   c0=2000, c1=700 if last else 1800), a, 1.2)
-                add(voices, choir(CHOIR[ch], dur, attack=0.5, release=4.0 if last else 0.5), a, 1.0)
-                add(low, brass(CHORDS[ch][0] + 12, dur, bright=420, attack=0.4, release=3.5 if last else 0.5,
+                place(voices, choir(CHOIR[ch], dur, attack=0.5, release=4.0 if last else 0.5), a, 1.0)
+                place(low, brass(CHORDS[ch][0] + 12, dur, bright=420, attack=0.4, release=3.5 if last else 0.5,
                                vib=0, scoop=False), a, 0.22)
-                add(low, sub(CHORDS[ch][0], dur), a, 0.2)
+                place(low, sub(CHORDS[ch][0], dur), a, 0.2)
             drum(t_c, 52, 0.9, 0.4)
             drum(t_c + 0.75 * 60 / BPM, 50, 0.9, 0.35)
-            add(drums, snare_roll(60 / BPM, 0.03, 0.18), t_d - 60 / BPM, 1.0)
+            place(drums, snare_roll(60 / BPM, 0.03, 0.18), t_d - 60 / BPM, 1.0)
             drum(t_d, 38, 2.0, 0.75)
             continue
 
@@ -438,14 +478,14 @@ def build_music():
             if style in ("full", "light"):
                 notes = notes + [notes[-2] + 12, notes[-1] + 12]
             first = b0 == 0
-            add(strs, strings(notes, dur + 0.7, attack=1.2 if first else 0.5, release=0.7, c0=cut * (0.7 if first else 1), c1=cut),
+            place(strs, strings(notes, dur + 0.7, attack=1.2 if first else 0.5, release=0.7, c0=cut * (0.7 if first else 1), c1=cut),
                 a, {"light": 1.35, "break": 0.9}.get(style, 1.0))
             if style in ("full", "march"):
-                add(low, sub(notes[0] if notes[0] < 40 else notes[0] - 12, dur + 0.5), a, 0.14 if style == "full" else 0.1)
+                place(low, sub(notes[0] if notes[0] < 40 else notes[0] - 12, dur + 0.5), a, 0.14 if style == "full" else 0.1)
             if style == "full":
                 root = notes[0] + 12 if notes[0] < 40 else notes[0]
                 for m in (root + 12, root + 19):
-                    add(low, brass(m, dur + 0.6, bright=520, attack=1.4, release=0.7, vib=0, scoop=False), a, 0.12)
+                    place(low, brass(m, dur + 0.6, bright=520, attack=1.4, release=0.7, vib=0, scoop=False), a, 0.12)
 
             # ostinato: galloping low strings in the full sections, light 8ths in the macros
             if style in ("full", "light"):
@@ -454,13 +494,13 @@ def build_music():
                     bt = a + k * B
                     if style == "full":
                         for off, g, oct_ in [(0, 0.55, 0), (0.5, 0.32, 0), (0.75, 0.38, 12 if k % 2 else 0)]:
-                            add(ost, gallop(root + oct_), bt + off * B, g, pan=-0.25 if off else 0.25)
+                            place(ost, gallop(root + oct_), bt + off * B, g, pan=-0.25 if off else 0.25)
                     else:
                         for off, g in [(0, 0.45), (0.5, 0.3)]:
-                            add(ost, gallop(root + (7 if (k % 2 and off) else 0)), bt + off * B, g, pan=-0.2 if off else 0.2)
+                            place(ost, gallop(root + (7 if (k % 2 and off) else 0)), bt + off * B, g, pan=-0.2 if off else 0.2)
                         tones = [notes[2] + 12, notes[1] + 12, notes[3] + 12, notes[1] + 12]
                         for h in range(2):
-                            add(pizz, build.pluck(tones[(2 * k + h) % 4], 0.4), bt + h * B / 2, 0.55 if h == 0 else 0.4,
+                            place(pizz, build.pluck(tones[(2 * k + h) % 4], 0.4), bt + h * B / 2, 0.55 if h == 0 else 0.4,
                                 pan=0.35 if h else -0.35)
 
         # drums
@@ -484,7 +524,7 @@ def build_music():
                                3: [(0, 0.22), (0.25, 0.08), (0.5, 0.1), (0.75, 0.13)]}[bar_pos]:
                     snare(bt + off * B, g)
                 if b % 8 == 7 and not last_beat:
-                    add(drums, snare_roll(B, 0.03, 0.12), bt, 1.0, pan=0.15)
+                    place(drums, snare_roll(B, 0.03, 0.12), bt, 1.0, pan=0.15)
             elif style == "light":
                 if bar_pos == 0:
                     drum(bt, 52, 0.9, 0.5)
@@ -498,14 +538,14 @@ def build_music():
                 drum(bt, 46, 0.6, 0.2 if b % 2 else 0.26)
 
         if style == "break":
-            add(drums, snare_roll(2 * B, 0.02, 0.32), end - 2 * B, 1.0)
-            add(fx, swell(2 * B), end - 2 * B, 0.25)
+            place(drums, snare_roll(2 * B, 0.02, 0.32), end - 2 * B, 1.0)
+            place(fx, swell(2 * B), end - 2 * B, 0.25)
 
     # soft accents on the chapter changes, cornu calls at Dispatch and the Campaign
     for t_ in [start for _, start, _, _ in SECTIONS[1:-1]]:
         drum(t_, 40, 1.5, 0.6 if t_ == 6.5 else 0.42)
     for t_ in (START["setup"], START["send"], START["board"]):
-        add(horns, horn_call([(45, 0.26), (50, 0.95)]), t_ + 0.02, 0.32, pan=0.15)
+        place(horns, horn_call([(45, 0.26), (50, 0.95)]), t_ + 0.02, 0.32, pan=0.15)
 
     dry = 0.62 * drums + 0.3 * strs + 0.5 * low + 0.22 * ost + 0.07 * pizz + 0.3 * horns + 0.18 * voices + 0.5 * fx
     wet = reverb(0.18 * drums + 0.35 * strs + 0.12 * ost + 0.2 * pizz + 0.55 * horns + 0.45 * voices + 0.2 * fx,
@@ -530,6 +570,7 @@ def build_music():
     fade_len = int(3.0 * SR)  # the held chord dies away to silence at the very end
     fade[-fade_len:] = np.linspace(1, 0, fade_len) ** 2
     mix = normalise(mix * fade[:, None])
+    mix = mix * duck_curve(n)[:, None]
 
     LWORK.mkdir(parents=True, exist_ok=True)
     wav = LWORK / "music.wav"
@@ -647,9 +688,9 @@ def build_sfx():
         return lp(signal.lfilter(b, a, x), 7000, 2)
 
     for name, fn in SFX.items():
-        write_wav(PUBLIC / "sfx" / f"{name}.wav", normalise(soften(fn()), 0.8))
+        write_wav(PUBLIC / "sfx" / f"{name}.wav", normalise(fade_tail(soften(fn())), 0.8))
     for name, fn in LEGION_SFX.items():
-        write_wav(PUBLIC / "sfx" / f"{name}.wav", normalise(soften(fn()), 0.8))
+        write_wav(PUBLIC / "sfx" / f"{name}.wav", normalise(fade_tail(soften(fn())), 0.8))
     print(f"  wrote {len(SFX) + len(LEGION_SFX)} sounds to public/audio/legion/sfx/")
 
 
@@ -659,9 +700,9 @@ if __name__ == "__main__":
     if what in ("sfx", "all"):
         print("sfx")
         build_sfx()
-    if what in ("music", "all"):
-        print("music")
-        build_music()
     if what in ("vo", "all"):
         print("voiceover")
         build_vo()
+    if what in ("music", "all"):
+        print("music")
+        build_music()  # after the voice: the duck follows manifest.json

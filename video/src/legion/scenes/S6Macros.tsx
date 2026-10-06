@@ -29,15 +29,15 @@ import {
 } from "../pieces";
 
 // Standing orders, v1.0.4. The story: they are your own prompt templates on hotkeys. Five
-// starters ship as a workflow (1 Plan → 2 Scope → 3 Research → 4 Summarize → 5 Execute),
+// starters ship as a workflow (1 Research → 2 Summarize → 3 Plan → 4 Scope → 5 Execute),
 // described word for word from the build thread's table; you can rewrite any of them or add
 // your own (Settings → Macros: name, hotkey, prompt, insert before, submit). Then one use:
-// Alt+2 Scope, Alt+5 Execute. A macro is pasted at the cursor after a leading space.
-// VO: 16-orders at 9, 16b-workflow at 195, 17-custom at 429, 17b-use at 660,
+// Alt+4 Scope, Alt+5 Execute. A macro is pasted at the cursor after a leading space.
+// VO: 16-orders at 9, 16b-workflow at 210, 17-custom at 429, 17b-use at 660,
 // 18-execute at 855, 18b-more at 1020.
 
 // Beat 1: the default workflow
-const STEP_AT = [200, 245, 290, 335, 380]; // each step lights as the narration names it
+const STEP_AT = [284, 311, 340, 355, 374]; // each step lights as the narration names it
 const WORKFLOW_OUT = [420, 432] as const;
 // Beat 2: make them yours (Settings → Macros)
 const PAGE = 430;
@@ -50,7 +50,7 @@ const PROMPT = [588, 640] as const;
 const PAGE_OUT = [652, 664] as const;
 // Beat 3: use it
 const TYPE1 = [674, 706] as const;
-const KEY2 = 714;
+const KEY4 = 714;
 const ENTER1 = 746;
 const KEY5 = 880;
 const ENTER2 = 910;
@@ -291,10 +291,10 @@ const MacrosPage: React.FC = () => {
         ]
       : []),
   ];
-  const selected = review ? names.length - 1 : f >= PICK_SCOPE ? 1 : -1;
+  const selected = review ? names.length - 1 : f >= PICK_SCOPE ? 3 : -1;
   const pos = along(f, [
     [PAGE + 4, 1100, 700],
-    [PICK_SCOPE - 4, 750, 346],
+    [PICK_SCOPE - 4, 966, 350],
     [EDIT[0] - 4, 1300, 640],
     [NEW - 4, 1168, 346],
     [NAME[0] - 4, 1446, 417],
@@ -402,7 +402,7 @@ const MacrosPage: React.FC = () => {
                         fontWeight: 600,
                       }}
                     >
-                      {review ? "Alt + 6" : "Alt + 2"}
+                      {review ? "Alt + 6" : "Alt + 4"}
                     </span>
                   )}
                 </Field>
@@ -560,8 +560,8 @@ const Conversation: React.FC = () => {
   if (f < ENTER1) {
     composer = {
       text: reveal(ASK, f, TYPE1[0], TYPE1[1]),
-      insert: f >= KEY2 + 6 ? ` ${MACRO_FIRST.scope} …` : undefined,
-      flashAt: KEY2 + 6,
+      insert: f >= KEY4 + 6 ? ` ${MACRO_FIRST.scope} …` : undefined,
+      flashAt: KEY4 + 6,
     };
   } else if (f < ENTER2) {
     body = (
@@ -612,7 +612,7 @@ export const S6Macros: React.FC = () => {
   const f = useCurrentFrame();
   const use = f >= PAGE_OUT[0];
   const lit =
-    f >= KEY5 && f < ENTER2 + 90 ? 4 : f >= KEY2 && f < KEY5 ? 1 : null;
+    f >= KEY5 && f < ENTER2 + 90 ? 4 : f >= KEY4 && f < KEY5 ? 3 : null;
   const glowNew = f >= MORE + 10 ? 0.5 + 0.5 * Math.sin((f - MORE) / 8) : 0;
   return (
     <SceneFade>
@@ -645,7 +645,7 @@ export const S6Macros: React.FC = () => {
         <KeyCast
           presses={[
             { combo: "Alt+6", at: HOTKEY - 4 },
-            { combo: "Alt+2", at: KEY2 },
+            { combo: "Alt+4", at: KEY4 },
             { combo: "Enter", at: ENTER1 },
             { combo: "Alt+5", at: KEY5 },
             { combo: "Enter", at: ENTER2 },
@@ -654,7 +654,7 @@ export const S6Macros: React.FC = () => {
         {STEP_AT.map((a) => (
           <Sfx key={a} at={a} name="shield" volume={0.22} />
         ))}
-        {[KEY2, KEY5].map((k) => (
+        {[KEY4, KEY5].map((k) => (
           <Sfx key={k} at={k + 6} name="scroll" volume={0.4} />
         ))}
         {[ENTER1, ENTER2].map((k) => (
@@ -664,13 +664,13 @@ export const S6Macros: React.FC = () => {
           items={[
             {
               from: 8,
-              to: 190,
+              to: 205,
               text: "Standing orders: your own *prompt templates*, on hotkeys.",
             },
             {
-              from: 195,
+              from: 210,
               to: 420,
-              text: "Five starters, one *workflow*: plan, scope, research, summarize, execute.",
+              text: "{Alt+1} to {Alt+5} runs the whole *campaign*: research, summarize, plan, scope, execute.",
             },
             {
               from: 429,
@@ -680,7 +680,7 @@ export const S6Macros: React.FC = () => {
             {
               from: 660,
               to: 850,
-              text: "Then fire it anywhere: type the ask, {Alt+2}, a full *spec* comes back.",
+              text: "Then fire it anywhere: type the ask, {Alt+4}, a full *spec* comes back.",
             },
             {
               from: 855,

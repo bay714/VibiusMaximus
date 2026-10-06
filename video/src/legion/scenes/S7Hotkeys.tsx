@@ -33,7 +33,7 @@ export const S7Hotkeys: React.FC = () => {
                 sweep={sweep}
               />
               <HotkeysPage
-                rows={Math.floor(ramp(f, 26, 90, 0, 13, (t) => t))}
+                rows={Math.floor(ramp(f, 26, 96, 0, 18, (t) => t))}
               />
             </div>
           </Win>
