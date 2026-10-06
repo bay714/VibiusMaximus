@@ -205,8 +205,8 @@ Uses Handy's existing submit-key setting (`Enter`, `Ctrl+Enter` or `Cmd+Enter`).
   halfway through. The clipboard is restored afterwards.
 - **Variables:** `{clipboard}`, `{date}`, `{time}`, filled in when the macro fires.
 - The body field accepts dictation (`Ctrl+Space`).
-- Ships 5 editable starter macros, a workflow: `Alt+1` *Plan*, `Alt+2` *Scope*,
-  `Alt+3` *Research*, `Alt+4` *Summarize*, `Alt+5` *Execute* (texts and sources
+- Ships 5 editable starter macros, in workflow order: `Alt+1` *Research*,
+  `Alt+2` *Summarize*, `Alt+3` *Plan*, `Alt+4` *Scope*, `Alt+5` *Execute* (texts and sources
   in `vibe/macros.rs`). Starters the user never edited are upgraded in place
   once, and new starters are added where their hotkey is free.
 - The tray menu lists macros, and clicking one inserts it. Useful for macros

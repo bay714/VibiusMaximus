@@ -38,8 +38,8 @@ pub struct Macro {
     pub submit: bool,
 }
 
-// Starter macros: the workflow Scope -> Plan -> Execute, plus Research and
-// Summarize. Written from published practice: Anthropic's Claude Code guide
+// Starter macros: the workflow Research -> Summarize -> Plan -> Scope ->
+// Execute. Written from published practice: Anthropic's Claude Code guide
 // (explore, then plan; self-contained specs that name files, interfaces and
 // non-goals; give the model a check it can run; review in a fresh context for
 // real gaps only), Anthropic's multi-agent research system (each delegated
@@ -49,30 +49,32 @@ pub struct Macro {
 // agent and GPT-5 guides (orchestrator keeps control, clear exit conditions,
 // restate the goal and plan), Anthropic's hallucination guidance (cite
 // sources, allow "not sure"), and bottom-line-up-front summaries.
+// In workflow order: find out, boil it down, decide how, define exactly
+// what "done" is for the builders, then build it.
 const STARTERS: &[(&str, &str, &str, &str)] = &[
     (
-        "plan-first",
-        "Plan",
+        "research",
+        "Research",
         "alt+1",
+        "Research this before answering. Prefer primary sources (official docs, changelogs, specs, source code) over blog posts, and note versions and dates, since this may have changed recently. Then give me:\n- The answer in 2-3 sentences, first\n- The key findings, each with its source\n- What's established fact and what's your inference. If you're not sure, say so instead of guessing\n- Where sources or experts disagree\n- One worked example applied to my case\n- What I should double-check before relying on this",
+    ),
+    (
+        "summary",
+        "Summarize",
+        "alt+2",
+        "Summarize the above for someone who wasn't following along.\nStart with a one-line bottom line: the most important takeaway or decision.\nThen for each topic:\n- What it is: one line of background, no jargon\n- Where it stands: done, decided or still open\n- The next step, with your recommendation if there's a choice to make\nEnd with any decisions you need from me. Keep names, numbers and commitments exact, drop everything else, and stay under 200 words.",
+    ),
+    (
+        "plan",
+        "Plan",
+        "alt+3",
         "Plan this before touching any code. Read the relevant code first, then:\n1. Restate the goal in one sentence and what \"done\" looks like.\n2. If anything important is ambiguous, ask me up to 3 questions and stop there.\n3. Otherwise lay out the approach: the files to change and why, the steps in order, and how each step will be checked (a test, a command, or what to look at).\n4. Name the risks and what could break.\nIf there are competing approaches, give each one line with its trade-off and recommend one. Wait for my OK before writing code.",
     ),
     (
         "scope",
         "Scope",
-        "alt+2",
-        "Fully scope this so a builder who has never seen this conversation can deliver it without guessing. Investigate the code first and ask me about anything you can't settle yourself. Then write the spec:\n- Goal and why it matters. Non-goals: what we are not doing.\n- Acceptance criteria: specific and testable, including edge cases and error states.\n- Constraints: files, interfaces and patterns to follow, and what must not change.\n- Tasks: small and ordered. Each names its files, its output and its own done-check, and says whether it can run in parallel.\n- Review gates: what gets verified after each task and before we ship, and how (test, build, screenshot, or me).\n- Risks, open questions, and every assumption you made.\nSpecific beats long.",
-    ),
-    (
-        "research-first",
-        "Research",
-        "alt+3",
-        "Research this before answering. Prefer primary sources (official docs, changelogs, specs, source code) over blog posts, and note versions and dates, since this may have changed recently. Then give me:\n- The answer in 2-3 sentences, first\n- The key findings, each with its source\n- What's established fact and what's your inference. If you're not sure, say so instead of guessing\n- Where sources or experts disagree\n- One worked example applied to my case\n- What I should double-check before relying on this",
-    ),
-    (
-        "summarize",
-        "Summarize",
         "alt+4",
-        "Summarize the above for someone who wasn't following along.\nStart with a one-line bottom line: the most important takeaway or decision.\nThen for each topic:\n- What it is: one line of background, no jargon\n- Where it stands: done, decided or still open\n- The next step, with your recommendation if there's a choice to make\nEnd with any decisions you need from me. Keep names, numbers and commitments exact, drop everything else, and stay under 200 words.",
+        "Fully scope this so a builder who has never seen this conversation can deliver it without guessing. Investigate the code first and ask me about anything you can't settle yourself. Then write the spec:\n- Goal and why it matters. Non-goals: what we are not doing.\n- Acceptance criteria: specific and testable, including edge cases and error states.\n- Constraints: files, interfaces and patterns to follow, and what must not change.\n- Tasks: small and ordered. Each names its files, its output and its own done-check, and says whether it can run in parallel.\n- Review gates: what gets verified after each task and before we ship, and how (test, build, screenshot, or me).\n- Risks, open questions, and every assumption you made.\nSpecific beats long.",
     ),
     (
         "execute",
@@ -82,37 +84,38 @@ const STARTERS: &[(&str, &str, &str, &str)] = &[
     ),
 ];
 
-/// Earlier starter macros, by id, with the text they shipped with. Copies
-/// nobody edited are upgraded to the starter now in the same slot.
+/// Earlier starter macros, by id, with the text they shipped with, and the
+/// starter that now sits on the same key. Copies nobody edited are upgraded
+/// to it, so each key keeps its position.
 const OLD_STARTERS: &[(&str, &str, &str)] = &[
     (
         "plan-first",
-        "plan-first",
+        "research",
         "Before writing any code, list the files you'll change and why, then wait for my OK.",
     ),
     (
         "design-system",
-        "scope",
+        "summary",
         "Use our existing components and Tailwind tokens. Don't add new colors, fonts or spacing values. If a component is missing, tell me first instead of creating one.",
     ),
     (
         "keep-tests",
-        "research-first",
+        "plan",
         "Don't modify or delete existing tests. If a test fails because of your change, fix the code, not the test.",
     ),
     (
         "small-diff",
-        "summarize",
+        "scope",
         "Make the smallest change that fixes this. No refactors, renames or formatting changes outside the lines you need to touch.",
     ),
     (
         "research-first",
-        "research-first",
+        "plan",
         "Research this first: check the official docs and current best practice. Bring back a concise summary (3 bullets max), then one detailed, worked example.",
     ),
     (
         "summarize",
-        "summarize",
+        "scope",
         "Too long. Give me the short version: 3 bullets max, then the one thing I should do next.",
     ),
 ];
@@ -401,6 +404,21 @@ mod tests {
         for (_, slot, _) in OLD_STARTERS {
             assert!(STARTERS.iter().any(|s| s.0 == *slot), "{slot}");
         }
+    }
+
+    #[test]
+    fn starters_run_in_workflow_order() {
+        let order: Vec<_> = STARTERS.iter().map(|s| (s.1, s.2)).collect();
+        assert_eq!(
+            order,
+            [
+                ("Research", "alt+1"),
+                ("Summarize", "alt+2"),
+                ("Plan", "alt+3"),
+                ("Scope", "alt+4"),
+                ("Execute", "alt+5"),
+            ]
+        );
     }
 
     #[test]
