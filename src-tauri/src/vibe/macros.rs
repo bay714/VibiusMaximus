@@ -38,24 +38,29 @@ pub struct Macro {
     pub submit: bool,
 }
 
-// Starter macros, written from published best practice: Anthropic's Claude
-// Code guide (explore, then plan; let the model ask questions; give it a way
-// to verify; review for real gaps, not style), Anthropic's guidance on
-// reducing hallucinations (let it say "I don't know", cite sources), OpenAI's
-// GPT-5 prompting guide (restate the goal, plan, self-check), and widely used
-// patterns (bottom line up front, pre-mortem, devil's advocate).
+// Starter macros: the workflow Scope -> Plan -> Execute, plus Research and
+// Summarize. Written from published practice: Anthropic's Claude Code guide
+// (explore, then plan; self-contained specs that name files, interfaces and
+// non-goals; give the model a check it can run; review in a fresh context for
+// real gaps only), Anthropic's multi-agent research system (each delegated
+// brief needs an objective, output format, sources and boundaries; divide work
+// so agents don't overlap), GitHub Spec Kit (what and why before how,
+// acceptance criteria, implement and check until it converges), OpenAI's
+// agent and GPT-5 guides (orchestrator keeps control, clear exit conditions,
+// restate the goal and plan), Anthropic's hallucination guidance (cite
+// sources, allow "not sure"), and bottom-line-up-front summaries.
 const STARTERS: &[(&str, &str, &str, &str)] = &[
     (
         "plan-first",
-        "Plan first",
+        "Plan",
         "alt+1",
-        "Don't write any code yet. First read the relevant files and restate my goal in one sentence. If something important is unclear, ask me up to 3 questions and stop there. Otherwise give me a plan:\n1. The files you'll change or add, and why\n2. The steps, in order\n3. Risks, edge cases and anything that could break\n4. How we'll check it works (tests, commands, or what to look at by hand)\nIf there's more than one sensible approach, compare them in a line each and recommend one. Then wait for my OK.",
+        "Plan this before touching any code. Read the relevant code first, then:\n1. Restate the goal in one sentence and what \"done\" looks like.\n2. If anything important is ambiguous, ask me up to 3 questions and stop there.\n3. Otherwise lay out the approach: the files to change and why, the steps in order, and how each step will be checked (a test, a command, or what to look at).\n4. Name the risks and what could break.\nIf there are competing approaches, give each one line with its trade-off and recommend one. Wait for my OK before writing code.",
     ),
     (
-        "pressure-test",
-        "Pressure test",
+        "scope",
+        "Scope",
         "alt+2",
-        "Before I go with this, pressure-test your last answer like a skeptical senior reviewer:\n- Which assumptions does it rely on, and which are shaky?\n- Pre-mortem: it failed in real use. What are the 3 most likely reasons?\n- Which edge cases, security or performance problems does it miss?\n- What would you do differently now?\nOnly flag issues that affect correctness or my goal, not style. Say how confident you are (high, medium or low), then give me the corrected version.",
+        "Fully scope this so a builder who has never seen this conversation can deliver it without guessing. Investigate the code first and ask me about anything you can't settle yourself. Then write the spec:\n- Goal and why it matters. Non-goals: what we are not doing.\n- Acceptance criteria: specific and testable, including edge cases and error states.\n- Constraints: files, interfaces and patterns to follow, and what must not change.\n- Tasks: small and ordered. Each names its files, its output and its own done-check, and says whether it can run in parallel.\n- Review gates: what gets verified after each task and before we ship, and how (test, build, screenshot, or me).\n- Risks, open questions, and every assumption you made.\nSpecific beats long.",
     ),
     (
         "research-first",
@@ -69,6 +74,12 @@ const STARTERS: &[(&str, &str, &str, &str)] = &[
         "alt+4",
         "Summarize the above for someone who wasn't following along.\nStart with a one-line bottom line: the most important takeaway or decision.\nThen for each topic:\n- What it is: one line of background, no jargon\n- Where it stands: done, decided or still open\n- The next step, with your recommendation if there's a choice to make\nEnd with any decisions you need from me. Keep names, numbers and commitments exact, drop everything else, and stay under 200 words.",
     ),
+    (
+        "execute",
+        "Execute",
+        "alt+5",
+        "Execute this as the orchestrator, not the builder. Work from the agreed scope or plan. If there isn't one, write it first and wait for my OK.\n- Split the work into tasks and give each builder (subagent) a self-contained brief: the objective, the files it owns, what not to touch, the acceptance criteria and the check it must pass. Never put two builders on the same files.\n- Run independent tasks in parallel and dependent ones in order.\n- Have a fresh reviewer check every result against its criteria. Accept evidence (test output, build, screenshot), not claims. Send failures back with the specific fix.\n- Don't widen the scope. If something needs a decision, stop and ask me.\n- If you can't run subagents, do the tasks yourself, one at a time, with the same checks.\nFinish with what was built, the evidence for each criterion, and anything left open.",
+    ),
 ];
 
 /// Earlier starter macros, by id, with the text they shipped with. Copies
@@ -81,7 +92,7 @@ const OLD_STARTERS: &[(&str, &str, &str)] = &[
     ),
     (
         "design-system",
-        "pressure-test",
+        "scope",
         "Use our existing components and Tailwind tokens. Don't add new colors, fonts or spacing values. If a component is missing, tell me first instead of creating one.",
     ),
     (
@@ -157,11 +168,12 @@ pub fn seed(app: &AppHandle) {
     store::set(app, "macrosSeeded", &true);
 }
 
-/// Replace starter macros nobody edited with the current starters, once.
-/// Each keeps its id and hotkey; only the name and text change. Edited
-/// macros, and ones the user made, are left alone.
+/// Once per install: replace starter macros nobody edited with the current
+/// starters (each keeps its id and hotkey; only the name and text change),
+/// and add new starters whose hotkey is still free. Edited macros, and ones
+/// the user made, are left alone.
 pub fn upgrade_starters(app: &AppHandle) {
-    if store::get::<bool>(app, "startersV2").unwrap_or(false) {
+    if store::get::<bool>(app, "startersV3").unwrap_or(false) {
         return;
     }
     let mut macros = load(app);
@@ -185,12 +197,35 @@ pub fn upgrade_starters(app: &AppHandle) {
         }
         changed += 1;
     }
+    // Starters added since this install was seeded (e.g. Execute on Alt+5).
+    for (id, name, hotkey, body) in STARTERS {
+        let taken = macros.iter().any(|m| m.id == *id)
+            || settings
+                .bindings
+                .values()
+                .any(|b| b.current_binding.eq_ignore_ascii_case(hotkey));
+        if taken {
+            continue;
+        }
+        let m = Macro {
+            id: id.to_string(),
+            name: name.to_string(),
+            body: body.to_string(),
+            insert_before: InsertBefore::Space,
+            submit: false,
+        };
+        settings
+            .bindings
+            .insert(binding_id(id), binding_for(&m, hotkey));
+        macros.push(m);
+        changed += 1;
+    }
     if changed > 0 {
         settings::write_settings(app, settings);
         save(app, &macros);
         info!("Upgraded {} starter macro(s)", changed);
     }
-    store::set(app, "startersV2", &true);
+    store::set(app, "startersV3", &true);
 }
 
 /// Register every macro hotkey. Handy only registers its built-in bindings at
