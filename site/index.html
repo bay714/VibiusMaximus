@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vibius Maximus · Speak it. Show it. Command your AI.</title>
+    <meta
+      name="description"
+      content="Offline voice, annotated screen captures and one-key prompt macros for Claude, ChatGPT, Cursor and every terminal agent. Free for Windows and macOS."
+    />
+    <meta property="og:title" content="Vibius Maximus" />
+    <meta
+      property="og:description"
+      content="Speak it. Show it. Command your AI. Free for Windows and macOS."
+    />
+    <meta property="og:image" content="img/hero-dark.png" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="nav">
+      <a class="brand" href="#top">
+        <img src="favicon.svg" alt="" width="30" height="30" />
+        <span>VIBIVS MAXIMVS</span>
+      </a>
+      <nav>
+        <a href="#watch">Watch</a>
+        <a href="#orders">Orders</a>
+        <a href="#install">Install</a>
+        <a href="https://github.com/bay714/VibiusMaximus">GitHub</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <p class="eyebrow">For AI vibe coding</p>
+        <h1>VIBIVS<br />MAXIMVS</h1>
+        <p class="tagline">Speak it. Show it. <em>Command your AI.</em></p>
+        <p class="lede">
+          Offline voice, annotated screen captures and one-key prompt macros for
+          Claude, ChatGPT, Cursor and every terminal agent.
+        </p>
+        <div class="actions">
+          <a
+            class="btn primary js-latest"
+            href="https://github.com/bay714/VibiusMaximus/releases/latest"
+            >Download free</a
+          >
+          <a class="btn ghost" href="#watch">▶ Watch the video</a>
+        </div>
+        <p class="motto">Veni · Vidi · Vibed</p>
+      </section>
+
+      <div class="meander" aria-hidden="true"></div>
+
+      <section id="watch" class="watch">
+        <div class="frame">
+          <video
+            controls
+            preload="metadata"
+            playsinline
+            poster="img/poster.jpg"
+            src="vibiusmaximus.mp4"
+          ></video>
+        </div>
+
+        <a
+          class="download"
+          id="download"
+          href="https://github.com/bay714/VibiusMaximus/releases/latest"
+        >
+          <img
+            src="img/download.png"
+            alt="Click here to download the latest version"
+          />
+        </a>
+        <div class="platforms">
+          <a
+            class="js-asset"
+            data-match="-setup.exe"
+            href="https://github.com/bay714/VibiusMaximus/releases/latest"
+          >
+            <strong>Windows</strong><span>10 and 11 · installer</span>
+          </a>
+          <a
+            class="js-asset"
+            data-match="_aarch64.dmg"
+            href="https://github.com/bay714/VibiusMaximus/releases/latest"
+          >
+            <strong>Mac · Apple silicon</strong><span>M1 and later · beta</span>
+          </a>
+          <a
+            class="js-asset"
+            data-match="_x64.dmg"
+            href="https://github.com/bay714/VibiusMaximus/releases/latest"
+          >
+            <strong>Mac · Intel</strong><span>beta</span>
+          </a>
+        </div>
+        <p class="version js-version"></p>
+      </section>
+
+      <section class="pillars">
+        <h2><span>The three orders</span></h2>
+        <img
+          src="img/pillars-dark.png"
+          alt="I Speak: hold Ctrl+Space, talk, let go. II Show: Alt+S freezes the screen to box, pin and caption. III Command: Alt+1 to Alt+5 fire prompt macros."
+        />
+        <img
+          src="img/board-dark.png"
+          alt="The board: line up several screenshots, notes and pins, then send them all in order."
+        />
+      </section>
+
+      <section id="orders" class="orders">
+        <h2><span>Standing orders</span></h2>
+        <p class="sub">
+          Five prompts written from published best practice, one key each. Edit
+          them, or add your own.
+        </p>
+        <img
+          src="img/orders-dark.png"
+          alt="Alt+1 Research, Alt+2 Summarize, Alt+3 Plan, Alt+4 Scope, Alt+5 Execute."
+        />
+      </section>
+
+      <section id="install" class="install">
+        <h2><span>Muster in two minutes</span></h2>
+        <div class="steps">
+          <div class="step">
+            <b>I</b>
+            <h3>Windows</h3>
+            <p>
+              Run the installer. The first launch downloads a small offline
+              speech model. Hold <kbd>Ctrl</kbd> <kbd>Space</kbd> and talk.
+            </p>
+          </div>
+          <div class="step">
+            <b>II</b>
+            <h3>macOS (beta)</h3>
+            <p>
+              Open the <code>.dmg</code> and drag the app to Applications. The
+              first time, allow it in System Settings → Privacy &amp; Security →
+              <strong>Open Anyway</strong>, then grant Microphone, Accessibility
+              and Screen Recording.
+            </p>
+          </div>
+          <div class="step">
+            <b>III</b>
+            <h3>Stay current</h3>
+            <p>
+              <strong>Check for updates</strong> in the app installs new
+              versions in place. Your keys, macros, captures and boards are
+              kept.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="meander" aria-hidden="true"></div>
+      <p>
+        Free and open source (MIT). Built on
+        <a href="https://github.com/cjpais/Handy">Handy</a>,
+        <a href="https://excalidraw.com">Excalidraw</a> and
+        <a href="https://github.com/nashaofu/xcap">xcap</a>.
+        <a href="https://github.com/bay714/VibiusMaximus">Source on GitHub</a>.
+      </p>
+    </footer>
+
+    <script>
+      // Point each download button at the matching file of the latest release.
+      fetch("https://api.github.com/repos/bay714/VibiusMaximus/releases/latest")
+        .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+        .then((release) => {
+          const find = (part) =>
+            release.assets.find((a) => a.name.endsWith(part));
+          document.querySelectorAll(".js-asset").forEach((link) => {
+            const asset = find(link.dataset.match);
+            if (asset) link.href = asset.browser_download_url;
+          });
+          const isMac = /Mac/.test(navigator.platform || navigator.userAgent);
+          const main = find(isMac ? "_aarch64.dmg" : "-setup.exe");
+          if (main) {
+            document
+              .querySelectorAll(".js-latest")
+              .forEach((a) => (a.href = main.browser_download_url));
+          }
+          document.querySelector(".js-version").textContent =
+            "Latest: " +
+            release.tag_name +
+            " · " +
+            new Date(release.published_at).toLocaleDateString();
+        })
+        .catch(() => {});
+    </script>
+  </body>
+</html>

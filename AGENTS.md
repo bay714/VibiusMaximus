@@ -203,7 +203,7 @@ Access debug features: `Cmd+Shift+D` (macOS) or `Ctrl+Shift+D` (Windows/Linux)
 
 ## Troubleshooting
 
-See the [Troubleshooting](README.md#troubleshooting) section in README.md.
+See the [Troubleshooting](docs/HANDY.md#troubleshooting) section in docs/HANDY.md (Handy's original README).
 
 ## GitHub workflow for AI coding assistants
 

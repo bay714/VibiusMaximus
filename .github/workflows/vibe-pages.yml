@@ -1,0 +1,51 @@
+# VibiusMaximus website (GitHub Pages): site/ plus the README images, the
+# Marcellus font and the how-to video, published to
+# https://bay714.github.io/VibiusMaximus/ whenever any of them change.
+name: VibiusMaximus website
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "docs/readme/**"
+      - "video/vibiusmaximus-legion.mp4"
+      - ".github/workflows/vibe-pages.yml"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: vibe-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Assemble the site
+        run: |
+          set -euo pipefail
+          mkdir -p _site/img _site/fonts
+          cp -r site/. _site/
+          cp docs/readme/* _site/img/
+          cp src/assets/fonts/Marcellus-latin.woff2 _site/fonts/
+          cp video/vibiusmaximus-legion.mp4 _site/vibiusmaximus.mp4
+          ls -la _site _site/img
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4

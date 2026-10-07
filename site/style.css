@@ -1,0 +1,380 @@
+/* Vibius Maximus website: the Legion palette from src/styles/theme.css. */
+
+@font-face {
+  font-family: Marcellus;
+  src: url(fonts/Marcellus-latin.woff2) format("woff2");
+  font-display: swap;
+}
+
+:root {
+  --bg: #17120f;
+  --bg-deep: #0f0b09;
+  --panel: #211915;
+  --text: #f1e6d6;
+  --muted: #b9a58c;
+  --bronze: #d4a157;
+  --bronze-deep: #c08a43;
+  --red: #9e2b25;
+  --line: rgba(212, 161, 87, 0.26);
+  --display: Marcellus, "Trajan Pro", Georgia, serif;
+  --sans:
+    "Segoe UI Variable Text", "Segoe UI", Inter, system-ui, -apple-system,
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--bg-deep);
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  font: 17px/1.6 var(--sans);
+  background:
+    radial-gradient(
+      circle at 20% 0%,
+      rgba(212, 161, 87, 0.12),
+      transparent 45%
+    ),
+    radial-gradient(
+      circle at 90% 30%,
+      rgba(158, 43, 37, 0.14),
+      transparent 40%
+    ),
+    linear-gradient(180deg, var(--bg), var(--bg-deep) 1200px);
+  background-repeat: no-repeat;
+  background-color: var(--bg-deep);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--bronze);
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px clamp(20px, 5vw, 64px);
+  background: rgba(15, 11, 9, 0.72);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text);
+  text-decoration: none;
+  font: 18px var(--display);
+  letter-spacing: 0.16em;
+}
+
+.nav nav {
+  display: flex;
+  gap: clamp(14px, 3vw, 32px);
+}
+
+.nav nav a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+}
+
+.nav nav a:hover {
+  color: var(--text);
+}
+
+main {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 clamp(20px, 5vw, 48px);
+}
+
+.hero {
+  text-align: center;
+  padding: clamp(64px, 12vh, 120px) 0 56px;
+}
+
+.eyebrow,
+.motto {
+  font-family: var(--display);
+  text-transform: uppercase;
+  letter-spacing: 0.34em;
+  color: var(--bronze);
+  margin: 0;
+}
+
+.eyebrow {
+  font-size: 14px;
+}
+
+h1 {
+  font: 400 clamp(52px, 9vw, 108px) / 1.02 var(--display);
+  letter-spacing: 0.12em;
+  margin: 22px 0 26px;
+  background: linear-gradient(180deg, #fff6e8 30%, #d9bf98);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.tagline {
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.tagline em {
+  font-style: normal;
+  color: var(--bronze);
+}
+
+.lede {
+  max-width: 620px;
+  margin: 14px auto 0;
+  color: var(--muted);
+}
+
+.actions {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 34px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  height: 52px;
+  padding: 0 28px;
+  border-radius: 999px;
+  text-decoration: none;
+  font: 15px var(--display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn.primary {
+  color: #fff4e2;
+  background: linear-gradient(180deg, #b9362d, #8a221d);
+  border: 1px solid var(--bronze-deep);
+  box-shadow: 0 14px 30px -12px rgba(158, 43, 37, 0.7);
+}
+
+.btn.ghost {
+  color: var(--text);
+  border: 1px solid var(--line);
+}
+
+.motto {
+  margin-top: 40px;
+  font-size: 15px;
+  letter-spacing: 0.5em;
+}
+
+.meander {
+  height: 24px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M0 22H20V6H8V14H14' fill='none' stroke='%23c08a43' stroke-width='2'/%3E%3C/svg%3E");
+  opacity: 0.35;
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 15%,
+    #000 85%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 15%,
+    #000 85%,
+    transparent
+  );
+}
+
+section {
+  padding: 64px 0;
+}
+
+.frame {
+  border-radius: 22px;
+  padding: 10px;
+  background: linear-gradient(
+    180deg,
+    rgba(212, 161, 87, 0.35),
+    rgba(158, 43, 37, 0.25)
+  );
+  box-shadow: 0 50px 100px -40px rgba(0, 0, 0, 0.9);
+}
+
+.frame video {
+  display: block;
+  width: 100%;
+  border-radius: 14px;
+  background: #000;
+}
+
+.download {
+  display: block;
+  max-width: 640px;
+  margin: 44px auto 0;
+  transition: transform 0.15s ease;
+}
+
+.download:hover {
+  transform: translateY(-3px) scale(1.01);
+}
+
+.platforms {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  max-width: 760px;
+  margin: 26px auto 0;
+}
+
+.platforms a {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(33, 25, 21, 0.6);
+  text-decoration: none;
+  color: var(--text);
+  text-align: center;
+}
+
+.platforms a:hover {
+  border-color: var(--bronze);
+}
+
+.platforms span {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.version {
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+  min-height: 1.6em;
+}
+
+h2 {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font: 400 clamp(26px, 3.4vw, 36px) var(--display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin: 0 0 30px;
+}
+
+h2::before,
+h2::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line));
+}
+
+h2::after {
+  background: linear-gradient(90deg, var(--line), transparent);
+}
+
+.pillars img + img {
+  margin-top: 26px;
+}
+
+.sub {
+  text-align: center;
+  color: var(--muted);
+  margin: -14px 0 30px;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.step {
+  padding: 26px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: linear-gradient(180deg, var(--panel), var(--bg));
+}
+
+.step b {
+  font: 400 34px var(--display);
+  color: var(--bronze);
+}
+
+.step h3 {
+  font: 400 22px var(--display);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin: 8px 0;
+}
+
+.step p {
+  color: var(--muted);
+  margin: 0;
+}
+
+kbd,
+code {
+  font: 600 13px var(--sans);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: #2a201b;
+  color: var(--text);
+}
+
+footer {
+  padding: 30px clamp(20px, 5vw, 64px) 60px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+footer p {
+  margin-top: 26px;
+}
+
+@media (max-width: 640px) {
+  .brand span {
+    display: none;
+  }
+
+  .nav nav a {
+    font-size: 14px;
+  }
+}
