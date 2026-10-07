@@ -114,7 +114,10 @@ mod tests {
     #[test]
     fn matches_apps_case_insensitively() {
         let o = CaptureOptions::default();
+        #[cfg(not(target_os = "macos"))]
         assert!(o.is_terminal("windowsterminal.exe"));
+        #[cfg(target_os = "macos")]
+        assert!(o.is_terminal("iterm2"));
         assert!(!o.is_terminal("chrome.exe"));
         assert!(!o.is_copy_only("chrome.exe"));
     }

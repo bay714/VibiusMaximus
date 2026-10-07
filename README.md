@@ -1,7 +1,19 @@
 # VibiusMaximus
 
-Voice-first capture for AI vibe coding on Windows. Snap part of the screen, say what to change,
-and paste the image and instructions into any AI chat or terminal. Fire saved prompts with one key.
+Voice-first capture for AI vibe coding on Windows and macOS. Snap part of the screen, say what to
+change, and paste the image and instructions into any AI chat or terminal. Fire saved prompts with one key.
+
+## Install
+
+Download from the [latest release](https://github.com/bay714/VibiusMaximus/releases/latest). Once
+installed, **Check for updates** in the app gets new versions; your settings, macros and keys are kept.
+
+- **Windows:** `VibiusMaximus_<version>_x64-setup.exe`.
+- **macOS (beta):** `VibiusMaximus_<version>_aarch64.dmg` for Apple Silicon (M1 and later) or
+  `_x64.dmg` for Intel. Drag the app to Applications. The app isn't notarized by Apple yet, so the
+  first time macOS blocks it: open **System Settings → Privacy & Security** and click **Open Anyway**.
+  Then allow **Microphone**, **Accessibility** (to paste) and **Screen Recording** (to capture) when
+  asked; after granting Screen Recording, quit and reopen the app. On a Mac, Alt is the Option key (⌥).
 
 ## What it does
 
@@ -11,7 +23,7 @@ and paste the image and instructions into any AI chat or terminal. Fire saved pr
 | `Ctrl+Shift+Space` | Dictate with AI cleanup (set a provider in Settings → Post-processing) |
 | `Alt+S` | **Capture**: freeze the screen, drag a region, annotate it in Excalidraw, drop numbered pins, speak a caption |
 | `Alt+B` | **Board**: build a prompt from several images, text boxes and numbered pins (same Pin tool as captures). `Ctrl+Enter` sends, `Alt+C` copies |
-| `Alt+1` … `Alt+4` | **Prompt macros**: insert a saved prompt at the cursor (edit in Settings → Macros) |
+| `Alt+1` … `Alt+5` | **Prompt macros**: Research, Summarize, Plan, Scope, Execute. Inserts a saved prompt at the cursor (edit in Settings → Macros) |
 
 In the capture editor:
 
@@ -41,7 +53,7 @@ only the open one.
 or on the board), press `Alt+V` in any app within 5 minutes: it pastes each image, then the text.
 Alt+V goes back to normal after that one paste.
 
-Terminals (Windows Terminal, PowerShell, cmd) get a saved file path plus the text instead of an
+Terminals (Windows Terminal, PowerShell, cmd; on a Mac Terminal, iTerm2, Warp, Ghostty and others) get a saved file path plus the text instead of an
 image, which suits Claude Code and other terminal agents. Every capture is kept in Settings → Captures.
 
 **Legion look:** a flat legionary-shield emblem, Pompeian red and bronze on warm sand (bronze and
@@ -52,7 +64,7 @@ The app and tray icons are generated from one source: `bun scripts/brand/generat
 
 **Lightweight by design:** the capture and board windows exist only while open and Excalidraw loads
 only inside them; the settings window is freed when closed; the speech model unloads after 2 minutes;
-no GPU backend, no update checks, no background polling. See [docs/PLAN.md §2a](docs/PLAN.md).
+no GPU backend on Windows, no background polling; updates are checked only when the settings window opens. See [docs/PLAN.md §2a](docs/PLAN.md).
 
 ## Build (Windows)
 
@@ -68,7 +80,10 @@ bun run tauri build      # installers in src-tauri/target/release/bundle/
 ```
 
 Tests: `bun src/board/compile.test.ts` and `cd src-tauri && cargo test --lib vibe`.
-CI: the **VibiusMaximus Windows build** workflow runs on demand or on `v*` tags and uploads unsigned installers.
+CI: the **VibiusMaximus Windows build** and **VibiusMaximus macOS build** workflows run on demand or
+on `v*` tags. On a tag, the Windows build creates the release; the macOS build then adds its `.dmg`
+files and its entries in the update feed (`latest.json`). Neither is code-signed by Microsoft or Apple;
+updates are signed with our own key.
 
 ## Docs
 
