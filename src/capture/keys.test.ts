@@ -1,7 +1,13 @@
 // Standalone assert check (no JS unit-test runner in this repo). Run with:
 //   bun src/capture/keys.test.ts
 import assert from "node:assert";
-import { DEFAULT_KEYS, comboFromEvent, isGlobalCombo, keyName } from "./keys";
+import {
+  DEFAULT_KEYS,
+  comboFromEvent,
+  isGlobalCombo,
+  keyName,
+  showKey,
+} from "./keys";
 
 const press = (code: string, mods: Partial<KeyboardEvent> = {}) =>
   ({
@@ -43,5 +49,10 @@ assert.ok(isGlobalCombo("Alt+V"));
 assert.ok(isGlobalCombo("Ctrl+Shift+F9"));
 assert.ok(!isGlobalCombo("V"));
 assert.ok(!isGlobalCombo("Alt+`"));
+
+// Not a Mac here: combos read as typed, "Mod" is Ctrl.
+assert.equal(showKey("Alt+C"), "Alt+C");
+assert.equal(showKey("Ctrl+Enter", " + "), "Ctrl + Enter");
+assert.equal(showKey("Mod+Z"), "Ctrl+Z");
 
 console.log("keys: all assertions passed");

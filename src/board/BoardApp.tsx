@@ -28,7 +28,7 @@ import {
   usePins,
   type Note,
 } from "../capture/pins";
-import { matches, useKeys } from "../capture/keys";
+import { matches, showKey, useKeys } from "../capture/keys";
 import { BoardsPanel, type BoardMeta } from "./BoardsPanel";
 
 // Fonts are bundled under /public/excalidraw so Excalidraw never fetches them.
@@ -447,7 +447,7 @@ export default function BoardApp() {
           true,
         );
       },
-      t("vibe.board.copiedHold", { paste: keys.paste }),
+      t("vibe.board.copiedHold", { paste: showKey(keys.paste) }),
     );
 
   const copyText = () =>
@@ -609,11 +609,11 @@ export default function BoardApp() {
           type="button"
           className="vibe-btn"
           disabled={busy}
-          title={t("vibe.board.copyHint", { paste: keys.paste })}
+          title={t("vibe.board.copyHint", { paste: showKey(keys.paste) })}
           onClick={copy}
         >
           {t("vibe.board.copy")}
-          <kbd>{keys.copy}</kbd>
+          <kbd>{showKey(keys.copy)}</kbd>
         </button>
         <button
           type="button"
@@ -625,7 +625,7 @@ export default function BoardApp() {
           {target
             ? t("vibe.board.sendTo", { app: target })
             : t("vibe.board.send")}
-          <kbd>{keys.send}</kbd>
+          <kbd>{showKey(keys.send)}</kbd>
         </button>
       </div>
     </div>

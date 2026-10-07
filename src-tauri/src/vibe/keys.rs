@@ -64,9 +64,58 @@ pub fn wait_for_modifiers_released(timeout: Duration) {
             std::thread::sleep(Duration::from_millis(10));
         }
     }
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(target_os = "macos")]
+    {
+        // Shift, Control, Option and Command in CGEventFlags.
+        const HELD: u64 = 0x0002_0000 | 0x0004_0000 | 0x0008_0000 | 0x0010_0000;
+        let start = Instant::now();
+        loop {
+            let flags = unsafe { mac::CGEventSourceFlagsState(mac::COMBINED_SESSION_STATE) };
+            if flags & HELD == 0 || start.elapsed() > timeout {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    }
+    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
     {
         let _ = (timeout, Instant::now());
         std::thread::sleep(Duration::from_millis(150));
+    }
+}
+
+/// Whether we may capture the screen. Without Screen Recording permission,
+/// macOS captures show only the wallpaper, so the first refusal shows the
+/// system prompt and later ones open the setting. Elsewhere, always true.
+pub fn screen_capture_allowed() -> bool {
+    #[cfg(target_os = "macos")]
+    {
+        use std::sync::atomic::{AtomicBool, Ordering};
+        static ASKED: AtomicBool = AtomicBool::new(false);
+
+        if unsafe { mac::CGPreflightScreenCaptureAccess() } {
+            return true;
+        }
+        if !ASKED.swap(true, Ordering::Relaxed) {
+            return unsafe { mac::CGRequestScreenCaptureAccess() };
+        }
+        let _ = std::process::Command::new("open")
+            .arg("x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")
+            .spawn();
+        false
+    }
+    #[cfg(not(target_os = "macos"))]
+    true
+}
+
+#[cfg(target_os = "macos")]
+mod mac {
+    pub const COMBINED_SESSION_STATE: i32 = 0;
+
+    #[link(name = "CoreGraphics", kind = "framework")]
+    extern "C" {
+        pub fn CGEventSourceFlagsState(state_id: i32) -> u64;
+        pub fn CGPreflightScreenCaptureAccess() -> bool;
+        pub fn CGRequestScreenCaptureAccess() -> bool;
     }
 }

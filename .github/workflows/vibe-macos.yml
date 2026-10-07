@@ -1,0 +1,163 @@
+# VibiusMaximus: macOS build (Apple Silicon and Intel). Runs when started by
+# hand or when a version tag (v*) is pushed, like the Windows build.
+#
+# The app is ad-hoc signed, not notarized (no Apple Developer account), so on
+# first open macOS asks the user to allow it in System Settings → Privacy &
+# Security. Updates are still signed with our updater key.
+#
+# On a tag, the Windows workflow creates the release and latest.json; the
+# publish job here waits for that, then adds the .dmg files, the updater
+# bundles and the macOS entries in latest.json. One writer at a time, so the
+# two workflows never race on the release or the update feed.
+name: VibiusMaximus macOS build
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: vibe-macos-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Same runners as Handy: macOS 26 has the Apple Intelligence SDK.
+          - runner: macos-26
+            target: aarch64-apple-darwin
+            arch: aarch64
+          - runner: macos-latest
+            target: x86_64-apple-darwin
+            arch: x64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check the tag matches the app version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          version=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} doesn't match app version ${version} in tauri.conf.json"
+            exit 1
+          fi
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          key: ${{ matrix.target }}
+
+      # Same as Handy: Intel builds link and bundle ONNX Runtime themselves.
+      - name: Install ONNX Runtime (Intel)
+        if: matrix.target == 'x86_64-apple-darwin'
+        run: |
+          ORT_VERSION="1.24.2"
+          curl -L --fail -o ort.tgz "https://blob.handy.computer/onnxruntime-osx-x86_64-${ORT_VERSION}.tgz"
+          tar xzf ort.tgz
+          ORT_DIR="$(pwd)/onnxruntime-osx-x86_64-${ORT_VERSION}"
+          echo "ORT_LIB_LOCATION=$ORT_DIR/lib" >> "$GITHUB_ENV"
+          echo "ORT_PREFER_DYNAMIC_LINK=1" >> "$GITHUB_ENV"
+          jq --arg lib "$ORT_DIR/lib/libonnxruntime.${ORT_VERSION}.dylib" \
+            '.bundle.macOS.frameworks = [$lib]' \
+            src-tauri/tauri.conf.json > tmp.json && mv tmp.json src-tauri/tauri.conf.json
+
+      - name: Download voice-activity model
+        run: |
+          mkdir -p src-tauri/resources/models
+          curl -L --fail -o src-tauri/resources/models/silero_vad_v4.onnx https://blob.handy.computer/silero_vad_v4.onnx
+
+      - run: bun install
+
+      - name: Tests
+        if: matrix.arch == 'aarch64'
+        run: |
+          bun src/board/compile.test.ts
+          cd src-tauri
+          cargo test --lib vibe
+
+      - name: Build
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: bun run tauri build --target ${{ matrix.target }} --bundles app,dmg
+
+      - name: Collect files
+        run: |
+          set -euo pipefail
+          bundle="src-tauri/target/${{ matrix.target }}/release/bundle"
+          mkdir -p out
+          cp "$bundle"/dmg/*.dmg out/
+          cp "$bundle/macos/VibiusMaximus.app.tar.gz" "out/VibiusMaximus_${{ matrix.arch }}.app.tar.gz"
+          cp "$bundle/macos/VibiusMaximus.app.tar.gz.sig" "out/VibiusMaximus_${{ matrix.arch }}.app.tar.gz.sig"
+          ls -la out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VibiusMaximus-macos-${{ matrix.arch }}
+          path: out/*
+
+  publish:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+
+      # The Windows build creates the release and writes latest.json.
+      - name: Wait for the Windows release
+        run: |
+          for i in $(seq 1 100); do
+            if gh release download "$TAG" -p latest.json -O latest.json --clobber 2>/dev/null \
+              && jq -e '.platforms["windows-x86_64"]' latest.json >/dev/null; then
+              echo "Release ready"; exit 0
+            fi
+            echo "Waiting for the Windows release ($i)..."; sleep 60
+          done
+          echo "::error::The Windows release for $TAG never appeared"; exit 1
+
+      - name: Upload the Mac files
+        run: gh release upload "$TAG" out/* --clobber
+
+      - name: Add macOS to the update feed
+        run: |
+          set -euo pipefail
+          base="https://github.com/${GH_REPO}/releases/download/${TAG}"
+          jq --arg arm "$(cat out/VibiusMaximus_aarch64.app.tar.gz.sig)" \
+             --arg intel "$(cat out/VibiusMaximus_x64.app.tar.gz.sig)" \
+             --arg base "$base" '
+            .platforms["darwin-aarch64"] = {signature: $arm, url: ($base + "/VibiusMaximus_aarch64.app.tar.gz")}
+            | .platforms["darwin-x86_64"] = {signature: $intel, url: ($base + "/VibiusMaximus_x64.app.tar.gz")}
+          ' latest.json > feed.json
+          mv feed.json latest.json
+          jq '.platforms | keys' latest.json
+          gh release upload "$TAG" latest.json --clobber
+
+      - name: Mention the Mac download
+        run: |
+          gh release view "$TAG" --json body -q .body > notes.md
+          if ! grep -q '\.dmg' notes.md; then
+            printf '\n\nMac (beta): download the `.dmg` for your Mac (`aarch64` for Apple Silicon, `x64` for Intel). The first time, open it from System Settings → Privacy & Security → **Open Anyway**.\n' >> notes.md
+            gh release edit "$TAG" --notes-file notes.md
+          fi

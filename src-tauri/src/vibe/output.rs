@@ -240,7 +240,25 @@ pub fn copy_png_and_text(_app: &AppHandle, png: &[u8], text: &str) -> Result<(),
     Ok(())
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "macos")]
+pub fn copy_png_and_text(_app: &AppHandle, png: &[u8], text: &str) -> Result<(), String> {
+    use objc2_app_kit::{NSPasteboard, NSPasteboardTypePNG, NSPasteboardTypeString};
+    use objc2_foundation::{NSData, NSString};
+
+    let pasteboard = NSPasteboard::generalPasteboard();
+    pasteboard.clearContents();
+    // SAFETY: the pasteboard type names are read-only framework statics.
+    let (png_type, text_type) = unsafe { (NSPasteboardTypePNG, NSPasteboardTypeString) };
+    if !pasteboard.setData_forType(Some(&NSData::with_bytes(png)), png_type) {
+        return Err("Couldn't put the image on the clipboard".into());
+    }
+    if !text.trim().is_empty() {
+        pasteboard.setString_forType(&NSString::from_str(text), text_type);
+    }
+    Ok(())
+}
+
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
 pub fn copy_png_and_text(app: &AppHandle, png: &[u8], _text: &str) -> Result<(), String> {
     copy_png(app, png)
 }

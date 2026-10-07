@@ -73,6 +73,9 @@ fn start_capture(app: &AppHandle, reopen: Option<CaptureRecord>) -> Result<(), S
     if app.get_webview_window(CAPTURE_WINDOW).is_some() {
         return Ok(());
     }
+    if !super::keys::screen_capture_allowed() {
+        return Err("Screen Recording permission is off".into());
+    }
     let state = app.state::<CaptureState>();
 
     // Remember where the user was before our window takes focus. A reopened

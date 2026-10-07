@@ -27,6 +27,30 @@ pub struct CaptureOptions {
     pub paste_key: String,
 }
 
+#[cfg(not(target_os = "macos"))]
+const DEFAULT_TERMINALS: &[&str] = &[
+    "WindowsTerminal.exe",
+    "OpenConsole.exe",
+    "conhost.exe",
+    "cmd.exe",
+    "pwsh.exe",
+    "powershell.exe",
+    "wezterm-gui.exe",
+    "alacritty.exe",
+];
+
+/// App names as macOS shows them in the Dock.
+#[cfg(target_os = "macos")]
+const DEFAULT_TERMINALS: &[&str] = &[
+    "Terminal",
+    "iTerm2",
+    "Warp",
+    "Ghostty",
+    "WezTerm",
+    "Alacritty",
+    "kitty",
+];
+
 impl Default for CaptureOptions {
     fn default() -> Self {
         Self {
@@ -34,19 +58,7 @@ impl Default for CaptureOptions {
             caption_band: true,
             include_text: true,
             paste_gap_ms: 250,
-            terminal_apps: [
-                "WindowsTerminal.exe",
-                "OpenConsole.exe",
-                "conhost.exe",
-                "cmd.exe",
-                "pwsh.exe",
-                "powershell.exe",
-                "wezterm-gui.exe",
-                "alacritty.exe",
-            ]
-            .iter()
-            .map(|s| s.to_string())
-            .collect(),
+            terminal_apps: DEFAULT_TERMINALS.iter().map(|s| s.to_string()).collect(),
             copy_only_apps: Vec::new(),
             keys: BTreeMap::new(),
             paste_key: "Alt+V".to_string(),

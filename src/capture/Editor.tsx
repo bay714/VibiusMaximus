@@ -26,7 +26,7 @@ import {
   type SessionTarget,
 } from "./api";
 import { PIN_COLOR, PinNoteRow, PinTools, usePins, type Note } from "./pins";
-import { matches, useKeys } from "./keys";
+import { matches, showKey, useKeys } from "./keys";
 
 // Fonts are bundled under /public/excalidraw so Excalidraw never fetches them
 // from a CDN.
@@ -473,7 +473,7 @@ export default function Editor({
               {cleaning
                 ? t("vibe.capture.cleaning")
                 : t("vibe.capture.cleanup")}
-              <kbd>{keys.cleanup}</kbd>
+              <kbd>{showKey(keys.cleanup)}</kbd>
             </button>
           )}
         </div>
@@ -512,8 +512,8 @@ export default function Editor({
                   : selectedPin
                     ? t("vibe.capture.pinTip")
                     : t("vibe.capture.copyHint", {
-                        copy: keys.copy,
-                        paste: keys.paste,
+                        copy: showKey(keys.copy),
+                        paste: showKey(keys.paste),
                       })}
           </span>
         )}
@@ -524,7 +524,7 @@ export default function Editor({
           onClick={() => closeCapture()}
         >
           {t("vibe.capture.cancel")}
-          <kbd>{keys.close}</kbd>
+          <kbd>{showKey(keys.close)}</kbd>
         </button>
         <button
           type="button"
@@ -533,7 +533,7 @@ export default function Editor({
           onClick={() => send("board", false)}
         >
           {t("vibe.capture.toBoard")}
-          <kbd>{keys.toBoard}</kbd>
+          <kbd>{showKey(keys.toBoard)}</kbd>
         </button>
         <button
           type="button"
@@ -542,7 +542,7 @@ export default function Editor({
           onClick={() => send("copyOnly", false)}
         >
           {t("vibe.capture.copy")}
-          <kbd>{keys.copy}</kbd>
+          <kbd>{showKey(keys.copy)}</kbd>
         </button>
         <button
           type="button"
@@ -551,7 +551,7 @@ export default function Editor({
           onClick={() => send("send", true)}
         >
           {t("vibe.capture.sendSubmit")}
-          <kbd>{keys.sendSubmit}</kbd>
+          <kbd>{showKey(keys.sendSubmit)}</kbd>
         </button>
         <button
           type="button"
@@ -563,7 +563,7 @@ export default function Editor({
           {target
             ? t("vibe.capture.sendTo", { app: target.app })
             : t("vibe.capture.send")}
-          <kbd>{keys.send}</kbd>
+          <kbd>{showKey(keys.send)}</kbd>
         </button>
       </div>
     </div>

@@ -93,6 +93,26 @@ export function comboFromEvent(e: KeyboardEvent): string | null {
   return parts.join("+");
 }
 
+const IS_MAC =
+  typeof navigator !== "undefined" &&
+  /Mac/.test(navigator.platform || navigator.userAgent);
+
+const MAC_SYMBOLS: Record<string, string> = {
+  Ctrl: "⌃",
+  Alt: "⌥",
+  Shift: "⇧",
+  Win: "⌘",
+  Mod: "⌘",
+};
+
+/** A combo as people expect to read it: "Alt+C" on Windows, "⌥C" on a Mac.
+ *  "Mod" is Ctrl on Windows and ⌘ on a Mac (for Excalidraw's own keys). */
+export function showKey(combo: string, separator = "+"): string {
+  const parts = combo.split("+");
+  if (IS_MAC) return parts.map((p) => MAC_SYMBOLS[p] ?? p).join("");
+  return parts.map((p) => (p === "Mod" ? "Ctrl" : p)).join(separator);
+}
+
 export const matches = (e: KeyboardEvent, combo: string) =>
   comboFromEvent(e) === combo;
 

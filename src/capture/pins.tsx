@@ -15,6 +15,7 @@ import type {
   ExcalidrawImperativeAPI,
 } from "@excalidraw/excalidraw/types";
 import type { ExcalidrawElement } from "@excalidraw/excalidraw/element/types";
+import { showKey } from "./keys";
 
 export interface Note {
   pinId: string;
@@ -374,7 +375,7 @@ export function PinTools({
         onClick={onPin}
       >
         {PIN_ICON} {t("vibe.capture.pin")}
-        <kbd>{pinKey}</kbd>
+        <kbd>{showKey(pinKey)}</kbd>
       </button>
       <button
         type="button"
@@ -384,7 +385,7 @@ export function PinTools({
         onClick={onToggleNumbers}
       >
         {NUMBER_ICON} {t("vibe.capture.numberShapes")}
-        <kbd>{numberKey}</kbd>
+        <kbd>{showKey(numberKey)}</kbd>
       </button>
     </div>
   );

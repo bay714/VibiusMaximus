@@ -12,6 +12,7 @@ import {
   KEY_ACTIONS,
   comboFromEvent,
   isGlobalCombo,
+  showKey,
   type KeyAction,
 } from "../../../capture/keys";
 
@@ -39,12 +40,12 @@ const DRAWING_KEYS = [
   ["E", "eraser"],
   ["H", "hand"],
   ["Delete", "delete"],
-  ["Ctrl+Z", "undo"],
-  ["Ctrl+Y", "redo"],
+  ["Mod+Z", "undo"],
+  ["Mod+Y", "redo"],
 ] as const;
 
 /** "Ctrl+Enter" shown as "Ctrl + Enter", like Handy's shortcut rows. */
-const display = (combo: string) => combo.split("+").join(" + ");
+const display = (combo: string) => showKey(combo, " + ");
 
 /** Click, then press the new combo. Clicking away cancels. Looks like
  *  Handy's shortcut rows. */
@@ -228,7 +229,7 @@ export const HotkeysSettings: React.FC = () => {
             <div key={tool} className="flex justify-between">
               <span>{t(`vibe.hotkeys.tools.${tool}`)}</span>
               <kbd className="px-1.5 rounded border border-mid-gray/40 text-xs font-semibold">
-                {key}
+                {showKey(key, " + ")}
               </kbd>
             </div>
           ))}
