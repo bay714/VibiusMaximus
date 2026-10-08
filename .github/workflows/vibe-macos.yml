@@ -86,6 +86,8 @@ jobs:
         if: matrix.arch == 'aarch64'
         run: |
           bun src/board/compile.test.ts
+          bun src/board/dictation.test.ts
+          bun src/capture/keys.test.ts
           cd src-tauri
           cargo test --lib vibe
 

@@ -30,6 +30,7 @@ import {
 } from "../capture/pins";
 import { matches, showKey, useKeys } from "../capture/keys";
 import { BoardsPanel, type BoardMeta } from "./BoardsPanel";
+import { insertWords, wrap } from "./dictation";
 
 // Fonts are bundled under /public/excalidraw so Excalidraw never fetches them.
 (window as unknown as { EXCALIDRAW_ASSET_PATH: string }).EXCALIDRAW_ASSET_PATH =
@@ -122,6 +123,9 @@ export default function BoardApp() {
   // The same keys as the capture editor, from Settings → Hotkeys.
   const keys = useKeys();
   const noteFields = useRef(new Map<string, HTMLInputElement>());
+  // The note dictation goes to when no text field has focus: the one placed,
+  // selected or typed in last.
+  const lastNote = useRef<string | null>(null);
   const {
     notes,
     setNote,
@@ -135,11 +139,82 @@ export default function BoardApp() {
     handleChange,
     reset: resetPins,
   } = usePins(api, {
-    onPlaced: (pinId) =>
-      setTimeout(() => noteFields.current.get(pinId)?.focus(), 0),
+    onPlaced: (pinId) => {
+      lastNote.current = pinId;
+      setTimeout(() => noteFields.current.get(pinId)?.focus(), 0);
+    },
+    onActive: (pinId) => (lastNote.current = pinId),
   });
   const notesRef = useRef(notes);
   notesRef.current = notes;
+
+  // Dictation (Ctrl+Space) while the board is in front arrives here instead of
+  // as a paste, which could land on the canvas: into the field being edited,
+  // else the last pin's note, else a new text box in the middle of the view.
+  useEffect(() => {
+    const unlisten = listen<string>("vibe://dictation", ({ payload }) => {
+      const text = payload.trim();
+      if (!text) return;
+      const focused = document.activeElement;
+      const focusedNote = [...noteFields.current].find(
+        ([, field]) => field === focused,
+      )?.[0];
+      const noteId =
+        focusedNote ??
+        (focused instanceof HTMLInputElement ||
+        focused instanceof HTMLTextAreaElement
+          ? undefined
+          : notesRef.current.find((n) => n.pinId === lastNote.current)?.pinId);
+
+      if (noteId) {
+        const field = noteFields.current.get(noteId);
+        const current =
+          notesRef.current.find((n) => n.pinId === noteId)?.text ?? "";
+        const at =
+          field && field === focused
+            ? (field.selectionStart ?? current.length)
+            : current.length;
+        const next = insertWords(current, at, text);
+        setNote(noteId, next.value);
+        lastNote.current = noteId;
+        requestAnimationFrame(() => {
+          field?.focus({ preventScroll: true });
+          field?.setSelectionRange(next.caret, next.caret);
+        });
+      } else if (
+        focused instanceof HTMLInputElement ||
+        focused instanceof HTMLTextAreaElement
+      ) {
+        // Another field, e.g. a text box being edited on the canvas.
+        const at = focused.selectionStart ?? focused.value.length;
+        const end = focused.selectionEnd ?? at;
+        const { value } = insertWords(focused.value.slice(0, at), at, text);
+        focused.setRangeText(value.slice(at), at, end, "end");
+        focused.dispatchEvent(new Event("input", { bubbles: true }));
+      } else if (api) {
+        const view = api.getAppState();
+        const x = view.width / 2 / view.zoom.value - view.scrollX - 200;
+        const y = view.height / 2 / view.zoom.value - view.scrollY;
+        api.updateScene({
+          elements: [
+            ...api.getSceneElements(),
+            ...convertToExcalidrawElements([
+              {
+                type: "text",
+                x,
+                y,
+                text: wrap(text, 60),
+                fontFamily: FONT_FAMILY.Helvetica,
+              } as Skeleton[number],
+            ]),
+          ],
+        });
+      }
+    });
+    return () => {
+      unlisten.then((f) => f());
+    };
+  }, [api, setNote]);
 
   useEffect(() => {
     invoke<{ meta: BoardMeta; scene: string | null }>("vibe_board_load")
@@ -552,7 +627,10 @@ export default function BoardApp() {
                 if (el) noteFields.current.set(note.pinId, el);
                 else noteFields.current.delete(note.pinId);
               }}
-              onFocus={() => selectPin(note.pinId)}
+              onFocus={() => {
+                lastNote.current = note.pinId;
+                selectPin(note.pinId);
+              }}
               onText={(text) => setNote(note.pinId, text)}
               onRemove={() => removePin(note.pinId)}
             />

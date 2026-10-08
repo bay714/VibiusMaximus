@@ -161,17 +161,31 @@ pub fn close(app: &AppHandle) {
     }
 }
 
-/// Send a finished dictation to the capture editor instead of pasting it.
-/// Returns false when no capture window is open.
+/// Send a finished dictation to the capture editor, or to the board when it's
+/// the window in front, instead of pasting it. A paste into our own windows
+/// can land on the canvas rather than the note being dictated. Returns false
+/// when neither should take it.
 pub fn deliver_dictation(app: &AppHandle, text: &str) -> bool {
-    let visible = app
+    let capture_open = app
         .get_webview_window(CAPTURE_WINDOW)
         .and_then(|w| w.is_visible().ok())
         .unwrap_or(false);
-    if visible {
+    if capture_open {
         let _ = app.emit_to(CAPTURE_WINDOW, DICTATION_EVENT, text.to_string());
+        return true;
     }
-    visible
+    let board_in_front = app
+        .get_webview_window(super::board::BOARD_WINDOW)
+        .and_then(|w| w.is_focused().ok())
+        .unwrap_or(false);
+    if board_in_front {
+        let _ = app.emit_to(
+            super::board::BOARD_WINDOW,
+            DICTATION_EVENT,
+            text.to_string(),
+        );
+    }
+    board_in_front
 }
 
 /// The frame as `[width u32 LE][height u32 LE][RGBA bytes]`.

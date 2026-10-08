@@ -131,7 +131,7 @@ bun run tauri dev        # run
 bun run tauri build      # installers in src-tauri/target/release/bundle/
 ```
 
-Tests: `bun src/board/compile.test.ts`, `bun src/capture/keys.test.ts` and
+Tests: `bun src/board/compile.test.ts`, `bun src/board/dictation.test.ts`, `bun src/capture/keys.test.ts` and
 `cd src-tauri && cargo test --lib vibe`.
 
 CI: the **Windows** and **macOS** build workflows run on `v*` tags. The Windows build creates the
