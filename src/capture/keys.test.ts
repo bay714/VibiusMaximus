@@ -50,9 +50,16 @@ assert.ok(isGlobalCombo("Ctrl+Shift+F9"));
 assert.ok(!isGlobalCombo("V"));
 assert.ok(!isGlobalCombo("Alt+`"));
 
-// Not a Mac here: combos read as typed, "Mod" is Ctrl.
-assert.equal(showKey("Alt+C"), "Alt+C");
-assert.equal(showKey("Ctrl+Enter", " + "), "Ctrl + Enter");
-assert.equal(showKey("Mod+Z"), "Ctrl+Z");
+// Hints read as typed elsewhere ("Mod" is Ctrl) and in Mac symbols on a Mac,
+// where the macOS build runs these tests.
+if (/Mac/.test(navigator.platform || navigator.userAgent)) {
+  assert.equal(showKey("Alt+C"), "⌥C");
+  assert.equal(showKey("Ctrl+Shift+Enter"), "⌃⇧Enter");
+  assert.equal(showKey("Mod+Z"), "⌘Z");
+} else {
+  assert.equal(showKey("Alt+C"), "Alt+C");
+  assert.equal(showKey("Ctrl+Enter", " + "), "Ctrl + Enter");
+  assert.equal(showKey("Mod+Z"), "Ctrl+Z");
+}
 
 console.log("keys: all assertions passed");

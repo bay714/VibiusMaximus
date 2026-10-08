@@ -9,10 +9,19 @@
 # publish job here waits for that, then adds the .dmg files, the updater
 # bundles and the macOS entries in latest.json. One writer at a time, so the
 # two workflows never race on the release or the update feed.
+#
+# Started by hand with "release" set (e.g. v1.0.6), it builds from the chosen
+# branch and adds the Mac files to that existing release, for when the Mac
+# build failed on the tag. The branch must have the same app version.
 name: VibiusMaximus macOS build
 
 on:
   workflow_dispatch:
+    inputs:
+      release:
+        description: "Add the Mac files to this existing release (e.g. v1.0.6); empty only builds"
+        required: false
+        default: ""
   push:
     tags: ["v*"]
 
@@ -42,11 +51,13 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Check the tag matches the app version
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || inputs.release != ''
+        env:
+          TAG: ${{ inputs.release || github.ref_name }}
         run: |
           version=$(node -p "require('./src-tauri/tauri.conf.json').version")
-          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
-            echo "::error::Tag ${GITHUB_REF_NAME} doesn't match app version ${version} in tauri.conf.json"
+          if [ "${TAG}" != "v${version}" ]; then
+            echo "::error::Release ${TAG} doesn't match app version ${version} in tauri.conf.json"
             exit 1
           fi
 
@@ -114,13 +125,13 @@ jobs:
 
   publish:
     needs: build
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/') || inputs.release != ''
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_REPO: ${{ github.repository }}
-      TAG: ${{ github.ref_name }}
+      TAG: ${{ inputs.release || github.ref_name }}
     steps:
       - uses: actions/download-artifact@v4
         with:
