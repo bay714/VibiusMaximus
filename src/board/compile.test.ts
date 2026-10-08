@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { compile, readingOrder, type Box } from "./compile";
+import { compile, readingOrder, withAttached, type Box } from "./compile";
 
 const img = (id: string, x: number, y: number): Box => ({
   id,
@@ -55,5 +55,35 @@ assert.equal(
 
 // No images means no header.
 assert.equal(compile([txt("t", 0, 0, "Just text")]).text, "Just text");
+
+// An image keeps whole pins and numbered shapes, even when only part of one
+// overlaps it: a pin's number is text inside the pin, a badge is grouped with
+// its shape.
+const el = (id: string, type: string, extra: object = {}) => ({
+  id,
+  type,
+  containerId: null as string | null,
+  groupIds: [] as string[],
+  ...extra,
+});
+const scene = [
+  el("shot", "image"),
+  el("pin", "ellipse", { groupIds: ["p1"] }),
+  el("pinNumber", "text", { containerId: "pin", groupIds: ["p1"] }),
+  el("box", "rectangle", { groupIds: ["n1"] }),
+  el("badge", "ellipse", { groupIds: ["n1"] }),
+  el("badgeNumber", "text", { containerId: "badge" }),
+  el("other", "image", { groupIds: ["n1"] }),
+  el("far", "text"),
+];
+const ids = (picked: string[]) =>
+  withAttached(
+    scene.filter((e) => picked.includes(e.id)),
+    scene,
+  ).map((e) => e.id);
+assert.deepEqual(ids(["shot", "pin"]), ["shot", "pin", "pinNumber"]);
+assert.deepEqual(ids(["shot", "pinNumber"]), ["shot", "pin", "pinNumber"]);
+assert.deepEqual(ids(["shot", "box"]), ["shot", "box", "badge", "badgeNumber"]);
+assert.deepEqual(ids(["shot"]), ["shot"]);
 
 console.log("compile tests passed");

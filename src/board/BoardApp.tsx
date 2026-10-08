@@ -20,7 +20,7 @@ import type {
   FileId,
 } from "@excalidraw/excalidraw/element/types";
 import "@excalidraw/excalidraw/index.css";
-import { compile, intersects, type Box } from "./compile";
+import { compile, intersects, withAttached, type Box } from "./compile";
 import {
   PinNoteRow,
   PinTools,
@@ -490,11 +490,12 @@ export default function BoardApp() {
     for (const id of imageIds) {
       const image = boxes.find((b) => b.id === id);
       if (!image) continue;
-      const group = elements.filter((e, i) => {
+      const touching = elements.filter((e, i) => {
         const box = boxes[i];
         return e.id === id || (box.kind !== "image" && intersects(box, image));
       });
-      pngs.push(await exportElements(group));
+      // Whole pins and numbered shapes, even if only part of one overlaps.
+      pngs.push(await exportElements(withAttached(touching, elements)));
     }
     return pngs;
   };

@@ -79,3 +79,43 @@ export function compile(boxes: Box[]): Compiled {
     : "";
   return { imageIds, text: [header, ...lines].filter(Boolean).join("\n") };
 }
+
+/** What `withAttached` needs to know about an element. */
+export interface Attachable {
+  id: string;
+  type: string;
+  containerId?: string | null;
+  groupIds: readonly string[];
+}
+
+/**
+ * `picked` plus everything that belongs with them, so an image never gets half
+ * of something: the text inside a picked shape (a pin's number) and the rest
+ * of any group a picked element is in (a shape's number badge). Other images
+ * are never pulled in.
+ */
+export function withAttached<T extends Attachable>(
+  picked: readonly T[],
+  all: readonly T[],
+): T[] {
+  const ids = new Set(picked.map((e) => e.id));
+  for (let grew = true; grew; ) {
+    grew = false;
+    const groups = new Set(
+      all.filter((e) => ids.has(e.id)).flatMap((e) => e.groupIds),
+    );
+    for (const e of all) {
+      if (ids.has(e.id) || e.type === "image") continue;
+      const contained = !!e.containerId && ids.has(e.containerId);
+      const grouped = e.groupIds.some((g) => groups.has(g));
+      const container = all.some(
+        (t) => t.containerId === e.id && ids.has(t.id),
+      );
+      if (contained || grouped || container) {
+        ids.add(e.id);
+        grew = true;
+      }
+    }
+  }
+  return all.filter((e) => ids.has(e.id));
+}
