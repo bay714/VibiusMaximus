@@ -63,6 +63,10 @@ type Skeleton = Parameters<typeof convertToExcalidrawElements>[0];
 // Symbols, not translatable text.
 const SPARKLE = "✨";
 const FILE_ID = "vibe-capture" as FileId;
+// Room Excalidraw's own UI takes over the canvas, in CSS pixels: the toolbar
+// on top, and on the left the shape properties panel (12.5rem wide, 1rem in)
+// that opens while drawing. The screenshot is fitted clear of both.
+const UI_INSET = { top: 72, left: 232, right: 16, bottom: 16 };
 const isTextField = (el: Element | null) =>
   el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement;
 
@@ -123,8 +127,14 @@ export default function Editor({
     const cssW = crop.width / crop.scale;
     const cssH = crop.height / crop.scale;
     return {
-      width: Math.min(Math.max(cssW + 48, 720), window.innerWidth * 0.94),
-      height: Math.min(Math.max(cssH + 110, 320), window.innerHeight * 0.62),
+      width: Math.min(
+        Math.max(cssW + UI_INSET.left + UI_INSET.right, 720),
+        window.innerWidth * 0.94,
+      ),
+      height: Math.min(
+        Math.max(cssH + UI_INSET.top + UI_INSET.bottom, 320),
+        window.innerHeight * 0.62,
+      ),
     };
   }, [crop]);
 
@@ -168,9 +178,25 @@ export default function Editor({
   useEffect(() => {
     if (api)
       setTimeout(
-        () => api.scrollToContent(undefined, { fitToContent: true }),
+        () =>
+          api.scrollToContent(undefined, {
+            fitToContent: true,
+            canvasOffsets: UI_INSET,
+          }),
         50,
       );
+  }, [api]);
+
+  // The editor is centred, so each note row added below the screenshot moves
+  // the canvas up. Excalidraw only re-reads its position on window resize or
+  // scroll, so without this, clicks land further off with every shape.
+  const editorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = editorRef.current;
+    if (!api || !el) return;
+    const observer = new ResizeObserver(() => api.refresh());
+    observer.observe(el);
+    return () => observer.disconnect();
   }, [api]);
 
   useEffect(() => {
@@ -410,6 +436,7 @@ export default function Editor({
 
   return (
     <div
+      ref={editorRef}
       className="vibe-editor"
       style={{ width: box.width }}
       onMouseDown={(e) => e.stopPropagation()}
