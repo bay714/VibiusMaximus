@@ -63,6 +63,9 @@ pub fn on_shortcuts_ready(app: &tauri::AppHandle) {
     macros::upgrade_starters(app);
     vocab::seed(app);
     macros::register_all(app);
+    // Old captures are otherwise only cleared when a new one is saved.
+    let app = app.clone();
+    std::thread::spawn(move || history::prune(&app));
 }
 
 /// True for commands handled by [`invoke_handler`].

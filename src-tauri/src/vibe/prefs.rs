@@ -25,6 +25,8 @@ pub struct CaptureOptions {
     pub keys: BTreeMap<String, String>,
     /// The key held for a few minutes after Alt+C, e.g. `Alt+V`.
     pub paste_key: String,
+    /// Unstarred captures older than this many days are deleted; 0 keeps them.
+    pub keep_days: u32,
 }
 
 #[cfg(not(target_os = "macos"))]
@@ -62,6 +64,7 @@ impl Default for CaptureOptions {
             copy_only_apps: Vec::new(),
             keys: BTreeMap::new(),
             paste_key: "Alt+V".to_string(),
+            keep_days: 30,
         }
     }
 }
@@ -104,7 +107,11 @@ pub fn vibe_capture_settings_get(app: AppHandle) -> CaptureOptions {
 
 #[tauri::command]
 pub fn vibe_capture_settings_set(app: AppHandle, options: CaptureOptions) {
+    let changed = options.keep_days != get(&app).keep_days;
     store::set(&app, "capture", &options);
+    if changed {
+        std::thread::spawn(move || super::history::prune(&app));
+    }
 }
 
 #[cfg(test)]
@@ -138,5 +145,6 @@ mod tests {
         assert!(o.always_submit);
         assert!(o.caption_band);
         assert_eq!(o.paste_gap_ms, 250);
+        assert_eq!(o.keep_days, 30);
     }
 }

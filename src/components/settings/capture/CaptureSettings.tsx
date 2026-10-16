@@ -6,6 +6,7 @@ import { SettingContainer } from "../../ui/SettingContainer";
 import { ToggleSwitch } from "../../ui/ToggleSwitch";
 import { Input } from "../../ui/Input";
 import { Textarea } from "../../ui/Textarea";
+import { Dropdown } from "../../ui/Dropdown";
 import { ShortcutInput } from "../ShortcutInput";
 
 interface CaptureOptions {
@@ -15,7 +16,10 @@ interface CaptureOptions {
   pasteGapMs: number;
   terminalApps: string[];
   copyOnlyApps: string[];
+  keepDays: number;
 }
+
+const KEEP_DAYS = [7, 30, 90, 0];
 
 const toLines = (list: string[]) => list.join("\n");
 const fromLines = (text: string) =>
@@ -97,6 +101,22 @@ export const CaptureSettings: React.FC = () => {
                 ),
               })
             }
+          />
+        </SettingContainer>
+        <SettingContainer
+          title={t("vibe.captureSettings.keepDays")}
+          description={t("vibe.captureSettings.keepDaysDescription")}
+          grouped={true}
+        >
+          <Dropdown
+            options={KEEP_DAYS.map((days) => ({
+              value: String(days),
+              label: days
+                ? t("vibe.captureSettings.keepDaysOption", { count: days })
+                : t("vibe.captureSettings.keepForever"),
+            }))}
+            selectedValue={String(options.keepDays)}
+            onSelect={(value) => save({ ...options, keepDays: Number(value) })}
           />
         </SettingContainer>
       </SettingsGroup>

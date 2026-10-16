@@ -9,8 +9,10 @@ use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use tauri::{AppHandle, Manager};
 
-/// Oldest unstarred captures beyond this are deleted.
+/// Oldest unstarred captures beyond this are deleted, however recent.
 const MAX_CAPTURES: usize = 200;
+
+const DAY_MS: i64 = 24 * 60 * 60 * 1000;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -125,18 +127,27 @@ fn remove(record: &CaptureRecord) {
     let _ = std::fs::remove_file(png);
 }
 
-fn prune(app: &AppHandle) {
-    let records = list(app);
-    let mut unstarred = records.iter().filter(|r| !r.starred).count();
-    for record in records.iter().rev() {
-        if unstarred <= MAX_CAPTURES {
-            break;
-        }
-        if !record.starred {
-            remove(record);
-            unstarred -= 1;
-        }
+/// Delete unstarred captures older than the "Keep captures" setting, and the
+/// oldest beyond [`MAX_CAPTURES`]. Starred ones are never deleted.
+pub fn prune(app: &AppHandle) {
+    let keep_days = super::prefs::get(app).keep_days;
+    let now = chrono::Local::now().timestamp_millis();
+    for record in expired(&list(app), now, keep_days) {
+        remove(record);
     }
+}
+
+/// The captures to delete from `records` (newest first, as [`list`] returns
+/// them). `keep_days` of 0 keeps them however old.
+fn expired(records: &[CaptureRecord], now: i64, keep_days: u32) -> Vec<&CaptureRecord> {
+    let cutoff = (keep_days > 0).then(|| now - i64::from(keep_days) * DAY_MS);
+    records
+        .iter()
+        .filter(|r| !r.starred)
+        .enumerate()
+        .filter(|(i, r)| *i >= MAX_CAPTURES || cutoff.is_some_and(|c| r.created < c))
+        .map(|(_, r)| r)
+        .collect()
 }
 
 #[tauri::command]
@@ -182,4 +193,52 @@ pub fn vibe_capture_to_board(app: AppHandle, id: String) -> Result<(), String> {
     super::board::add_to_inbox(&app, &record.path);
     super::board::open(&app);
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn record(id: usize, created: i64, starred: bool) -> CaptureRecord {
+        CaptureRecord {
+            id: id.to_string(),
+            path: String::new(),
+            text: String::new(),
+            target: String::new(),
+            created,
+            starred,
+            hwnd: 0,
+            editable: false,
+        }
+    }
+
+    fn ids(records: Vec<&CaptureRecord>) -> Vec<&str> {
+        records.iter().map(|r| r.id.as_str()).collect()
+    }
+
+    #[test]
+    fn deletes_unstarred_captures_past_the_age_limit() {
+        let now = 100 * DAY_MS;
+        let records = vec![
+            record(1, now - DAY_MS, false),
+            record(2, now - 31 * DAY_MS, true),
+            record(3, now - 31 * DAY_MS, false),
+        ];
+        assert_eq!(ids(expired(&records, now, 30)), ["3"]);
+        assert!(expired(&records, now, 0).is_empty());
+    }
+
+    #[test]
+    fn keeps_at_most_the_newest_unstarred_captures() {
+        let now = 100 * DAY_MS;
+        let mut records: Vec<_> = (0..MAX_CAPTURES + 2)
+            .map(|i| record(i, now - i as i64, false))
+            .collect();
+        records.insert(5, record(999, now, true));
+        let gone = ids(expired(&records, now, 0));
+        assert_eq!(
+            gone,
+            [MAX_CAPTURES.to_string(), (MAX_CAPTURES + 1).to_string()]
+        );
+    }
 }
