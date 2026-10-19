@@ -849,6 +849,8 @@ impl ShortcutAction for TranscribeAction {
                                         set_tray_state(&ah_clone, TrayIconState::Idle);
                                         return;
                                     }
+                                    // VibiusMaximus: kept for Paste again.
+                                    crate::vibe::pending::remember_text(&ah_clone, &final_text);
 
                                     match utils::paste(final_text, ah_clone.clone()) {
                                         Ok(()) => debug!(

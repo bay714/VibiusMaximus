@@ -25,6 +25,7 @@ export default defineConfig(async () => ({
         overlay: resolve(__dirname, "src/overlay/index.html"),
         capture: resolve(__dirname, "src/capture/index.html"),
         board: resolve(__dirname, "src/board/index.html"),
+        toast: resolve(__dirname, "src/toast/index.html"),
       },
     },
   },

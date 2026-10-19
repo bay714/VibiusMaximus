@@ -3,7 +3,7 @@
 
 use super::capture::{self, CaptureState};
 use super::target::{self, Target};
-use super::{board, history, pending, prefs};
+use super::{board, history, pending, prefs, toast};
 use crate::clipboard::send_return_key;
 use crate::input::{send_paste_ctrl_v, EnigoState};
 use crate::settings::get_settings;
@@ -122,8 +122,11 @@ fn send_capture(app: &AppHandle, meta: SendMeta, png: Vec<u8>) -> Result<(), Str
     let target = target.unwrap_or_default();
     std::thread::sleep(Duration::from_millis(80));
 
+    pending::remember_capture(app, png.clone(), meta.text.clone(), record.path.clone());
     let items = items_for(&options, &target.process, &record.path, png, text);
-    paste_items(app, &target, items, meta.submit || options.always_submit)
+    paste_items(app, &target, items, meta.submit || options.always_submit)?;
+    toast::sent(app, &target);
+    Ok(())
 }
 
 /// What to paste into an app: the image then the text, or for terminals (which

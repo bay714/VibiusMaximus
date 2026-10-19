@@ -804,6 +804,10 @@
       "edit": "Edit",
       "editHint": "Double-click to open it in the editor again"
     },
+    "toast": {
+      "sent": "Sent to {{app}}",
+      "again": "Wrong window? Click the right one and press {{key}}"
+    },
     "captureSettings": {
       "title": "Capture",
       "alwaysSubmit": "Always submit after Send",
@@ -819,6 +823,8 @@
       "keepDaysOption_one": "{{count}} day",
       "keepDaysOption_other": "{{count}} days",
       "keepForever": "Forever",
+      "sendToast": "Show where it was sent",
+      "sendToastDescription": "After Send, a note at the bottom of the screen names the app for a few seconds, with the key to paste it somewhere else.",
       "profilesTitle": "Per-app behaviour",
       "profilesDescription": "Match apps by their program name, one per line (for example chrome.exe).",
       "terminalApps": "Send a file path instead of an image",
@@ -832,6 +838,8 @@
       "pasteKey": "Paste copied capture",
       "pasteKeyDescription": "After Copy, this key pastes the image(s) and then the text in any app. It's only active for 5 minutes after copying, and for one paste.",
       "pasteKeyInvalid": "Use a modifier (Ctrl, Alt, Shift or Win) plus a letter, number or F-key.",
+      "againKey": "Paste again",
+      "againKeyDescription": "Pastes the last capture, board or dictation again in the app in front. If it went to the wrong window, click the right one and press this.",
       "macros": "Macros",
       "macrosDescription": "Change the text of a macro in the Macros page.",
       "canvas": "Capture editor and board",

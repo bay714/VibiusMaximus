@@ -27,6 +27,10 @@ pub struct CaptureOptions {
     pub paste_key: String,
     /// Unstarred captures older than this many days are deleted; 0 keeps them.
     pub keep_days: u32,
+    /// Always held: pastes the last thing sent, copied or dictated again.
+    pub again_key: String,
+    /// After Send, briefly show which app it went to.
+    pub send_toast: bool,
 }
 
 #[cfg(not(target_os = "macos"))]
@@ -65,22 +69,35 @@ impl Default for CaptureOptions {
             keys: BTreeMap::new(),
             paste_key: "Alt+V".to_string(),
             keep_days: 30,
+            again_key: "Alt+Shift+V".to_string(),
+            send_toast: true,
         }
     }
 }
 
+/// A key as shown in Settings in the global hotkey format (`Alt+V` becomes
+/// `alt+v`), or `default` when it's blank.
+fn to_hotkey(key: &str, default: &str) -> String {
+    let key = key.trim();
+    let key = if key.is_empty() { default } else { key };
+    key.split('+')
+        .map(|part| match part {
+            "Win" => "super".to_string(),
+            other => other.to_lowercase(),
+        })
+        .collect::<Vec<_>>()
+        .join("+")
+}
+
 impl CaptureOptions {
-    /// `paste_key` in the global hotkey format (`Alt+V` becomes `alt+v`).
+    /// `paste_key` in the global hotkey format.
     pub fn paste_hotkey(&self) -> String {
-        let key = self.paste_key.trim();
-        let key = if key.is_empty() { "Alt+V" } else { key };
-        key.split('+')
-            .map(|part| match part {
-                "Win" => "super".to_string(),
-                other => other.to_lowercase(),
-            })
-            .collect::<Vec<_>>()
-            .join("+")
+        to_hotkey(&self.paste_key, "Alt+V")
+    }
+
+    /// `again_key` in the global hotkey format.
+    pub fn again_hotkey(&self) -> String {
+        to_hotkey(&self.again_key, "Alt+Shift+V")
     }
 
     pub fn is_terminal(&self, process: &str) -> bool {
@@ -107,9 +124,12 @@ pub fn vibe_capture_settings_get(app: AppHandle) -> CaptureOptions {
 
 #[tauri::command]
 pub fn vibe_capture_settings_set(app: AppHandle, options: CaptureOptions) {
-    let changed = options.keep_days != get(&app).keep_days;
+    let old = get(&app);
     store::set(&app, "capture", &options);
-    if changed {
+    if options.again_hotkey() != old.again_hotkey() {
+        super::pending::register_again(&app, Some(&old));
+    }
+    if options.keep_days != old.keep_days {
         std::thread::spawn(move || super::history::prune(&app));
     }
 }
@@ -137,6 +157,7 @@ mod tests {
         assert_eq!(o.paste_hotkey(), "ctrl+shift+f9");
         o.paste_key = "".into();
         assert_eq!(o.paste_hotkey(), "alt+v");
+        assert_eq!(o.again_hotkey(), "alt+shift+v");
     }
 
     #[test]

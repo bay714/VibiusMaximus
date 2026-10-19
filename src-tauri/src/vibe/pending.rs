@@ -4,6 +4,10 @@
 //! any app it pastes each image, then the text, the same step-by-step paste
 //! Send uses. After one paste, or when the time runs out, Alt+V goes back to
 //! normal.
+//!
+//! Paste again (Alt+Shift+V) is always held. It pastes the last thing sent,
+//! copied or dictated into the app in front, for when it went to the wrong
+//! window.
 
 use super::output::{self, join_nonempty, Item};
 use super::{history, keys, prefs, target};
@@ -15,8 +19,10 @@ use std::time::Duration;
 use tauri::{AppHandle, Manager};
 
 pub const BINDING_ID: &str = "vibe:paste-capture";
+pub const AGAIN_ID: &str = "vibe:paste-again";
 const HOLD_FOR: Duration = Duration::from_secs(5 * 60);
 
+#[derive(Clone)]
 struct Pending {
     pngs: Vec<Vec<u8>>,
     text: String,
@@ -32,6 +38,8 @@ pub struct PendingState {
     /// The capture waiting for Alt+V, and a counter that tells a timer whether
     /// the capture it was started for is still the current one.
     inner: Mutex<(Option<Pending>, u64)>,
+    /// The last thing sent, copied or dictated, for Paste again.
+    last: Mutex<Option<Pending>>,
 }
 
 /// The paste key from Settings → Hotkeys (Alt+V unless changed).
@@ -46,6 +54,84 @@ fn binding(app: &AppHandle) -> ShortcutBinding {
     }
 }
 
+/// The Paste again key from Settings → Hotkeys (Alt+Shift+V unless changed).
+fn again_binding(options: &prefs::CaptureOptions) -> ShortcutBinding {
+    let hotkey = options.again_hotkey();
+    ShortcutBinding {
+        id: AGAIN_ID.to_string(),
+        name: "Paste again".to_string(),
+        description: "Paste the last thing sent, copied or dictated".to_string(),
+        default_binding: hotkey.clone(),
+        current_binding: hotkey,
+    }
+}
+
+/// Register Paste again, first freeing the key from `old` settings when the
+/// user changed it.
+pub fn register_again(app: &AppHandle, old: Option<&prefs::CaptureOptions>) {
+    if let Some(old) = old {
+        let _ = crate::shortcut::unregister_shortcut(app, again_binding(old));
+    }
+    let binding = again_binding(&prefs::get(app));
+    let _ = crate::shortcut::unregister_shortcut(app, binding.clone());
+    if let Err(e) = crate::shortcut::register_shortcut(app, binding) {
+        warn!("Couldn't register Paste again: {}", e);
+    }
+}
+
+/// True for the hotkeys handled here: Alt+V and Paste again.
+pub fn handles(binding_id: &str) -> bool {
+    binding_id == BINDING_ID || binding_id == AGAIN_ID
+}
+
+fn remember(app: &AppHandle, pending: Pending) {
+    if let Ok(mut last) = app.state::<PendingState>().last.lock() {
+        *last = Some(pending);
+    }
+}
+
+/// Keep dictated text for Paste again.
+pub fn remember_text(app: &AppHandle, text: &str) {
+    if text.trim().is_empty() {
+        return;
+    }
+    remember(
+        app,
+        Pending {
+            pngs: Vec::new(),
+            text: text.to_string(),
+            paths: Vec::new(),
+            label: false,
+        },
+    );
+}
+
+/// Keep a sent capture for Paste again.
+pub fn remember_capture(app: &AppHandle, png: Vec<u8>, text: String, path: String) {
+    remember(
+        app,
+        Pending {
+            pngs: vec![png],
+            text,
+            paths: vec![path],
+            label: true,
+        },
+    );
+}
+
+/// Keep a sent board's images and text for Paste again.
+pub fn remember_many(app: &AppHandle, pngs: Vec<Vec<u8>>, text: String) {
+    remember(
+        app,
+        Pending {
+            pngs,
+            text,
+            paths: Vec::new(),
+            label: false,
+        },
+    );
+}
+
 /// Hold one capture for Alt+V.
 pub fn arm(app: &AppHandle, png: Vec<u8>, text: String, path: String) {
     hold(app, vec![png], text, vec![path], true);
@@ -57,18 +143,20 @@ pub fn arm_many(app: &AppHandle, pngs: Vec<Vec<u8>>, text: String) {
 }
 
 fn hold(app: &AppHandle, pngs: Vec<Vec<u8>>, text: String, paths: Vec<String>, label: bool) {
+    let pending = Pending {
+        pngs,
+        text,
+        paths,
+        label,
+    };
+    remember(app, pending.clone());
     let generation = {
         let state = app.state::<PendingState>();
         let Ok(mut inner) = state.inner.lock() else {
             return;
         };
         inner.1 += 1;
-        inner.0 = Some(Pending {
-            pngs,
-            text,
-            paths,
-            label,
-        });
+        inner.0 = Some(pending);
         inner.1
     };
     // Re-register so a hotkey left over from an earlier copy isn't doubled.
@@ -104,16 +192,27 @@ fn disarm(app: &AppHandle) -> Option<Pending> {
     pending
 }
 
-/// Alt+V was pressed: paste into the app in front. Runs off the shortcut
-/// thread, which must not unregister its own hotkey.
-pub fn fire(app: &AppHandle) {
+/// Alt+V or Paste again was pressed: paste into the app in front. Runs off
+/// the shortcut thread, which must not unregister its own hotkey.
+pub fn fire(app: &AppHandle, binding_id: &str) {
     let app = app.clone();
+    let again = binding_id == AGAIN_ID;
     std::thread::spawn(move || {
-        let Some(pending) = disarm(&app) else {
+        let pending = if again {
+            app.state::<PendingState>()
+                .last
+                .lock()
+                .ok()
+                .and_then(|last| last.clone())
+        } else {
+            disarm(&app)
+        };
+        let Some(pending) = pending else {
+            info!("Nothing sent yet to paste again");
             return;
         };
         if let Err(e) = paste(&app, pending) {
-            error!("Pasting the copied capture failed: {}", e);
+            error!("Pasting again failed: {}", e);
         }
     });
 }
@@ -127,7 +226,8 @@ fn paste(app: &AppHandle, pending: Pending) -> Result<(), String> {
 
     let target = target::foreground().unwrap_or_default();
     let options = prefs::get(app);
-    let text = if options.include_text {
+    // Dictation is only text, so it's pasted whatever the caption setting.
+    let text = if options.include_text || pending.pngs.is_empty() {
         pending.text.as_str()
     } else {
         ""
@@ -152,6 +252,6 @@ fn paste(app: &AppHandle, pending: Pending) -> Result<(), String> {
         items.push(Item::Text(join_nonempty(&[label, text])));
         items
     };
-    info!("Pasting the copied capture into {}", target.process);
+    info!("Pasting into {}", target.process);
     output::paste_items(app, &target, items, false)
 }

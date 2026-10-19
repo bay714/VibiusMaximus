@@ -7,6 +7,7 @@ import { ShortcutInput } from "../ShortcutInput";
 import { ResetButton } from "../../ui/ResetButton";
 import { useSettings } from "../../../hooks/useSettings";
 import {
+  DEFAULT_AGAIN_KEY,
   DEFAULT_KEYS,
   DEFAULT_PASTE_KEY,
   KEY_ACTIONS,
@@ -19,6 +20,7 @@ import {
 interface CaptureOptions {
   keys?: Partial<Record<KeyAction, string>>;
   pasteKey?: string;
+  againKey?: string;
   [other: string]: unknown;
 }
 
@@ -129,6 +131,7 @@ export const HotkeysSettings: React.FC = () => {
   };
   const keys = { ...DEFAULT_KEYS, ...(options.keys ?? {}) };
   const pasteKey = options.pasteKey || DEFAULT_PASTE_KEY;
+  const againKey = options.againKey || DEFAULT_AGAIN_KEY;
 
   const setKey = (action: KeyAction, combo: string) => {
     const clash = KEY_ACTIONS.find((a) => a !== action && keys[a] === combo);
@@ -150,7 +153,17 @@ export const HotkeysSettings: React.FC = () => {
 
   const setPasteKey = (combo: string) => {
     if (!isGlobalCombo(combo)) return t("vibe.hotkeys.pasteKeyInvalid");
+    if (combo === againKey)
+      return t("vibe.hotkeys.conflict", { action: t("vibe.hotkeys.againKey") });
     save({ ...options, pasteKey: combo });
+    return null;
+  };
+
+  const setAgainKey = (combo: string) => {
+    if (!isGlobalCombo(combo)) return t("vibe.hotkeys.pasteKeyInvalid");
+    if (combo === pasteKey)
+      return t("vibe.hotkeys.conflict", { action: t("vibe.hotkeys.pasteKey") });
+    save({ ...options, againKey: combo });
     return null;
   };
 
@@ -180,6 +193,18 @@ export const HotkeysSettings: React.FC = () => {
             isDefault={pasteKey === DEFAULT_PASTE_KEY}
             onChange={setPasteKey}
             onReset={() => save({ ...options, pasteKey: DEFAULT_PASTE_KEY })}
+          />
+        </SettingContainer>
+        <SettingContainer
+          title={t("vibe.hotkeys.againKey")}
+          description={t("vibe.hotkeys.againKeyDescription")}
+          grouped={true}
+        >
+          <KeyRecorder
+            value={againKey}
+            isDefault={againKey === DEFAULT_AGAIN_KEY}
+            onChange={setAgainKey}
+            onReset={() => save({ ...options, againKey: DEFAULT_AGAIN_KEY })}
           />
         </SettingContainer>
       </SettingsGroup>

@@ -12,6 +12,7 @@ pub mod pending;
 mod prefs;
 mod store;
 pub mod target;
+mod toast;
 mod vocab;
 
 use tauri::ipc::Invoke;
@@ -63,9 +64,26 @@ pub fn on_shortcuts_ready(app: &tauri::AppHandle) {
     macros::upgrade_starters(app);
     vocab::seed(app);
     macros::register_all(app);
+    pending::register_again(app, None);
+    migrate_history_limit(app);
     // Old captures are otherwise only cleared when a new one is saved.
     let app = app.clone();
     std::thread::spawn(move || history::prune(&app));
+}
+
+/// Handy keeps the last 5 transcriptions; we keep 25, so a dictation that
+/// went to the wrong window can still be found in History. Installs still on
+/// the old default move up once; a limit the user chose is left alone.
+fn migrate_history_limit(app: &tauri::AppHandle) {
+    if store::get::<bool>(app, "historyLimitV2").unwrap_or(false) {
+        return;
+    }
+    let mut settings = crate::settings::get_settings(app);
+    if settings.history_limit == 5 {
+        settings.history_limit = 25;
+        crate::settings::write_settings(app, settings);
+    }
+    store::set(app, "historyLimitV2", &true);
 }
 
 /// True for commands handled by [`invoke_handler`].

@@ -41,6 +41,7 @@ export const DEFAULT_KEYS: Record<KeyAction, string> = {
 
 /** Held for a few minutes after Alt+C, in any app. */
 export const DEFAULT_PASTE_KEY = "Alt+V";
+export const DEFAULT_AGAIN_KEY = "Alt+Shift+V";
 
 const NAMED: Record<string, string> = {
   Backquote: "`",

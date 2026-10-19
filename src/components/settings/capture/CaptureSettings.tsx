@@ -17,6 +17,7 @@ interface CaptureOptions {
   terminalApps: string[];
   copyOnlyApps: string[];
   keepDays: number;
+  sendToast: boolean;
 }
 
 const KEEP_DAYS = [7, 30, 90, 0];
@@ -78,6 +79,13 @@ export const CaptureSettings: React.FC = () => {
           onChange={(includeText) => save({ ...options, includeText })}
           label={t("vibe.captureSettings.includeText")}
           description={t("vibe.captureSettings.includeTextDescription")}
+          grouped={true}
+        />
+        <ToggleSwitch
+          checked={options.sendToast}
+          onChange={(sendToast) => save({ ...options, sendToast })}
+          label={t("vibe.captureSettings.sendToast")}
+          description={t("vibe.captureSettings.sendToastDescription")}
           grouped={true}
         />
         <SettingContainer

@@ -50,10 +50,11 @@ pub fn handle_shortcut_event(
         return;
     }
 
-    // VibiusMaximus: Alt+V, held briefly after copying a capture.
-    if binding_id == crate::vibe::pending::BINDING_ID {
+    // VibiusMaximus: Alt+V, held briefly after copying a capture, and Paste
+    // again (Alt+Shift+V).
+    if crate::vibe::pending::handles(binding_id) {
         if is_pressed {
-            crate::vibe::pending::fire(app);
+            crate::vibe::pending::fire(app, binding_id);
         }
         return;
     }
