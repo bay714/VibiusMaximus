@@ -28,6 +28,12 @@ pub fn display_name(process: &str) -> String {
         "chatgpt" => Some("ChatGPT"),
         "slack" => Some("Slack"),
         "teams" | "ms-teams" => Some("Teams"),
+        "olk" | "outlook" | "microsoft outlook" => Some("Outlook"),
+        "excel" | "microsoft excel" => Some("Excel"),
+        "winword" | "microsoft word" => Some("Word"),
+        "powerpnt" | "microsoft powerpoint" => Some("PowerPoint"),
+        "pbidesktop" => Some("Power BI"),
+        "explorer" => Some("File Explorer"),
         _ => None,
     };
     match known {
@@ -97,6 +103,58 @@ unsafe fn describe(hwnd: windows::Win32::Foundation::HWND) -> Option<Target> {
             process,
             title,
         })
+    }
+}
+
+/// Open app windows, front to back, for picking where to send: the ones on
+/// the taskbar, without our own windows.
+#[cfg(target_os = "windows")]
+pub fn list() -> Vec<Target> {
+    use windows::core::BOOL;
+    use windows::Win32::Foundation::{HWND, LPARAM};
+    use windows::Win32::Graphics::Dwm::{DwmGetWindowAttribute, DWMWA_CLOAKED};
+    use windows::Win32::UI::WindowsAndMessaging::{
+        EnumWindows, GetWindow, GetWindowLongW, GetWindowThreadProcessId, IsWindowVisible,
+        GWL_EXSTYLE, GW_OWNER, WS_EX_TOOLWINDOW,
+    };
+
+    unsafe extern "system" fn collect(hwnd: HWND, out: LPARAM) -> BOOL {
+        // SAFETY: `out` is the Vec passed to EnumWindows below, alive for the call.
+        unsafe { (*(out.0 as *mut Vec<HWND>)).push(hwnd) };
+        true.into()
+    }
+
+    let mut hwnds: Vec<HWND> = Vec::new();
+    let own_pid = std::process::id();
+    unsafe {
+        let _ = EnumWindows(Some(collect), LPARAM(&mut hwnds as *mut _ as isize));
+        hwnds
+            .into_iter()
+            .filter(|&hwnd| {
+                let mut pid = 0u32;
+                GetWindowThreadProcessId(hwnd, Some(&mut pid));
+                // Hidden UWP apps stay "visible" but cloaked.
+                let mut cloaked = 0u32;
+                let _ = DwmGetWindowAttribute(
+                    hwnd,
+                    DWMWA_CLOAKED,
+                    &mut cloaked as *mut u32 as *mut core::ffi::c_void,
+                    std::mem::size_of::<u32>() as u32,
+                );
+                IsWindowVisible(hwnd).as_bool()
+                    && cloaked == 0
+                    && pid != own_pid
+                    && GetWindow(hwnd, GW_OWNER).is_err()
+                    && GetWindowLongW(hwnd, GWL_EXSTYLE) as u32 & WS_EX_TOOLWINDOW.0 == 0
+            })
+            .filter_map(|hwnd| describe(hwnd))
+            .filter(|t| {
+                !t.title.trim().is_empty()
+                    && !t.process.is_empty()
+                    && !(t.process.eq_ignore_ascii_case("explorer.exe")
+                        && t.title == "Program Manager")
+            })
+            .collect()
     }
 }
 
@@ -171,6 +229,19 @@ fn describe_app(app: &objc2_app_kit::NSRunningApplication) -> Option<Target> {
     })
 }
 
+/// Running apps that show in the Dock, for picking where to send.
+#[cfg(target_os = "macos")]
+pub fn list() -> Vec<Target> {
+    use objc2_app_kit::{NSApplicationActivationPolicy, NSWorkspace};
+
+    NSWorkspace::sharedWorkspace()
+        .runningApplications()
+        .iter()
+        .filter(|app| app.activationPolicy() == NSApplicationActivationPolicy::Regular)
+        .filter_map(|app| describe_app(&app))
+        .collect()
+}
+
 /// An app saved earlier, if it's still running under the same name. Process
 /// ids are reused, so the name check keeps us from pasting into another app.
 #[cfg(target_os = "macos")]
@@ -219,6 +290,11 @@ pub fn foreground() -> Option<Target> {
 }
 
 #[cfg(not(any(target_os = "windows", target_os = "macos")))]
+pub fn list() -> Vec<Target> {
+    Vec::new()
+}
+
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
 pub fn focus(_target: &Target) -> bool {
     false
 }
@@ -238,6 +314,8 @@ mod tests {
         assert_eq!(display_name("Code.exe"), "VS Code");
         assert_eq!(display_name("WindowsTerminal.exe"), "Terminal");
         assert_eq!(display_name("notepad++.exe"), "Notepad++");
+        assert_eq!(display_name("olk.exe"), "Outlook");
+        assert_eq!(display_name("PBIDesktop.exe"), "Power BI");
         // macOS app names
         assert_eq!(display_name("Google Chrome"), "Chrome");
         assert_eq!(display_name("Cursor"), "Cursor");

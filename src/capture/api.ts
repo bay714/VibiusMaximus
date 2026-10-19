@@ -83,3 +83,18 @@ export function cleanupText(
 ): Promise<{ caption: string; notes: string[] }> {
   return invoke("vibe_cleanup", { input: { caption, notes } });
 }
+
+/** An open window Send can paste into instead. */
+export interface WindowChoice {
+  hwnd: number;
+  /** Short app name, e.g. "Chrome". */
+  app: string;
+  title: string;
+}
+
+/** Open windows, front to back. */
+export const listWindows = () => invoke<WindowChoice[]>("vibe_windows_list");
+
+/** Make Send paste into this window instead. */
+export const setSendTarget = (hwnd: number) =>
+  invoke("vibe_capture_set_target", { hwnd });

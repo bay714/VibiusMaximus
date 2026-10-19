@@ -27,6 +27,8 @@ pub fn invoke_handler() -> impl Fn(Invoke<tauri::Wry>) -> bool + Send + Sync + '
         capture::vibe_capture_ready,
         capture::vibe_capture_session,
         capture::vibe_close,
+        capture::vibe_windows_list,
+        capture::vibe_capture_set_target,
         output::vibe_send,
         cleanup::vibe_cleanup,
         history::vibe_captures_list,

@@ -22,9 +22,12 @@ import {
   closeCapture,
   formatText,
   sendCapture,
+  setSendTarget,
   type SendMode,
   type SessionTarget,
+  type WindowChoice,
 } from "./api";
+import { TargetPicker } from "./TargetPicker";
 import { PIN_COLOR, PinNoteRow, PinTools, usePins, type Note } from "./pins";
 import { matches, showKey, useKeys } from "./keys";
 
@@ -72,7 +75,7 @@ const isTextField = (el: Element | null) =>
 
 export default function Editor({
   crop,
-  target,
+  target: startTarget,
   restore,
 }: {
   crop: Crop;
@@ -89,6 +92,11 @@ export default function Editor({
   const [error, setError] = useState<string | null>(null);
   const [cleaning, setCleaning] = useState(false);
   const [captionBand, setCaptionBand] = useState(true);
+  // The "Send to another window" list is open, and the window picked there,
+  // which Send then pastes into instead.
+  const [picking, setPicking] = useState(false);
+  const [picked, setPicked] = useState<SessionTarget | null>(null);
+  const target = picked ?? startTarget;
   const [beforeCleanup, setBeforeCleanup] = useState<{
     caption: string;
     notes: Note[];
@@ -369,6 +377,21 @@ export default function Editor({
     [busy, exportPng, crop, api, caption, notes],
   );
 
+  const sendToWindow = useCallback(
+    async (choice: WindowChoice) => {
+      setPicking(false);
+      try {
+        await setSendTarget(choice.hwnd);
+      } catch (e) {
+        setError(String(e));
+        return;
+      }
+      setPicked({ app: choice.app, title: choice.title });
+      send("send", false);
+    },
+    [send],
+  );
+
   // Keys come from Settings → Hotkeys. Plain Enter only moves to the next
   // field. Excalidraw keeps its own keys (tools, Delete, undo) otherwise.
   useEffect(() => {
@@ -411,7 +434,10 @@ export default function Editor({
       } else if (matches(e, keys.close)) {
         const selected =
           api && Object.keys(api.getAppState().selectedElementIds).length > 0;
-        if (pinMode) armPin(false);
+        if (picking) {
+          handled();
+          setPicking(false);
+        } else if (pinMode) armPin(false);
         else if (!selected) closeCapture();
       }
     };
@@ -427,6 +453,7 @@ export default function Editor({
     pinMode,
     notes,
     target,
+    picking,
   ]);
 
   const bindField = (key: string) => (el: HTMLInputElement | null) => {
@@ -580,18 +607,26 @@ export default function Editor({
           {t("vibe.capture.sendSubmit")}
           <kbd>{showKey(keys.sendSubmit)}</kbd>
         </button>
-        <button
-          type="button"
-          className="vibe-btn primary"
-          disabled={busy || !target}
-          title={target?.title}
-          onClick={() => send("send", false)}
-        >
-          {target
-            ? t("vibe.capture.sendTo", { app: target.app })
-            : t("vibe.capture.send")}
-          <kbd>{showKey(keys.send)}</kbd>
-        </button>
+        <div className="vibe-send">
+          <button
+            type="button"
+            className="vibe-btn primary"
+            disabled={busy || !target}
+            title={target?.title}
+            onClick={() => send("send", false)}
+          >
+            {target
+              ? t("vibe.capture.sendTo", { app: target.app })
+              : t("vibe.capture.send")}
+            <kbd>{showKey(keys.send)}</kbd>
+          </button>
+          <TargetPicker
+            open={picking}
+            onOpenChange={setPicking}
+            disabled={busy}
+            onPick={sendToWindow}
+          />
+        </div>
       </div>
     </div>
   );

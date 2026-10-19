@@ -245,6 +245,42 @@ pub fn vibe_capture_session(state: tauri::State<'_, CaptureState>) -> Session {
     Session { target, reopen }
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WindowChoice {
+    hwnd: isize,
+    /// Short app name, e.g. `Chrome`.
+    app: String,
+    title: String,
+}
+
+/// Open windows Send can paste into, front to back.
+#[tauri::command]
+pub fn vibe_windows_list() -> Vec<WindowChoice> {
+    target::list()
+        .into_iter()
+        .map(|t| WindowChoice {
+            hwnd: t.hwnd,
+            app: target::display_name(&t.process),
+            title: t.title,
+        })
+        .collect()
+}
+
+/// Send to this window instead of the one the capture started from.
+#[tauri::command]
+pub fn vibe_capture_set_target(
+    state: tauri::State<'_, CaptureState>,
+    hwnd: isize,
+) -> Result<(), String> {
+    let chosen = target::list()
+        .into_iter()
+        .find(|t| t.hwnd == hwnd)
+        .ok_or("That window is no longer open")?;
+    *state.target.lock().map_err(|e| e.to_string())? = Some(chosen);
+    Ok(())
+}
+
 /// Called by the capture window once the frame is drawn, to avoid a blank flash.
 #[tauri::command]
 pub fn vibe_capture_ready(window: tauri::WebviewWindow) -> Result<(), String> {
