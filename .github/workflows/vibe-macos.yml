@@ -72,25 +72,6 @@ jobs:
           workspaces: src-tauri
           key: ${{ matrix.target }}
 
-      # Same as Handy: Intel builds link and bundle ONNX Runtime themselves.
-      - name: Install ONNX Runtime (Intel)
-        if: matrix.target == 'x86_64-apple-darwin'
-        run: |
-          ORT_VERSION="1.24.2"
-          curl -L --fail -o ort.tgz "https://blob.handy.computer/onnxruntime-osx-x86_64-${ORT_VERSION}.tgz"
-          tar xzf ort.tgz
-          ORT_DIR="$(pwd)/onnxruntime-osx-x86_64-${ORT_VERSION}"
-          echo "ORT_LIB_LOCATION=$ORT_DIR/lib" >> "$GITHUB_ENV"
-          echo "ORT_PREFER_DYNAMIC_LINK=1" >> "$GITHUB_ENV"
-          jq --arg lib "$ORT_DIR/lib/libonnxruntime.${ORT_VERSION}.dylib" \
-            '.bundle.macOS.frameworks = [$lib]' \
-            src-tauri/tauri.conf.json > tmp.json && mv tmp.json src-tauri/tauri.conf.json
-
-      - name: Download voice-activity model
-        run: |
-          mkdir -p src-tauri/resources/models
-          curl -L --fail -o src-tauri/resources/models/silero_vad_v4.onnx https://blob.handy.computer/silero_vad_v4.onnx
-
       - run: bun install
 
       - name: Tests
