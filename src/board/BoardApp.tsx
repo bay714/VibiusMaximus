@@ -126,6 +126,13 @@ export default function BoardApp() {
   // The note dictation goes to when no text field has focus: the one placed,
   // selected or typed in last.
   const lastNote = useRef<string | null>(null);
+  // A new pin or number's note, focused once its row is on screen (the row
+  // can appear a moment after the number does).
+  const focusNext = useRef<string | null>(null);
+  const focusNote = (el: HTMLInputElement) => {
+    focusNext.current = null;
+    el.focus();
+  };
   const {
     notes,
     setNote,
@@ -141,7 +148,11 @@ export default function BoardApp() {
   } = usePins(api, {
     onPlaced: (pinId) => {
       lastNote.current = pinId;
-      setTimeout(() => noteFields.current.get(pinId)?.focus(), 0);
+      focusNext.current = pinId;
+      setTimeout(() => {
+        const el = noteFields.current.get(pinId);
+        if (el && focusNext.current === pinId) focusNote(el);
+      }, 0);
     },
     onActive: (pinId) => (lastNote.current = pinId),
   });
@@ -627,6 +638,7 @@ export default function BoardApp() {
               inputRef={(el) => {
                 if (el) noteFields.current.set(note.pinId, el);
                 else noteFields.current.delete(note.pinId);
+                if (el && focusNext.current === note.pinId) focusNote(el);
               }}
               onFocus={() => {
                 lastNote.current = note.pinId;

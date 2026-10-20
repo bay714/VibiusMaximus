@@ -66,9 +66,10 @@ export function usePins(
     /** Scene units per CSS pixel, so badges look the same size everywhere. */
     scale?: number;
     initialNotes?: Note[];
-    /** A pin was placed with the Pin tool (e.g. focus its note). */
+    /** A pin was placed with the Pin tool, or a new shape got its number
+     *  (e.g. focus its note, ready for typing or dictation). */
     onPlaced?: (pinId: string) => void;
-    /** A pin was selected or a shape was numbered (e.g. aim dictation at it). */
+    /** A pin was selected on the canvas (e.g. aim dictation at it). */
     onActive?: (pinId: string) => void;
   } = {},
 ) {
@@ -169,8 +170,8 @@ export function usePins(
   }, [api, addPin]);
 
   // Give newly drawn shapes the next number, grouped with the shape so they
-  // move and delete together. Focus stays on the canvas, so tool keys keep
-  // working.
+  // move and delete together. The last one's note goes to onPlaced, so it can
+  // be typed or dictated into straight away.
   const numberNewShapes = useCallback(
     (shapes: ExcalidrawElement[]) => {
       if (!api || shapes.length === 0) return;
@@ -199,7 +200,7 @@ export function usePins(
         captureUpdate: CaptureUpdateAction.IMMEDIATELY,
       });
       const last = badges.filter(isPin).pop();
-      if (last) callbacks.current.onActive?.(last.id);
+      if (last) callbacks.current.onPlaced?.(last.id);
     },
     [api, makeBadge],
   );

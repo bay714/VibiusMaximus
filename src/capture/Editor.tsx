@@ -103,8 +103,18 @@ export default function Editor({
   } | null>(null);
   const fields = useRef(new Map<string, HTMLInputElement>());
   const lastField = useRef<string>("caption");
-  // Pins, numbered shapes and their notes. A placed pin's note gets focus;
-  // a selected or new number becomes the dictation target.
+  // A new number's note, focused once its row is on screen (the row can
+  // appear a moment after the number does).
+  const focusNext = useRef<string | null>(null);
+  const focusNote = (el: HTMLInputElement) => {
+    focusNext.current = null;
+    el.focus({ preventScroll: true });
+    // The notes list scrolls once there are many.
+    el.scrollIntoView({ block: "nearest" });
+  };
+  // Pins, numbered shapes and their notes. A new pin or number's note gets
+  // focus, so Ctrl+Space dictates into it; a selected number becomes the
+  // dictation target.
   const {
     notes,
     setNotes,
@@ -122,10 +132,11 @@ export default function Editor({
     initialNotes: restore?.notes,
     onPlaced: (pinId) => {
       lastField.current = pinId;
-      setTimeout(
-        () => fields.current.get(pinId)?.focus({ preventScroll: true }),
-        0,
-      );
+      focusNext.current = pinId;
+      setTimeout(() => {
+        const el = fields.current.get(pinId);
+        if (el && focusNext.current === pinId) focusNote(el);
+      }, 0);
     },
     onActive: (pinId) => (lastField.current = pinId),
   });
@@ -459,6 +470,7 @@ export default function Editor({
   const bindField = (key: string) => (el: HTMLInputElement | null) => {
     if (el) fields.current.set(key, el);
     else fields.current.delete(key);
+    if (el && focusNext.current === key) focusNote(el);
   };
 
   return (
