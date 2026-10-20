@@ -55,6 +55,7 @@ pub fn invoke_handler() -> impl Fn(Invoke<tauri::Wry>) -> bool + Send + Sync + '
         macros::vibe_macro_save,
         macros::vibe_macro_delete,
         macros::vibe_macro_clear_hotkey,
+        vibe_restart,
     ]
 }
 
@@ -86,6 +87,28 @@ fn migrate_history_limit(app: &tauri::AppHandle) {
         crate::settings::write_settings(app, settings);
     }
     store::set(app, "historyLimitV2", &true);
+}
+
+/// Quit and start again: the fix when dictation stops responding after a long
+/// session (a dead keyboard hook, a stuck "Transcribing…", a mic that went
+/// quiet after sleep). Clearing those in place can't reach a thread that's
+/// hung, and a fresh process clears them all in a couple of seconds.
+pub fn restart(app: &tauri::AppHandle) {
+    log::info!("Restart requested from the Restart button");
+    let handle = app.clone();
+    // On the main thread, which owns the single-instance window.
+    let _ = app.run_on_main_thread(move || {
+        // Restarting from the main thread skips the exit event, so the
+        // single-instance lock would still be held when the new copy starts,
+        // and it would hand over to this one and quit. Let go of it first.
+        tauri_plugin_single_instance::destroy(&handle);
+        handle.restart();
+    });
+}
+
+#[tauri::command]
+fn vibe_restart(app: tauri::AppHandle) {
+    restart(&app);
 }
 
 /// True for commands handled by [`invoke_handler`].

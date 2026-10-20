@@ -606,6 +606,12 @@
         "failed": "Diagnostic failed: {{error}}"
       }
     },
+    "restart": {
+      "title": "Restart Vibius Maximus",
+      "description": "If dictation stops responding after a long session (the shortcut does nothing, it's stuck on Transcribing, or nothing gets typed), restart the app. Also in the tray menu.",
+      "button": "Restart",
+      "restarting": "Restarting…"
+    },
     "about": {
       "title": "About",
       "version": {

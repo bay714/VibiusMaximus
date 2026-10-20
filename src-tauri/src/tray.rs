@@ -515,6 +515,14 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
     // VibiusMaximus
     let new_capture_i = MenuItem::with_id(app, "vibe_capture", "New capture", true, None::<&str>)?;
     let open_board_i = MenuItem::with_id(app, "vibe_board", "Open board", true, None::<&str>)?;
+    // In both menus: when dictation is stuck, the tray may show either one.
+    let restart_i = MenuItem::with_id(
+        app,
+        "vibe_restart",
+        "Restart Vibius Maximus",
+        true,
+        None::<&str>,
+    )?;
     let separator = || PredefinedMenuItem::separator(app);
 
     let menu = if inputs.busy {
@@ -531,6 +539,7 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
                 &settings_i,
                 &check_updates_i,
                 &separator()?,
+                &restart_i,
                 &quit_i,
             ],
         )?
@@ -574,6 +583,7 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
                 &settings_i,
                 &check_updates_i,
                 &separator()?,
+                &restart_i,
                 &quit_i,
             ],
         )?

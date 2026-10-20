@@ -360,6 +360,9 @@ fn initialize_core_logic(app_handle: &AppHandle) {
             "vibe_board" => {
                 vibe::board::open(app);
             }
+            "vibe_restart" => {
+                vibe::restart(app);
+            }
             "unload_model" => {
                 let transcription_manager = app.state::<Arc<TranscriptionManager>>();
                 if !transcription_manager.is_model_loaded() {
