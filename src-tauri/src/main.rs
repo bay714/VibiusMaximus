@@ -33,6 +33,7 @@ fn main() {
         std::process::exit(handy_app_lib::engine_supervisor::run_worker());
     }
 
+    handy_app_lib::wait_for_stuck_copy();
     let cli_args = CliArgs::parse();
     handy_app_lib::run(cli_args)
 }

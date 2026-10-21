@@ -33,6 +33,7 @@ pub use cli::CliArgs;
 use specta_typescript::{BigIntExportBehavior, Typescript};
 use tauri_specta::{collect_commands, collect_events, Builder};
 pub use utils::env_flag_enabled;
+pub use vibe::startup::wait_for_stuck_copy;
 
 use env_filter::Builder as EnvFilterBuilder;
 use managers::audio::AudioRecordingManager;
@@ -1018,8 +1019,10 @@ pub fn run(cli_args: CliArgs) {
                 return Ok(());
             }
 
+            vibe::startup::begin();
             build_main_window(app.handle())?;
 
+            vibe::startup::step("settings");
             let mut settings = get_settings(app.handle());
 
             // Apply the persisted appearance theme to the native title bar before
@@ -1027,7 +1030,10 @@ pub fn run(cli_args: CliArgs) {
             // of the wrong theme. See `apply_window_theme` for what this does per
             // platform.
             #[cfg(any(target_os = "windows", target_os = "macos"))]
-            shortcut::apply_window_theme(app.handle(), settings.theme);
+            {
+                vibe::startup::step("theme");
+                shortcut::apply_window_theme(app.handle(), settings.theme);
+            }
 
             // CLI --debug flag overrides debug_mode and log level (runtime-only, not persisted)
             if cli_args.debug {
@@ -1044,8 +1050,10 @@ pub fn run(cli_args: CliArgs) {
             // honors the runtime `--debug` override applied to `settings` above.
             WEBVIEW_LOG_STREAMING.store(settings.debug_mode, Ordering::Relaxed);
             let app_handle = app.handle().clone();
+            vibe::startup::step("coordinator");
             app.manage(TranscriptionCoordinator::new(app_handle.clone()));
 
+            vibe::startup::step("core");
             initialize_core_logic(&app_handle);
 
             // Secure Input monitor (macOS): detects stuck secure input that
@@ -1093,9 +1101,11 @@ pub fn run(cli_args: CliArgs) {
             // Keep in sync with `apply_startup_activation_policy` (macOS).
             let tray_available = settings.show_tray_icon && !cli_args.no_tray;
             if should_force_show || !should_hide || !tray_available {
+                vibe::startup::step("show");
                 show_main_window(&app_handle);
             }
 
+            vibe::startup::done();
             Ok(())
         })
         .on_window_event(|window, event| match event {

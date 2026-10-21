@@ -10,6 +10,7 @@ pub mod macros;
 pub mod output;
 pub mod pending;
 mod prefs;
+pub mod startup;
 mod store;
 pub mod target;
 mod toast;
