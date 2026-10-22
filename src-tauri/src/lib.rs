@@ -98,9 +98,24 @@ fn build_console_filter() -> env_filter::Filter {
     builder.build()
 }
 
+/// Set while the settings window is being built. Building waits on WebView2
+/// and keeps handling window messages meanwhile, so opening the app again
+/// during startup asks to show the window partway through. Building a second
+/// copy then waits forever on the first, freezing the app.
+static BUILDING_MAIN_WINDOW: AtomicBool = AtomicBool::new(false);
+/// The settings window was asked for while it was being built.
+static SHOW_MAIN_WINDOW_LATER: AtomicBool = AtomicBool::new(false);
+
 /// Build the settings window. VibiusMaximus destroys it on close to free its
 /// web view, so this also runs whenever the window is reopened from the tray.
 fn build_main_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow> {
+    BUILDING_MAIN_WINDOW.store(true, Ordering::SeqCst);
+    let result = build_main_window_now(app);
+    BUILDING_MAIN_WINDOW.store(false, Ordering::SeqCst);
+    result
+}
+
+fn build_main_window_now(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow> {
     // Create main window programmatically so we can set data_directory
     // for portable mode (redirects WebView2 cache to portable Data dir)
     let mut win_builder =
@@ -146,6 +161,11 @@ fn build_main_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow> {
 }
 
 fn show_main_window(app: &AppHandle) {
+    if BUILDING_MAIN_WINDOW.load(Ordering::SeqCst) {
+        // Shown once it's built; see the end of `setup`.
+        SHOW_MAIN_WINDOW_LATER.store(true, Ordering::SeqCst);
+        return;
+    }
     if app.get_webview_window("main").is_none() {
         match build_main_window(app) {
             Ok(_) => {
@@ -155,6 +175,7 @@ fn show_main_window(app: &AppHandle) {
             Err(e) => log::error!("Failed to recreate main window: {}", e),
         }
     }
+    SHOW_MAIN_WINDOW_LATER.store(false, Ordering::SeqCst);
     if let Some(main_window) = app.get_webview_window("main") {
         if let Err(e) = main_window.unminimize() {
             log::error!("Failed to unminimize webview window: {}", e);
@@ -1100,7 +1121,12 @@ pub fn run(cli_args: CliArgs) {
             // anyway. Without a tray icon, the dock is the only way back in.
             // Keep in sync with `apply_startup_activation_policy` (macOS).
             let tray_available = settings.show_tray_icon && !cli_args.no_tray;
-            if should_force_show || !should_hide || !tray_available {
+            // Also show it if the app was opened again while it was starting.
+            if should_force_show
+                || !should_hide
+                || !tray_available
+                || SHOW_MAIN_WINDOW_LATER.load(Ordering::SeqCst)
+            {
                 vibe::startup::step("show");
                 show_main_window(&app_handle);
             }
