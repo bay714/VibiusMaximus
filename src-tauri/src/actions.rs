@@ -417,6 +417,10 @@ impl ShortcutAction for TranscribeAction {
                 .get_model_path(&selected_model)
             {
                 warn!("Not starting recording: no model can transcribe it ({})", e);
+                // From the tray nothing would say why; the window offers the
+                // model update or a model to download.
+                let app_clone = app.clone();
+                let _ = app.run_on_main_thread(move || crate::show_main_window(&app_clone));
                 return;
             }
         }
