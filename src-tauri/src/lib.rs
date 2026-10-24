@@ -264,6 +264,23 @@ fn should_force_show_permissions_window(app: &AppHandle) -> bool {
     false
 }
 
+/// VibiusMaximus: the main window is built on demand, so when starting hidden
+/// Handy's model update screen (old ONNX models retired in 1.0.8) never runs
+/// and dictation silently has no model. Show the window instead.
+fn selected_model_unavailable(app: &AppHandle) -> bool {
+    let selected_model = get_settings(app).selected_model;
+    match app
+        .state::<Arc<ModelManager>>()
+        .get_model_path(&selected_model)
+    {
+        Ok(_) => false,
+        Err(e) => {
+            log::info!("No usable model ({}); showing the main window", e);
+            true
+        }
+    }
+}
+
 fn initialize_core_logic(app_handle: &AppHandle) {
     // Note: Enigo (keyboard/mouse simulation) is NOT initialized here.
     // The frontend is responsible for calling the `initialize_enigo` command
@@ -1121,11 +1138,13 @@ pub fn run(cli_args: CliArgs) {
             // anyway. Without a tray icon, the dock is the only way back in.
             // Keep in sync with `apply_startup_activation_policy` (macOS).
             let tray_available = settings.show_tray_icon && !cli_args.no_tray;
-            // Also show it if the app was opened again while it was starting.
+            // Also show it if the app was opened again while it was starting,
+            // or if there's no model to dictate with.
             if should_force_show
                 || !should_hide
                 || !tray_available
                 || SHOW_MAIN_WINDOW_LATER.load(Ordering::SeqCst)
+                || selected_model_unavailable(&app_handle)
             {
                 vibe::startup::step("show");
                 show_main_window(&app_handle);
